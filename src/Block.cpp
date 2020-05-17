@@ -11,21 +11,15 @@ Block::Block(uint32_t nIndexIn, const std::string &sDataIn)
       _sData(sDataIn)
 {
     _nNonce = 0;
-    _tTime = time(nullptr);
+    _tTime = 0;
 
     _sHash = calculateHash();
 }
 
 void Block::MineBlock(uint32_t nDifficulty)
 {
-    char cstr[nDifficulty + 1];
-    for (uint32_t i = 0; i < nDifficulty; ++i)
-    {
-        cstr[i] = '0';
-    }
-    cstr[nDifficulty] = '\0';
-
-    std::string str(cstr);
+    std::string zeros;
+    zeros.assign(nDifficulty, '0');
 
     do
     {
@@ -33,7 +27,7 @@ void Block::MineBlock(uint32_t nDifficulty)
         _sHash = calculateHash();
         // std::cout << "hash: " << _sHash << std::endl;
     }
-    while (_sHash.substr(0, nDifficulty) != str);
+    while (_sHash.compare(0, nDifficulty, zeros) != 0);
 
     std::cout << "Block mined: " << _sHash << std::endl;
 }
