@@ -7,6 +7,8 @@
 namespace ash
 {
 
+constexpr auto DIFFICULTY = 2u;
+
 class Blockchain 
 {
 public:
@@ -14,11 +16,21 @@ public:
 
     void AddBlock(Block bNew);
 
-private:
-    uint32_t _nDifficulty;
-    std::vector<Block> _vChain;
+    std::size_t size() const 
+    { 
+        return _vChain.size(); 
+    }
 
-    Block _GetLastBlock() const;
+    const Block& getBlockByIndex(std::size_t idx) 
+    { 
+        return _vChain.at(idx); 
+    }
+
+    bool isValidBlockPair(std::size_t idx) const;
+    bool isValidChain() const;
+
+private:
+    std::vector<Block> _vChain;
 };
 
 }

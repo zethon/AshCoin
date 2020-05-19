@@ -2,6 +2,8 @@
 
 #include "BlockChain.h"
 
+// options: mine, validate, sync
+
 int main()
 {
     ash::Blockchain bChain;

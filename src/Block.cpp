@@ -1,4 +1,5 @@
 #include <sstream>
+#include <ostream>
 
 #include "Block.h"
 #include "sha256.h"
@@ -6,14 +7,34 @@
 namespace ash
 {
 
-Block::Block(uint32_t nIndexIn, const std::string &sDataIn) 
+std::string Block::CalculateHash(const Block & block)
+{
+    std::stringstream ss;
+    ss << block.index()
+        << block.previousHash()
+        << block.time()
+        << block.data()
+        << block.nonce();
+
+    return sha256(ss.str());
+}
+
+Block::Block(uint32_t nIndexIn, const std::string &sDataIn)
     : _nIndex(nIndexIn), 
-      _sData(sDataIn)
+      _data(sDataIn)
 {
     _nNonce = 0;
     _tTime = 0;
 
-    _sHash = calculateHash();
+    _sHash = Block::CalculateHash(*this);
+}
+
+bool Block::operator==(const Block & other) const
+{
+    return _nIndex == other._nIndex
+        && _nNonce == other._nNonce
+        && _data == other._data
+        && _tTime == other._tTime;
 }
 
 void Block::MineBlock(uint32_t nDifficulty)
@@ -24,20 +45,22 @@ void Block::MineBlock(uint32_t nDifficulty)
     do
     {
         _nNonce++;
-        _sHash = calculateHash();
-        // std::cout << "hash: " << _sHash << std::endl;
+        _sHash = Block::CalculateHash(*this);
     }
     while (_sHash.compare(0, nDifficulty, zeros) != 0);
 
     std::cout << "Block mined: " << _sHash << std::endl;
 }
 
-inline std::string Block::calculateHash() const
-{
-    std::stringstream ss;
-    ss << _nIndex << _sPrevHash << _tTime << _sData << _nNonce;
+} // namespace
 
-    return sha256(ss.str());
+namespace std
+{
+
+std::ostream& operator<<(std::ostream & os, const ash::Block & block)
+{
+    os << "block { index: " << block.index() << " hash: " << block.hash() << " data: " << block.data() << " }";
+    return os;
 }
 
-} // namespace
+} // namespace std
