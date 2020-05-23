@@ -13,6 +13,11 @@ set(HEADER_FILES
 )
 
 add_executable(ash
-${SOURCE_FILES}
-${HEADER_FILES}
+    ${SOURCE_FILES}
+    ${HEADER_FILES}
+)
+
+target_link_libraries(ash
+    PUBLIC
+        ${CONAN_LIBS}
 )

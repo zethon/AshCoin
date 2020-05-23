@@ -17,6 +17,12 @@ BOOST_AUTO_TEST_CASE(basicBlockchain)
     BOOST_REQUIRE_EQUAL(genblock.data(), "Genesis Block");
 }
 
+BOOST_AUTO_TEST_CASE(chainValidity)
+{
+    ash::Blockchain chain;
+    BOOST_REQUIRE_EQUAL(chain.isValidChain(), true);
+}
+
 BOOST_AUTO_TEST_CASE(blockEquality)
 {
     ash::Blockchain chain;

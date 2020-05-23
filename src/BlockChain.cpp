@@ -29,7 +29,10 @@ bool Blockchain::isValidBlockPair(std::size_t idx) const
 
 bool Blockchain::isValidChain() const
 {
-    // TODO: test that the genises block is [0]
+    if (_vChain.at(0) == Block{ 0, "Gensis Block" })
+    {
+        return false;
+    }
 
     for (auto idx = 1; idx < _vChain.size(); idx++)
     {
