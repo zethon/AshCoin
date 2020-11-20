@@ -4,6 +4,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "core.h"
+#include "utils.h"
 #include "BlockChain.h"
 
 namespace po = boost::program_options;
@@ -13,6 +15,11 @@ namespace po = boost::program_options;
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "");
+    std::cout << APP_TITLE << '\n';
+    std::cout << COPYRIGHT << '\n';
+    std::cout << GITHUB_PAGE << '\n';
+    std::cout << "user-folder: " << utils::getUserFolder() << '\n';
+    std::cout << '\n';
 
     po::options_description desc("Allowed options");
     desc.add_options()

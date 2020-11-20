@@ -11,6 +11,7 @@ set(SOURCE_FILES
 set(HEADER_FILES
     Block.h
     BlockChain.h
+    core.h
     Settings.h
     sha256.h
     utils.h

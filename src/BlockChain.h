@@ -7,7 +7,7 @@
 namespace ash
 {
 
-constexpr auto DIFFICULTY = 2u;
+constexpr auto DIFFICULTY = 10u;
 
 class Blockchain 
 {

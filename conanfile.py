@@ -14,8 +14,7 @@ class AshConan(ConanFile):
 
     requires = (
         "boost/1.71.0@conan/stable",
-        # "spdlog/1.4.2@bincrafters/stable",
-        "fmt/5.3.0@bincrafters/stable",
+        "spdlog/1.4.2@bincrafters/stable",
         "jsonformoderncpp/3.6.0@vthiery/stable",
         "libcurl/7.66.0@bincrafters/stable",
     )

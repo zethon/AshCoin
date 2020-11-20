@@ -20,6 +20,6 @@
 #define APP_NAME_LONG           "Ash Crypto"
 #define APP_DOMAIN              "ash"
 #define APP_TITLE               APP_NAME_LONG " " VERSION
-#define COPYRIGHT               "Copyright (c) 2017-2020, github.com/zethon"
+#define COPYRIGHT               "Copyright (c) 2019-2020, github.com/zethon"
 
 #define GITHUB_PAGE             "https://github.com/zethon/ash"
