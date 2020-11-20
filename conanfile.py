@@ -13,9 +13,11 @@ class AshConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     requires = (
-        "boost/1.68.0@conan/stable",
+        "boost/1.71.0@conan/stable",
+        # "spdlog/1.4.2@bincrafters/stable",
         "fmt/5.3.0@bincrafters/stable",
-        "jsonformoderncpp/3.4.0@vthiery/stable"
+        "jsonformoderncpp/3.6.0@vthiery/stable",
+        "libcurl/7.66.0@bincrafters/stable",
     )
 
     generators = "cmake"
@@ -41,7 +43,6 @@ class AshConan(ConanFile):
         "boost:without_regex": True,
         "boost:without_mpi": True,
         "boost:without_serialization": True,
-        "boost:without_signals": True,
         "boost:without_coroutine": True,
         "boost:without_fiber": True,
         "boost:without_context": True,
