@@ -25,8 +25,8 @@ bool isBoolean(const std::string_view s);
 bool convertToBool(const std::string_view s);
 
 std::string getUserFolder();
-std::string getDefaultHistoryFile();
-std::string getDefaultSessionFile();
+std::string getDataFolder();
 std::string getDefaultConfigFile();
+std::string getDefaultDatabaseFolder();
 
 } // namespace

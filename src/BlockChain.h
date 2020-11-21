@@ -2,17 +2,17 @@
 
 #include <cstdint>
 #include <vector>
+
+#include "Settings.h"
 #include "Block.h"
 
 namespace ash
 {
 
-constexpr auto DIFFICULTY = 10u;
-
 class Blockchain 
 {
 public:
-    Blockchain();
+    Blockchain(ash::SettingsPtr settings);
 
     void AddBlock(Block bNew);
 
@@ -30,7 +30,9 @@ public:
     bool isValidChain() const;
 
 private:
-    std::vector<Block> _vChain;
+    ash::SettingsPtr    _settings;
+    std::uint32_t       _difficulty;
+    std::vector<Block>  _vChain;
 };
 
 }

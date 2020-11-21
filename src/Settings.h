@@ -12,11 +12,13 @@
 
 #include "utils.h"
 
+using namespace std::string_literals;
+
 namespace ash
 {
 
-// class Settings;
-// using SettingsPtr = std::unique_ptr<Settings>;
+ class Settings;
+ using SettingsPtr = std::unique_ptr<Settings>;
 
 class Validator
 {
@@ -35,6 +37,20 @@ public:
 
 
     virtual ~Validator() = default;
+};
+
+class NotEmptyValidator : public Validator 
+{
+public:
+    bool isValid(const std::string& value) override
+    {
+        return !value.empty();
+    }
+
+    std::string error(const std::string& value) const override
+    {
+        return "the setting cannot be empty"s;
+    }
 };
 
 class LengthValidator : public Validator
@@ -197,8 +213,8 @@ public:
         return _settings.items().end();
     }
 
-    std::size_t load(const std::string& filename);
-    void save(const std::string& filename);
+    std::size_t load(std::string_view filename);
+    void save(std::string_view filename);
 
     bool exists(const std::string& name) const;
     std::size_t size() const { return _settings.size(); }

@@ -2,6 +2,7 @@
 // Copyright (c) 2017-2020, Adalid Claure <aclaure@gmail.com>
 
 #include <iostream>
+#include <iomanip>
 
 #include <boost/filesystem.hpp>
 
@@ -20,16 +21,16 @@ inline std::string json_to_string(const nlohmann::json& j)
     return j.dump();
 }
 
-std::size_t Settings::load(const std::string & filename)
+std::size_t Settings::load(std::string_view filename)
 {
     std::size_t count = 0;
 
-    boost::filesystem::path file{ filename };
+    boost::filesystem::path file{ filename.data() };
 
     if (boost::filesystem::exists(file))
     {
         nlohmann::json settings;
-        std::ifstream in(filename);
+        std::ifstream in(filename.data());
         in >> settings;
         in.close();
 
@@ -60,15 +61,13 @@ std::size_t Settings::load(const std::string & filename)
     return count;
 }
 
-void Settings::save(const std::string & filename)
+void Settings::save(std::string_view filename)
 {
-    boost::filesystem::path file{ filename };
-
     boost::filesystem::ofstream out;
-    out.open(filename,
+    out.open(filename.data(),
         boost::filesystem::ofstream::out | boost::filesystem::ofstream::trunc);
 
-    out << _settings;
+    out << std::setw(4) << _settings;
     out.close();
 }
 

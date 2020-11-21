@@ -88,6 +88,29 @@ retval = pw->pw_dir;
 
     return retval;
 }
+
+std::string getDataFolder()
+{
+    std::string retval;
+
+#ifdef _WINDOWS
+    WCHAR path[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL, 0, path)))
+    {
+        std::wstring temp(path);
+        retval.assign(temp.begin(), temp.end());
+    }
+    else
+    {
+        throw std::runtime_error("could not retrieve user folder");
+    }
+#else    
+    struct passwd *pw = getpwuid(getuid());
+    retval = pw->pw_dir;
+#endif
+
+    return retval;
+}
     
 void openBrowser(const std::string& url_str)
 {
@@ -176,22 +199,16 @@ bool convertToBool(const std::string_view s)
     throw std::runtime_error(fmt::format("invalid value '{}'", s));
 }
 
-std::string getDefaultHistoryFile()
-{
-    return fmt::format("{}{}{}",
-        utils::getUserFolder(), PATH_SEPERATOR, ".arcc_history");
-}
-
-std::string getDefaultSessionFile()
-{
-    return fmt::format("{}{}{}",
-        utils::getUserFolder(), PATH_SEPERATOR, ".arcc_session");
-}
-
 std::string getDefaultConfigFile()
 {
     return fmt::format("{}{}{}",
-        utils::getUserFolder(), PATH_SEPERATOR, ".arcc_config");
+        utils::getUserFolder(), PATH_SEPERATOR, ".ash_config");
+}
+
+std::string getDefaultDatabaseFolder()
+{
+    return fmt::format("{}{}{}",
+        utils::getDataFolder(), PATH_SEPERATOR, "AshChain");
 }
 
 
