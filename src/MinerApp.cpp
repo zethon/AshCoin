@@ -6,11 +6,13 @@ namespace ash
 MinerApp::MinerApp(SettingsPtr settings)
     : _settings{ std::move(settings) }
 {
+    const std::string dbfolder = _settings->value("database.folder", "");
+    _database = std::make_unique<ChainDatabase>(dbfolder);
+
     std::uint32_t difficulty = _settings->value("chain.difficulty", 5u);
     _blockchain = std::make_unique<Blockchain>(difficulty);
 
-    const std::string dbfolder = _settings->value("database.folder", "");
-    _database = std::make_unique<ChainDatabase>(dbfolder);
+    _database->initialize(*_blockchain);
 }
 
 void MinerApp::run()

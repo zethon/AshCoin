@@ -1,3 +1,5 @@
+#include "Blockchain.h"
+
 #include "ChainDatabase.h"
 
 namespace ash
@@ -10,30 +12,26 @@ ChainDatabase::ChainDatabase(std::string_view folder)
     : _folder{ folder },
       _path{ boost::filesystem::path { _folder.data()} }
 {
+}
+
+void ChainDatabase::initialize(Blockchain& blockchain)
+{
     if (!boost::filesystem::exists(_path))
     {
         boost::filesystem::create_directories(_path);
     }
 
-    _anchorFile = _path / std::string{AnchorFile};
-    if (!boost::filesystem::exists(_anchorFile))
+    // _anchorFile = _path / std::string{AnchorFile};
+    // if (!boost::filesystem::exists(_anchorFile))
+    // {
+    //     createDatabase();
+    // }
+
+    for (const auto& block : blockchain)
     {
-        createDatabase();
+        std::cout << "block: " << block << '\n';
     }
-
-    initialize();
 }
-
-void ChainDatabase::createDatabase()
-{
-
-}
-
-void ChainDatabase::initialize()
-{
-
-}
-
 void ChainDatabase::writeBlock(const Block & block)
 {
 }

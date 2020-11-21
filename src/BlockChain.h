@@ -14,8 +14,22 @@ using BlockChainPtr = std::unique_ptr<Blockchain>;
 
 class Blockchain 
 {
+
+std::uint32_t       _difficulty;
+std::vector<Block>  _vChain;
+
 public:
     Blockchain(std::uint32_t difficulty);
+
+    auto begin() const -> decltype(_vChain.begin())
+    {
+        return _vChain.begin();
+    }
+
+    auto end() const -> decltype(_vChain.end())
+    {
+        return _vChain.end();
+    }
 
     void AddBlock(Block bNew);
 
@@ -31,10 +45,6 @@ public:
 
     bool isValidBlockPair(std::size_t idx) const;
     bool isValidChain() const;
-
-private:
-    std::uint32_t       _difficulty;
-    std::vector<Block>  _vChain;
 };
 
 }
