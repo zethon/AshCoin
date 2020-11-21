@@ -8,7 +8,7 @@
 
 #include "core.h"
 #include "utils.h"
-#include "BlockChain.h"
+#include "Blockchain.h"
 #include "Settings.h"
 #include "MinerApp.h"
 

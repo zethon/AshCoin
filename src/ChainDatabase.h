@@ -26,7 +26,9 @@ private:
 
 private:
     std::string                 _folder;
+
     boost::filesystem::path     _path;
+    boost::filesystem::path     _anchorFile;
 };
 
 } // namespace

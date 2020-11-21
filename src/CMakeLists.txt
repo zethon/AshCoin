@@ -1,7 +1,7 @@
 
 set(SOURCE_FILES
     Block.cpp
-    BlockChain.cpp
+    Blockchain.cpp
     ChainDatabase.cpp
     main.cpp
     MinerApp.cpp
@@ -12,7 +12,7 @@ set(SOURCE_FILES
 
 set(HEADER_FILES
     Block.h
-    BlockChain.h
+    Blockchain.h
     ChainDatabase.h
     core.h
     MinerApp.h

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BlockChain.h"
+#include "Blockchain.h"
 #include "ChainDatabase.h"
 #include "Settings.h"
 

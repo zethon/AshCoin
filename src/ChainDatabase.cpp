@@ -14,14 +14,22 @@ ChainDatabase::ChainDatabase(std::string_view folder)
     {
         boost::filesystem::create_directories(_path);
     }
+
+    _anchorFile = _path / std::string{AnchorFile};
+    if (!boost::filesystem::exists(_anchorFile))
+    {
+        createDatabase();
+    }
+
+    initialize();
 }
 
-void ChainDatabase::initialize()
+void ChainDatabase::createDatabase()
 {
 
 }
 
-void ChainDatabase::createDatabase()
+void ChainDatabase::initialize()
 {
 
 }
