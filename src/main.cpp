@@ -31,6 +31,12 @@ ash::SettingsPtr registerSettings()
     retval->registerUInt("database.filesize.max", filesizeDefault,
         std::make_shared<ash::RangeValidator<std::uint64_t>>(filesizeMin, filesizeMax));
 
+    constexpr auto portMin = 1024u;
+    constexpr auto portMax = 65535u;
+    constexpr auto portDefault = 27182u;
+    retval->registerUInt("rest.port", portDefault,
+        std::make_shared<ash::RangeValidator<std::uint64_t>>(filesizeMin, filesizeMax));
+
     return std::move(retval);
 }
 
