@@ -4,6 +4,7 @@ namespace ash
 {
 
 constexpr std::string_view AnchorFile = "anchor.bin";
+constexpr std::string_view FilePattern = "chain-{}.blockdb";
 
 ChainDatabase::ChainDatabase(std::string_view folder)
     : _folder{ folder },
