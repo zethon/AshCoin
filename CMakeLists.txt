@@ -13,6 +13,17 @@ conan_basic_setup(NO_OUTPUT_DIRS KEEP_RPATHS)
 
 option(BUILD_ASH_TESTS "Build unit tests (default OFF)" OFF)
 
+if (MSVC)
+    add_compile_options(
+        # treat warnings as errors
+        /WX
+        /wd4996
+        
+        # ignore macro redefinition warnings because of PDCurses and MOUSE_MOVED
+        /wd4005 
+    )
+endif(MSVC)
+
 add_subdirectory(src)
 
 if (BUILD_ASH_TESTS)
