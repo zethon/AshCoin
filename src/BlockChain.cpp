@@ -3,10 +3,9 @@
 namespace ash
 {
 
-Blockchain::Blockchain(ash::SettingsPtr settings)
-    : _settings{ std::move(settings) }
+Blockchain::Blockchain(std::uint32_t difficulty)
+    : _difficulty{ difficulty }
 {
-    _difficulty = _settings->value("chain.difficulty", 5u);
     _vChain.emplace_back(Block(0, "Genesis Block"));
 }
 

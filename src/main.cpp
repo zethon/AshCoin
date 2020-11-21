@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "BlockChain.h"
 #include "Settings.h"
+#include "MinerApp.h"
 
 namespace po = boost::program_options;
 
@@ -26,7 +27,8 @@ ash::SettingsPtr registerSettings()
 
     constexpr auto filesizeMin = 1024u;
     constexpr auto filesizeMax = 1024u * 1024u * 1024u;
-    retval->registerUInt("database.filesize.max", 1024u * 5u,
+    constexpr auto filesizeDefault = 1024u * 1024u * 5u;
+    retval->registerUInt("database.filesize.max", filesizeDefault,
         std::make_shared<ash::RangeValidator<std::uint64_t>>(filesizeMin, filesizeMax));
 
     return std::move(retval);
@@ -79,17 +81,8 @@ int main(int argc, char* argv[])
     }
 
     auto settings = initSettings(configFile);
-
-    ash::Blockchain bChain{ std::move(settings) };
-
-    std::cout << "Mining block 1..." << std::endl;
-    bChain.AddBlock(ash::Block(1, "Block 1 Data"));
-
-    std::cout << "Mining block 2..." << std::endl;
-    bChain.AddBlock(ash::Block(2, "Block 2 Data"));
-
-    std::cout << "Mining block 3..." << std::endl;
-    bChain.AddBlock(ash::Block(3, "Block 3 Data"));
+    ash::MinerApp app{ std::move(settings) };
+    app.run();
 
     return 0;
 }

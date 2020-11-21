@@ -9,10 +9,13 @@
 namespace ash
 {
 
+class Blockchain;
+using BlockChainPtr = std::unique_ptr<Blockchain>;
+
 class Blockchain 
 {
 public:
-    Blockchain(ash::SettingsPtr settings);
+    Blockchain(std::uint32_t difficulty);
 
     void AddBlock(Block bNew);
 
@@ -30,7 +33,6 @@ public:
     bool isValidChain() const;
 
 private:
-    ash::SettingsPtr    _settings;
     std::uint32_t       _difficulty;
     std::vector<Block>  _vChain;
 };
