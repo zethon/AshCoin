@@ -1,3 +1,6 @@
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 #include "Blockchain.h"
 
 #include "ChainDatabase.h"
@@ -28,13 +31,52 @@ void ChainDatabase::initialize(Blockchain& blockchain)
         write(Block{ 0, "Genesis Block" });
     }
 
+    std::ifstream ifs(_dbfile.c_str());
+
+    // std::streampos archiveOffset = ifs.tellg(); 
+    std::streampos streamEnd = ifs.seekg(0, std::ios_base::end).tellg();
+    ifs.clear();
+    ifs.seekg(0);
+
+    boost::archive::binary_iarchive ia(ifs);
+    Block block;
+    while (ifs.tellg() < streamEnd)
+    {
+        ia >> block;
+        blockchain._vChain.emplace_back(std::move(block));
+    }
 }
-void ChainDatabase::write(const Block & block)
+void ChainDatabase::write(const Block& block)
 {
+    using namespace boost::serialization;
+    
+    std::ofstream ofs(_dbfile.c_str(), std::ios_base::app);
+    // boost::archive::binary_oarchive oa(ofs, boost::archive::no_header);
+    // oa << make_binary_object(&block, sizeof(Block));
+
+    boost::archive::binary_oarchive oa(ofs);
+    oa << block;
 }
 
-void ChainDatabase::read(std::uint32_t index)
+std::optional<Block> ChainDatabase::read(std::uint32_t index)
 {
+    Block retval;
+    std::uint32_t current = 0;
+
+    std::ifstream ifs(_dbfile.c_str());
+    boost::archive::binary_iarchive ia(ifs, boost::archive::no_header);
+    while (!ifs.eof())
+    {
+        ia >> retval;
+        if (current == index)
+        {
+            return retval;
+        }
+
+        current++;
+    }
+
+    return std::optional<Block>{};
 }
 
 } // namespace

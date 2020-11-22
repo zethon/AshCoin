@@ -1,5 +1,6 @@
 #pragma once
 #include <string_view>
+#include <optional>
 
 #include <boost/filesystem.hpp>
 
@@ -18,7 +19,7 @@ public:
     ChainDatabase(std::string_view folder);
 
     void write(const Block& block);
-    void read(std::uint32_t index);
+    std::optional<Block> read(std::uint32_t index);
 
     void initialize(Blockchain& chain);
 
