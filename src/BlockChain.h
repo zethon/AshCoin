@@ -15,6 +15,8 @@ using BlockChainPtr = std::unique_ptr<Blockchain>;
 class Blockchain 
 {
 
+friend class ChainDatabase;
+
 std::uint32_t       _difficulty;
 std::vector<Block>  _vChain;
 

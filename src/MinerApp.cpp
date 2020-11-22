@@ -1,3 +1,5 @@
+#include <charconv>
+
 #include "MinerApp.h"
 
 namespace ash
@@ -55,6 +57,27 @@ void MinerApp::initRest()
 
             response->write(stream);
         };
+
+    _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            const auto indexStr = request->path_match[1].str();
+            int index = 0;
+            auto result = 
+                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), index);
+
+            std::stringstream ss;
+            if (result.ec != std::errc() || index >= _blockchain->size())
+            {
+                ss << R"xx(<html><body><h2 stye="color:red">Invalid Block</h2></body></html>)xx";
+            }
+            else
+            {
+                ss << "<pre>" << _blockchain->getBlockByIndex(index) << "</pre>";
+            }
+            
+            response->write(ss);
+        };
 }
 
 void MinerApp::run()
@@ -85,7 +108,7 @@ void MinerApp::doMine()
             ash::Block(static_cast<std::uint32_t>(index++), data);
 
         _blockchain->AddBlock(std::move(newblock));
-        _database->writeBlock(newblock);
+        _database->write(newblock);
 
         std::this_thread::yield();
     }
