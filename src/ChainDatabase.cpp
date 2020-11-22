@@ -32,11 +32,11 @@ void ChainDatabase::initialize(Blockchain& blockchain)
         std::cout << "block: " << block << '\n';
     }
 }
-void ChainDatabase::writeBlock(const Block & block)
+void ChainDatabase::write(const Block & block)
 {
 }
 
-void ChainDatabase::readBlock(std::uint32_t index)
+void ChainDatabase::read(std::uint32_t index)
 {
 }
 

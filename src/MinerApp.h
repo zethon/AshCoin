@@ -27,13 +27,15 @@ private:
     void doMine();
 
 private:
-    ChainDatabasePtr    _database;
-    BlockChainPtr       _blockchain;
-    SettingsPtr         _settings;
-    HttpServer          _httpServer;
+    ChainDatabasePtr        _database;
+    BlockChainPtr           _blockchain;
+    SettingsPtr             _settings;
 
-    bool                _done = false;
-    std::thread         _mineThread;
+    HttpServer              _httpServer;
+    std::thread             _httpThread;
+
+    bool                    _done = false;
+    std::thread             _mineThread;
 };
 
 } // namespace

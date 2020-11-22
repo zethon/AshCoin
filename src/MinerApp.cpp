@@ -5,6 +5,7 @@ namespace ash
 
 MinerApp::MinerApp(SettingsPtr settings)
     : _settings{ std::move(settings) },
+      _httpThread{},
       _mineThread{}
 {
     initRest();
@@ -23,6 +24,12 @@ MinerApp::~MinerApp()
     if (_mineThread.joinable())
     {
         _mineThread.join();
+    }
+
+    if (_httpThread.joinable())
+    {
+        _httpServer.stop();
+        _httpThread.join();
     }
 }
 
@@ -48,13 +55,18 @@ void MinerApp::initRest()
 
             response->write(stream);
         };
-
-    _httpServer.start();
 }
 
 void MinerApp::run()
 {
+    _httpThread = std::thread(
+        [this]()
+        {
+            _httpServer.start();
+        });
+
     _mineThread = std::thread(&MinerApp::doMine, this);
+    
     while (!_done)
     {
         std::this_thread::yield();
@@ -67,7 +79,14 @@ void MinerApp::doMine()
     while (!_done)
     {
         std::cout << fmt::format("Mining block {}", index) << '\n';
-        _blockchain->AddBlock(ash::Block(static_cast<std::uint32_t>(index++), "Block 3 Data"));
+        const std::string data = fmt::format("Block {} Data", index);
+
+        auto newblock = 
+            ash::Block(static_cast<std::uint32_t>(index++), data);
+
+        _blockchain->AddBlock(std::move(newblock));
+        _database->writeBlock(newblock);
+
         std::this_thread::yield();
     }
 }
