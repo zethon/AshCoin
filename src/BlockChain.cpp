@@ -6,7 +6,6 @@ namespace ash
 Blockchain::Blockchain(std::uint32_t difficulty)
     : _difficulty{ difficulty }
 {
-    _vChain.emplace_back(Block(0, "Genesis Block"));
 }
 
 void Blockchain::AddBlock(Block bNew)

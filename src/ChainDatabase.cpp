@@ -20,7 +20,6 @@ ChainDatabase::ChainDatabase(std::string_view folder)
 
 void ChainDatabase::initialize(Blockchain& blockchain)
 {
-    assert(blockchain.size() > 0);
     if (!boost::filesystem::exists(_path))
     {
         boost::filesystem::create_directories(_path);
@@ -32,8 +31,6 @@ void ChainDatabase::initialize(Blockchain& blockchain)
     }
 
     std::ifstream ifs(_dbfile.c_str());
-
-    // std::streampos archiveOffset = ifs.tellg(); 
     std::streampos streamEnd = ifs.seekg(0, std::ios_base::end).tellg();
     ifs.clear();
     ifs.seekg(0);
@@ -51,9 +48,6 @@ void ChainDatabase::write(const Block& block)
     using namespace boost::serialization;
     
     std::ofstream ofs(_dbfile.c_str(), std::ios_base::app);
-    // boost::archive::binary_oarchive oa(ofs, boost::archive::no_header);
-    // oa << make_binary_object(&block, sizeof(Block));
-
     boost::archive::binary_oarchive oa(ofs);
     oa << block;
 }
@@ -64,7 +58,7 @@ std::optional<Block> ChainDatabase::read(std::uint32_t index)
     std::uint32_t current = 0;
 
     std::ifstream ifs(_dbfile.c_str());
-    boost::archive::binary_iarchive ia(ifs, boost::archive::no_header);
+    boost::archive::binary_iarchive ia(ifs);
     while (!ifs.eof())
     {
         ia >> retval;
