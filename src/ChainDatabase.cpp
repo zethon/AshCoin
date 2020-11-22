@@ -28,6 +28,7 @@ void ChainDatabase::initialize(Blockchain& blockchain)
     if (!boost::filesystem::exists(_dbfile))
     {
         write(Block{ 0, "Genesis Block" });
+        write(Block{ 1, "Second BLock" });
     }
 
     std::ifstream ifs(_dbfile.c_str());
@@ -35,10 +36,10 @@ void ChainDatabase::initialize(Blockchain& blockchain)
     ifs.clear();
     ifs.seekg(0);
 
-    boost::archive::binary_iarchive ia(ifs);
     Block block;
     while (ifs.tellg() < streamEnd)
     {
+        boost::archive::binary_iarchive ia(ifs);
         ia >> block;
         blockchain._vChain.emplace_back(std::move(block));
     }
