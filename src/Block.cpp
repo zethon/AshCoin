@@ -31,20 +31,20 @@ std::string Block::CalculateHash(const Block & block)
 }
 
 Block::Block(uint32_t nIndexIn, const std::string &sDataIn)
-    : _nIndex(nIndexIn), 
+    : _index(nIndexIn), 
       _data(sDataIn)
 {
-    _nNonce = 0;
-    _tTime = std::time(nullptr);
-    _sHash = Block::CalculateHash(*this);
+    _nonce = 0;
+    _time = std::time(nullptr);
+    _hash = Block::CalculateHash(*this);
 }
 
 bool Block::operator==(const Block & other) const
 {
-    return _nIndex == other._nIndex
-        && _nNonce == other._nNonce
+    return _index == other._index
+        && _nonce == other._nonce
         && _data == other._data
-        && _tTime == other._tTime;
+        && _time == other._time;
 }
 
 void Block::MineBlock(uint32_t nDifficulty)
@@ -54,12 +54,12 @@ void Block::MineBlock(uint32_t nDifficulty)
 
     do
     {
-        _nNonce++;
-        _sHash = Block::CalculateHash(*this);
+        _nonce++;
+        _hash = Block::CalculateHash(*this);
     }
-    while (_sHash.compare(0, nDifficulty, zeros) != 0);
+    while (_hash.compare(0, nDifficulty, zeros) != 0);
 
-    std::cout << "Block mined: " << _sHash << std::endl;
+    std::cout << "Block mined: " << _hash << std::endl;
 }
 
 } // namespace

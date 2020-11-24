@@ -27,23 +27,23 @@ public:
 
     bool operator==(const Block& other) const;
 
-    std::uint32_t index() const { return _nIndex; }
+    std::uint32_t index() const { return _index; }
     std::string data() const { return _data;  }
-    std::string hash() const { return _sHash; }
-    std::string previousHash() const { return _sPrevHash; }
-    std::uint32_t nonce() const { return _nNonce; }
-    time_t time() const { return _tTime; }
+    std::string hash() const { return _hash; }
+    std::string previousHash() const { return _prev; }
+    std::uint32_t nonce() const { return _nonce; }
+    time_t time() const { return _time; }
 
-    void setPrevious(const std::string& val) { _sPrevHash = val; }
+    void setPrevious(const std::string& val) { _prev = val; }
     void MineBlock(uint32_t nDifficulty);
 
 private:
-    uint32_t        _nIndex;
-    uint32_t        _nNonce;
+    uint32_t        _index;
+    uint32_t        _nonce;
     std::string     _data;
-    time_t          _tTime; // std::uint64_t 
-    std::string     _sHash;
-    std::string     _sPrevHash;
+    time_t          _time; // std::uint64_t 
+    std::string     _hash;
+    std::string     _prev;
 };
 
 } // namespace ash

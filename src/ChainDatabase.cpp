@@ -21,16 +21,16 @@ void write_block(std::ostream& stream, const Block& block)
 
 void read_block(std::istream& stream, Block& block)
 {
-    ashdb::read_data(stream, block._nIndex);
-    ashdb::read_data(stream, block._nNonce);
+    ashdb::read_data(stream, block._index);
+    ashdb::read_data(stream, block._nonce);
     ashdb::read_data(stream, block._data);
 
     std::uint64_t dtime;
     ashdb::read_data(stream, dtime);
-    block._tTime = static_cast<time_t>(dtime);
+    block._time = static_cast<time_t>(dtime);
 
-    ashdb::read_data(stream, block._sHash);
-    ashdb::read_data(stream, block._sPrevHash);
+    ashdb::read_data(stream, block._hash);
+    ashdb::read_data(stream, block._prev);
 }
 
 constexpr std::string_view AnchorFile = "anchor.bin";
