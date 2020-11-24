@@ -10,24 +10,20 @@
 
 #include <nlohmann/json.hpp>
 
+namespace nl = nlohmann;
+
 namespace ash
 {
 
+void to_json(nl::json& j, Block& b);
+
 class Block 
 {
-    friend class boost::serialization::access;
     friend void read_block(std::istream& stream, Block& block);
+    friend void write_block(std::ostream& stream, const Block& block);
 
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int)
-    {
-        ar & this->_nIndex;
-        ar & this->_nNonce;
-        ar & this->_data;
-        ar & this->_tTime;
-        ar & this->_sHash;
-        ar & this->_sPrevHash;
-    }
+    friend void from_json(const nl::json& j, const Block& b);
+    friend void to_json(nl::json& j, Block& b);
 
 public:
     static std::string CalculateHash(const Block& block);

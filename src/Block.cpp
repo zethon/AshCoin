@@ -8,6 +8,16 @@
 namespace ash
 {
 
+void to_json(nl::json& j, Block& b)
+{
+    j["index"] = b._nIndex;
+    j["nonce"] = b._nNonce;
+    j["data"] = b._data;
+    j["time"] = b._tTime;
+    j["hash"] = b._sHash;
+    j["prev"] = b._sPrevHash;
+}
+
 std::string Block::CalculateHash(const Block & block)
 {
     std::stringstream ss;
