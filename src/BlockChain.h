@@ -16,12 +16,6 @@ class Blockchain
 {
 
 friend class ChainDatabase;
-
-    template<class Archive>
-    void serialize(Archive & ar, const unsigned int version)
-    {
-        ar & _vChain;
-    }
     
     std::vector<Block>  _vChain;
     std::uint32_t       _difficulty;

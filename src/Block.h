@@ -3,11 +3,6 @@
 #include <cstdint>
 #include <iostream>
 
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/serialization/binary_object.hpp>
-#include <boost/serialization/serialization.hpp>
-
 #include <nlohmann/json.hpp>
 
 namespace nl = nlohmann;
@@ -15,15 +10,13 @@ namespace nl = nlohmann;
 namespace ash
 {
 
-void to_json(nl::json& j, Block& b);
+class Block;
+void to_json(nl::json& j, const Block& b);
 
 class Block 
 {
     friend void read_block(std::istream& stream, Block& block);
     friend void write_block(std::ostream& stream, const Block& block);
-
-    friend void from_json(const nl::json& j, const Block& b);
-    friend void to_json(nl::json& j, Block& b);
 
 public:
     static std::string CalculateHash(const Block& block);

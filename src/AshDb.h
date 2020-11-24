@@ -21,7 +21,7 @@ inline void write_data(std::ostream& stream, T value)
 
 inline void write_data(std::ostream& stream, std::string_view data)
 {
-    StrLenType size = data.size();
+    auto size = static_cast<StrLenType>(data.size());
     write_data<StrLenType>(stream, size);
     stream.write(data.data(), size);
 }

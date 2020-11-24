@@ -1,7 +1,3 @@
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/serialization/binary_object.hpp>
-
 #include "Blockchain.h"
 #include "AshDb.h"
 
@@ -68,6 +64,10 @@ void ChainDatabase::initialize(Blockchain& blockchain)
     }
 
     std::cout << "loaded " << blockchain.size() << " block(s)\n";
+    if (!blockchain.isValidChain())
+    {
+        throw std::logic_error("invalid chain");
+    }
 }
 void ChainDatabase::write(const Block& block)
 {
@@ -77,21 +77,21 @@ void ChainDatabase::write(const Block& block)
 
 std::optional<Block> ChainDatabase::read(std::uint32_t index)
 {
-    Block retval;
-    std::uint32_t current = 0;
+    //Block retval;
+    //std::uint32_t current = 0;
 
-    std::ifstream ifs(_dbfile.c_str());
-    boost::archive::binary_iarchive ia(ifs);
-    while (!ifs.eof())
-    {
-        ia >> retval;
-        if (current == index)
-        {
-            return retval;
-        }
+    //std::ifstream ifs(_dbfile.c_str());
+    //boost::archive::binary_iarchive ia(ifs);
+    //while (!ifs.eof())
+    //{
+    //    ia >> retval;
+    //    if (current == index)
+    //    {
+    //        return retval;
+    //    }
 
-        current++;
-    }
+    //    current++;
+    //}
 
     return std::optional<Block>{};
 }

@@ -8,14 +8,14 @@
 namespace ash
 {
 
-void to_json(nl::json& j, Block& b)
+void to_json(nl::json& j, const Block& b)
 {
-    j["index"] = b._nIndex;
-    j["nonce"] = b._nNonce;
-    j["data"] = b._data;
-    j["time"] = b._tTime;
-    j["hash"] = b._sHash;
-    j["prev"] = b._sPrevHash;
+    j["index"] = b.index();
+    j["nonce"] = b.nonce();
+    j["data"] = b.data();
+    j["time"] = b.time();
+    j["hash"] = b.hash();
+    j["prev"] = b.previousHash();
 }
 
 std::string Block::CalculateHash(const Block & block)

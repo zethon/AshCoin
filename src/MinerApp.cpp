@@ -1,5 +1,9 @@
 #include <charconv>
 
+#include <nlohmann/json.hpp>
+
+namespace nl = nlohmann;
+
 #include "MinerApp.h"
 
 namespace ash
@@ -73,7 +77,8 @@ void MinerApp::initRest()
             }
             else
             {
-                ss << "<pre>" << _blockchain->getBlockByIndex(index) << "</pre>";
+                nl::json json = _blockchain->getBlockByIndex(index);
+                ss << "<pre>" << json.dump(4) << "</pre>";
             }
             
             response->write(ss);
