@@ -8,7 +8,7 @@ Blockchain::Blockchain(std::uint32_t difficulty)
 {
 }
 
-void Blockchain::AddBlock(Block bNew)
+void Blockchain::AddBlock(Block& bNew)
 {
     bNew.setPrevious(_vChain.back().hash());
     bNew.MineBlock(_difficulty);

@@ -1,5 +1,6 @@
 
 set(SOURCE_FILES
+    AshDb.cpp
     Block.cpp
     Blockchain.cpp
     ChainDatabase.cpp
@@ -11,6 +12,7 @@ set(SOURCE_FILES
 )
 
 set(HEADER_FILES
+    AshDb.h
     Block.h
     Blockchain.h
     ChainDatabase.h

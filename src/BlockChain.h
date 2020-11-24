@@ -39,7 +39,7 @@ public:
         return _vChain.end();
     }
 
-    void AddBlock(Block bNew);
+    void AddBlock(Block& bNew);
 
     std::size_t size() const 
     { 
