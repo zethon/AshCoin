@@ -60,10 +60,6 @@ ash::SettingsPtr initSettings(std::string_view filename)
 
 int main(int argc, char* argv[])
 {
-    ashdb::AshBuffer buffer;
-    buffer.push(static_cast<std::uint8_t>(3));
-    buffer.push("eat");
-
     setlocale(LC_ALL, "");
     std::cout << APP_TITLE << '\n';
     std::cout << COPYRIGHT << '\n';

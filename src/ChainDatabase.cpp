@@ -21,8 +21,6 @@ void write_block(std::ostream& stream, const Block& block)
 
     ashdb::write_data(stream, block.hash());
     ashdb::write_data(stream, block.previousHash());
-
-    std::cout << "saved: " << block << '\n';
 }
 
 void read_block(std::istream& stream, Block& block)
@@ -37,8 +35,6 @@ void read_block(std::istream& stream, Block& block)
 
     ashdb::read_data(stream, block._sHash);
     ashdb::read_data(stream, block._sPrevHash);
-
-    std::cout << "loaded: " << block << '\n';
 }
 
 constexpr std::string_view AnchorFile = "anchor.bin";
@@ -70,6 +66,8 @@ void ChainDatabase::initialize(Blockchain& blockchain)
         read_block(ifs, block);
         blockchain._vChain.push_back(block);
     }
+
+    std::cout << "loaded " << blockchain.size() << " block(s)\n";
 }
 void ChainDatabase::write(const Block& block)
 {
