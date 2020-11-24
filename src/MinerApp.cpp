@@ -107,7 +107,7 @@ void MinerApp::doMine()
         auto newblock = 
             ash::Block(static_cast<std::uint32_t>(index++), data);
 
-        _blockchain->AddBlock(std::move(newblock));
+        _blockchain->AddBlock(newblock);
         _database->write(newblock);
 
         std::this_thread::yield();

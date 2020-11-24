@@ -16,6 +16,7 @@ namespace ash
 class Block 
 {
     friend class boost::serialization::access;
+    friend void read_block(std::istream& stream, Block& block);
 
     template<class Archive>
     void serialize(Archive & ar, const unsigned int)
@@ -51,7 +52,7 @@ private:
     uint32_t        _nIndex;
     uint32_t        _nNonce;
     std::string     _data;
-    time_t          _tTime;
+    time_t          _tTime; // std::uint64_t 
     std::string     _sHash;
     std::string     _sPrevHash;
 };

@@ -1,5 +1,6 @@
 #include <sstream>
 #include <ostream>
+#include <ctime>
 
 #include "Block.h"
 #include "sha256.h"
@@ -24,8 +25,7 @@ Block::Block(uint32_t nIndexIn, const std::string &sDataIn)
       _data(sDataIn)
 {
     _nNonce = 0;
-    _tTime = 0;
-
+    _tTime = std::time(nullptr);
     _sHash = Block::CalculateHash(*this);
 }
 

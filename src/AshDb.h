@@ -2,53 +2,44 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <istream>
 
 namespace ashdb
 {
 
-using AshDbPtr = unsigned char;
-using Container = std::vector<AshDbPtr>;
+using ValueType = unsigned char;
+using Container = std::vector<ValueType>;
+using PointerType = char*;
+using StrLenType = std::uint32_t;
 
-class AshBuffer
+template <typename T,
+    typename = typename std::enable_if<(std::is_integral<T>::value)>::type>
+inline void write_data(std::ostream& stream, T value)
 {
-    Container              _data;
-    Container::iterator    _current;
+    stream.write(reinterpret_cast<PointerType>(&value), sizeof(value));
+}
 
-public:
-    auto begin() -> decltype(_data.begin())
-    {
-        return _data.begin();
-    }
+inline void write_data(std::ostream& stream, std::string_view data)
+{
+    StrLenType size = data.size();
+    write_data<StrLenType>(stream, size);
+    stream.write(data.data(), size);
+}
 
-    auto end() -> decltype(_data.end())
-    {
-        return _data.end();
-    }
+template <typename T,
+    typename = typename std::enable_if<(std::is_integral<T>::value)>::type>
+inline void read_data(std::istream& stream, T& value)
+{
+    stream.read(reinterpret_cast<PointerType>(&value), sizeof(value));
+}
 
-    template <typename T,
-        typename = typename std::enable_if<(std::is_integral<T>::value)>::type>
-    void push(T value)
-    {
-        auto offset = _data.size();
+inline void read_data(std::istream& stream, std::string& data)
+{
+    StrLenType len;
+    ashdb::read_data(stream, len);
 
-        auto size = sizeof(value);
-        _data.resize(_data.size() + size);
-        
-        auto current = &(*(std::next(_data.begin(), offset)));
-        std::memcpy(&(*current), &value, size);
-    }
-
-    void push(std::string_view data)
-    {
-        std::uint32_t size = static_cast<std::uint32_t>(data.size());
-        push(size);
-
-        auto offset = _data.size();
-        _data.resize(offset + size);
-
-        auto current = &(*(std::next(_data.begin(), offset)));
-        std::memcpy(&(*current), data.data(), size);
-    }
-};
+    data.resize(len);
+    stream.read(reinterpret_cast<PointerType>(data.data()), len);
+}
 
 } // namespace ashdb
