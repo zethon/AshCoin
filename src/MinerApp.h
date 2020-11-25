@@ -28,7 +28,7 @@ using HttpRequestPtr = std::shared_ptr<HttpRequest>;
 using HttpResponse = HttpServer::Response;
 using HttpResponsePtr = std::shared_ptr<HttpResponse>;
 
-using WsEndpoint = WsServer::Endpoint;
+using WsServer = SimpleWeb::SocketServer<SimpleWeb::WS>;
 
 class MinerApp
 {
