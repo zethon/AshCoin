@@ -49,7 +49,11 @@ void MinerApp::printIndex(HttpResponsePtr response)
         << "</b></h3>";
 
     out << "<h3>blockchain size: <b>"
-        << _blockchain->size()
+        << "<a href='/block-idx/" 
+            << (_blockchain->size() - 1) 
+            << "'>" 
+            << (_blockchain->size() - 1) 
+            << "</a>"
         << "</b></h3>";
 
     if (_miningDone)
@@ -74,21 +78,6 @@ void MinerApp::initRest()
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
             this->printIndex(response);
-            std::stringstream stream;
-            stream << "<h1>Request from " << request->remote_endpoint().address().to_string() << ":" << request->remote_endpoint().port() << "</h1>";
-
-            stream << request->method << " " << request->path << " HTTP/" << request->http_version;
-
-            stream << "<h2>Query Fields</h2>";
-            auto query_fields = request->parse_query_string();
-            for (auto &field : query_fields)
-                stream << field.first << ": " << field.second << "<br>";
-
-            stream << "<h2>Header Fields</h2>";
-            for (auto &field : request->header)
-                stream << field.first << ": " << field.second << "<br>";
-
-            response->write(stream);
         };
 
     _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] = 
