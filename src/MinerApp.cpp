@@ -155,14 +155,24 @@ void MinerApp::run()
             _httpServer.start();
         });
 
-    _mineThread = std::thread(&MinerApp::runMineThread, this);
+    if (_settings->value("mining.autostart", false))
+    {
+        _mineThread = std::thread(&MinerApp::runMineThread, this);
+    }
+    else
+    {
+        _miningDone = true;
+    }
+    
+    if (_settings->value("rest.autoload", false))
+    {
+        const auto address = _httpServer.config.address.empty() ? 
+            "localhost" : _httpServer.config.address;
 
-    const auto address = _httpServer.config.address.empty() ? 
-        "localhost" : _httpServer.config.address;
-
-    const auto localUrl = fmt::format("http://{}:{}",
-        address, _httpServer.config.port);
-    utils::openBrowser(localUrl);
+        const auto localUrl = fmt::format("http://{}:{}",
+            address, _httpServer.config.port);
+        utils::openBrowser(localUrl);
+    }
 
     while (!_done)
     {
