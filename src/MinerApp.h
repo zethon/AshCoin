@@ -10,13 +10,15 @@
 #if _WINDOWS
 #pragma warning(pop)
 #endif
-
 #include "Blockchain.h"
 #include "ChainDatabase.h"
 #include "Settings.h"
 
 namespace ash
 {
+
+constexpr auto HTTPServerPortDefault = 27182u;
+constexpr auto WebSocketServerPorDefault = 14142u;
 
 using HttpServer = SimpleWeb::Server<SimpleWeb::HTTP>;
 
@@ -26,7 +28,7 @@ using HttpRequestPtr = std::shared_ptr<HttpRequest>;
 using HttpResponse = HttpServer::Response;
 using HttpResponsePtr = std::shared_ptr<HttpResponse>;
 
-using WsServer = SimpleWeb::SocketServer<SimpleWeb::WS>;
+using WsEndpoint = WsServer::Endpoint;
 
 class MinerApp
 {
@@ -41,6 +43,8 @@ public:
 
 private:
     void initRest();
+    void initWebSocket();
+
     void runMineThread();
 
     void printIndex(HttpResponsePtr response);
@@ -51,8 +55,11 @@ private:
     SettingsPtr             _settings;
 
     HttpServer              _httpServer;
-    WsServer                _wsServer;
     std::thread             _httpThread;
+
+    WsServer                _wsServer;
+    std::thread             _wsThread;
+
 
     bool                    _done = false;
     bool                    _miningDone = false;

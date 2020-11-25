@@ -16,6 +16,7 @@ MinerApp::MinerApp(SettingsPtr settings)
       _mineThread{}
 {
     initRest();
+    initWebSocket();
 
     const std::string dbfolder = _settings->value("database.folder", "");
     _database = std::make_unique<ChainDatabase>(dbfolder);
@@ -37,6 +38,12 @@ MinerApp::~MinerApp()
     {
         _httpServer.stop();
         _httpThread.join();
+    }
+
+    if (_wsThread.joinable())
+    {
+        _wsServer.stop();
+        _wsThread.join();
     }
 }
 
@@ -73,7 +80,7 @@ void MinerApp::printIndex(HttpResponsePtr response)
 
 void MinerApp::initRest()
 {
-    _httpServer.config.port = _settings->value("rest.port", 27182);
+    _httpServer.config.port = _settings->value("rest.port", HTTPServerPortDefault);
     _httpServer.resource["^/$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
@@ -138,6 +145,27 @@ void MinerApp::initRest()
             stream << "<html><body><h1>Mining startup requested</h1></body></html>";
             response->write(stream);
         };
+
+    _httpServer.resource["^/addPeer/((?:[0-9]{1,3}\\.){3}[0-9]{1,3})$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            response->write("<h1>peer added</h1>");
+        };
+}
+
+void MinerApp::initWebSocket()
+{
+    _wsServer.config.port = _settings->value("websocket.port", WebSocketServerPorDefault);
+    _wsServer.endpoint["^/echo/?$"].on_message =
+        [](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
+        {
+            auto out_message = in_message->string();
+            std::cout << "Server: Message received: \"" << out_message << "\" from " << connection.get() << std::endl;
+            std::cout << "Server: Sending message \"" << out_message << "\" to " << connection.get() << std::endl;
+
+            // connection->send is an asynchronous function
+            connection->send(out_message);
+        };
 }
 
 void MinerApp::run()
@@ -146,6 +174,12 @@ void MinerApp::run()
         [this]()
         {
             _httpServer.start();
+        });
+
+    _wsThread = std::thread(
+        [this]()
+        {
+            _wsServer.start();
         });
 
     if (_settings->value("mining.autostart", false))

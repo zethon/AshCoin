@@ -41,8 +41,12 @@ ash::SettingsPtr registerSettings()
 
     constexpr auto portMin = 1024u;
     constexpr auto portMax = 65535u;
-    constexpr auto portDefault = 27182u;
+    constexpr auto portDefault = ash::HTTPServerPortDefault;
     retval->registerUInt("rest.port", portDefault,
+        std::make_shared<ash::RangeValidator<std::uint64_t>>(filesizeMin, filesizeMax));
+
+    constexpr auto wsPortDefault = ash::WebSocketServerPorDefault;
+    retval->registerUInt("websocket.port", wsPortDefault,
         std::make_shared<ash::RangeValidator<std::uint64_t>>(filesizeMin, filesizeMax));
 
     retval->registerBool("rest.autoload", false);
@@ -76,7 +80,6 @@ int main(int argc, char* argv[])
     desc.add_options()
         ("help,?", "print help message")
         ("version,v", "print version string")
-        ("chain,n", po::value<std::string>(), "the block chain folder file")
         ("config,c",po::value<std::string>(), "config file")
         ;
 
