@@ -108,6 +108,10 @@ void MinerApp::initRest()
             {
                 nl::json json = _blockchain->getBlockByIndex(index);
                 ss << "<pre>" << json.dump(4) << "</pre>";
+                ss << "<br/>";
+                if (index > 0) ss << "<a href='/block-idx/" << (index - 1) << "'>prev</a>&nbsp;";
+                ss << "current: " << index;
+                if (index < _blockchain->size()) ss << "&nbsp;<a href='/block-idx/" << (index + 1) << "'>next</a>&nbsp;";
             }
             
             response->write(ss);
