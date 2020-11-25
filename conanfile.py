@@ -16,7 +16,6 @@ class AshConan(ConanFile):
         "boost/1.71.0@conan/stable",
         "spdlog/1.4.2@bincrafters/stable",
         "jsonformoderncpp/3.6.0@vthiery/stable",
-        # "libcurl/7.66.0@bincrafters/stable",
         "Simple-Web-Server/v3.1.1@owl/stable",
         "simple-websocket-server/2.0.2",
         "asio/1.18.0"

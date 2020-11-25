@@ -28,7 +28,16 @@ add_executable(ash
     ${HEADER_FILES}
 )
 
+if (APPLE)
+# utils.h/.cpp needs these two libraries if curl
+# is not included
+find_library(COREFOUNDATION_LIBRARY CoreFoundation)
+find_library(CARBON_LIBRARY Carbon)
+endif(APPLE)
+
 target_link_libraries(ash
     PUBLIC
         ${CONAN_LIBS}
+        ${COREFOUNDATION_LIBRARY}
+        ${CARBON_LIBRARY}
 )
