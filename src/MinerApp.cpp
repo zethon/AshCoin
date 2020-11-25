@@ -93,7 +93,7 @@ void MinerApp::run()
             _httpServer.start();
         });
 
-    _mineThread = std::thread(&MinerApp::doMine, this);
+    _mineThread = std::thread(&MinerApp::runMineThread, this);
     
     while (!_done)
     {
@@ -101,7 +101,7 @@ void MinerApp::run()
     }
 }
 
-void MinerApp::doMine()
+void MinerApp::runMineThread()
 {
     auto index = _blockchain->size();
     while (!_done)

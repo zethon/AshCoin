@@ -17,32 +17,32 @@ class Blockchain
 
 friend class ChainDatabase;
     
-    std::vector<Block>  _vChain;
+    std::vector<Block>  _blocks;
     std::uint32_t       _difficulty;
 
 public:
     Blockchain(std::uint32_t difficulty);
 
-    auto begin() const -> decltype(_vChain.begin())
+    auto begin() const -> decltype(_blocks.begin())
     {
-        return _vChain.begin();
+        return _blocks.begin();
     }
 
-    auto end() const -> decltype(_vChain.end())
+    auto end() const -> decltype(_blocks.end())
     {
-        return _vChain.end();
+        return _blocks.end();
     }
 
     void AddBlock(Block& bNew);
 
     std::size_t size() const 
     { 
-        return _vChain.size(); 
+        return _blocks.size(); 
     }
 
     const Block& getBlockByIndex(std::size_t idx) 
     { 
-        return _vChain.at(idx); 
+        return _blocks.at(idx); 
     }
 
     bool isValidBlockPair(std::size_t idx) const;

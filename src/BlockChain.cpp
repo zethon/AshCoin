@@ -8,35 +8,41 @@ Blockchain::Blockchain(std::uint32_t difficulty)
 {
 }
 
-void Blockchain::AddBlock(Block& bNew)
+void Blockchain::AddBlock(Block& newblock)
 {
-    bNew.setPrevious(_vChain.back().hash());
-    bNew.MineBlock(_difficulty);
-    _vChain.push_back(bNew);
+    newblock.setPrevious(_blocks.back().hash());
+    newblock.MineBlock(_difficulty);
+    _blocks.push_back(newblock);
 }
 
 bool Blockchain::isValidBlockPair(std::size_t idx) const
 {
-    if (idx > _vChain.size() || idx < 1) return false;
-
-    const auto& current = _vChain.at(idx);
-    const auto& prev = _vChain.at(idx - 1);
-
-    return (current.index() == prev.index() + 1)
-        && (current.previousHash() == prev.hash())
-        && (Block::CalculateHash(current) == current.hash());
-}
-
-bool Blockchain::isValidChain() const
-{
-    if (_vChain.at(0) == Block{ 0, "Gensis Block" })
+    if (idx > _blocks.size() || idx < 1)
     {
         return false;
     }
 
-    for (auto idx = 1u; idx < _vChain.size(); idx++)
+    const auto& current = _blocks.at(idx);
+    const auto& prev = _blocks.at(idx - 1);
+
+    return (current.index() == prev.index() + 1)
+        && (current.previousHash() == prev.hash())
+        && (CalculateBlockHash(current) == current.hash());
+}
+
+bool Blockchain::isValidChain() const
+{
+    if (_blocks.at(0) == Block{ 0, "Gensis Block" })
     {
-        if (!isValidBlockPair(idx)) return false;
+        return false;
+    }
+
+    for (auto idx = 1u; idx < _blocks.size(); idx++)
+    {
+        if (!isValidBlockPair(idx))
+        {
+            return false;
+        }
     }
 
     return true;

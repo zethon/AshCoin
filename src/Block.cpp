@@ -8,26 +8,29 @@
 namespace ash
 {
 
+std::string CalculateBlockHash(const Block& block)
+{
+    std::stringstream ss;
+    ss << block.index()
+        << block.nonce()
+        << block.difficulty()
+        << block.data()
+        << block.time()
+        << block.previousHash();
+
+    return sha256(ss.str());
+}
+
+
 void to_json(nl::json& j, const Block& b)
 {
     j["index"] = b.index();
     j["nonce"] = b.nonce();
+    j["difficulty"] = b.difficulty();
     j["data"] = b.data();
     j["time"] = b.time();
     j["hash"] = b.hash();
     j["prev"] = b.previousHash();
-}
-
-std::string Block::CalculateHash(const Block & block)
-{
-    std::stringstream ss;
-    ss << block.index()
-        << block.previousHash()
-        << block.time()
-        << block.data()
-        << block.nonce();
-
-    return sha256(ss.str());
 }
 
 Block::Block(uint32_t nIndexIn, const std::string &sDataIn)
@@ -36,7 +39,7 @@ Block::Block(uint32_t nIndexIn, const std::string &sDataIn)
 {
     _nonce = 0;
     _time = std::time(nullptr);
-    _hash = Block::CalculateHash(*this);
+    _hash = CalculateBlockHash(*this);
 }
 
 bool Block::operator==(const Block & other) const
@@ -47,17 +50,19 @@ bool Block::operator==(const Block & other) const
         && _time == other._time;
 }
 
-void Block::MineBlock(uint32_t nDifficulty)
+void Block::MineBlock(std::uint32_t nDifficulty)
 {
+    _difficulty = nDifficulty;
+
     std::string zeros;
-    zeros.assign(nDifficulty, '0');
+    zeros.assign(_difficulty, '0');
 
     do
     {
         _nonce++;
-        _hash = Block::CalculateHash(*this);
+        _hash = CalculateBlockHash(*this);
     }
-    while (_hash.compare(0, nDifficulty, zeros) != 0);
+    while (_hash.compare(0, _difficulty, zeros) != 0);
 
     std::cout << "Block mined: " << _hash << std::endl;
 }

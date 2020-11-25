@@ -10,6 +10,7 @@ void write_block(std::ostream& stream, const Block& block)
 {
     ashdb::write_data<std::uint32_t>(stream, block.index());
     ashdb::write_data<std::uint32_t>(stream, block.nonce());
+    ashdb::write_data<std::uint32_t>(stream, block.difficulty());
     ashdb::write_data(stream, block.data());
 
     std::uint64_t dtime = static_cast<std::uint64_t>(block.time());
@@ -23,6 +24,7 @@ void read_block(std::istream& stream, Block& block)
 {
     ashdb::read_data(stream, block._index);
     ashdb::read_data(stream, block._nonce);
+    ashdb::read_data(stream, block._difficulty);
     ashdb::read_data(stream, block._data);
 
     std::uint64_t dtime;
@@ -60,7 +62,7 @@ void ChainDatabase::initialize(Blockchain& blockchain)
     {
         Block block;
         read_block(ifs, block);
-        blockchain._vChain.push_back(block);
+        blockchain._blocks.push_back(block);
     }
 
     std::cout << "loaded " << blockchain.size() << " block(s)\n";
