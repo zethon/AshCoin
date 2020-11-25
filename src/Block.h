@@ -21,7 +21,7 @@ class Block
 
 public:
     Block() = default;
-    Block(uint32_t nIndexIn, const std::string& sDataIn);
+    Block(uint32_t nIndexIn, std::string_view sDataIn);
 
     bool operator==(const Block& other) const;
 

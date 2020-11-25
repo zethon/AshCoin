@@ -33,7 +33,7 @@ void to_json(nl::json& j, const Block& b)
     j["prev"] = b.previousHash();
 }
 
-Block::Block(uint32_t nIndexIn, const std::string &sDataIn)
+Block::Block(uint32_t nIndexIn, std::string_view sDataIn)
     : _index(nIndexIn), 
       _data(sDataIn)
 {

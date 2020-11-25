@@ -2,9 +2,10 @@
 
 #include <nlohmann/json.hpp>
 
-namespace nl = nlohmann;
-
+#include "utils.h"
 #include "MinerApp.h"
+
+namespace nl = nlohmann;
 
 namespace ash
 {
@@ -39,12 +40,40 @@ MinerApp::~MinerApp()
     }
 }
 
+void MinerApp::printIndex(HttpResponsePtr response)
+{
+    std::stringstream out;
+    out << "<html><body>";
+    out << "<h3>mining status: <b>"
+        << (_miningDone ? "stopped" : "started")
+        << "</b></h3>";
+
+    out << "<h3>blockchain size: <b>"
+        << _blockchain->size()
+        << "</b></h3>";
+
+    if (_miningDone)
+    {
+        out << "<a href='/startMining'>start mining</a><br/>";
+    }
+    else
+    {
+        out << "<a href='/stopMining'>stop mining</a><br/>";
+    }
+    
+    out << "<a href='/quit'>quit</a>";
+   
+    out << "</body></html>";
+    response->write(out);
+}
+
 void MinerApp::initRest()
 {
     _httpServer.config.port = _settings->value("rest.port", 27182);
     _httpServer.resource["^/$"]["GET"] = 
-        [](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
+            this->printIndex(response);
             std::stringstream stream;
             stream << "<h1>Request from " << request->remote_endpoint().address().to_string() << ":" << request->remote_endpoint().port() << "</h1>";
 
@@ -83,6 +112,39 @@ void MinerApp::initRest()
             
             response->write(ss);
         };
+
+    _httpServer.resource["^/quit$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            this->signalExit();
+            std::stringstream stream;
+            stream << "<html><body><h1>Shutdown requested</h1></body></html>";
+            response->write(stream);
+        };
+
+    _httpServer.resource["^/stopMining$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            this->stopMining();
+            std::stringstream stream;
+            stream << "<html><body><h1>Mining shutdown requested</h1></body></html>";
+            response->write(stream);
+
+            if (this->_mineThread.joinable())
+            {
+                this->_mineThread.join();
+            }
+        };
+
+    _httpServer.resource["^/startMining$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            this->_miningDone = false;
+            this->_mineThread = std::thread(&MinerApp::runMineThread, this);
+            std::stringstream stream;
+            stream << "<html><body><h1>Mining startup requested</h1></body></html>";
+            response->write(stream);
+        };
 }
 
 void MinerApp::run()
@@ -94,7 +156,14 @@ void MinerApp::run()
         });
 
     _mineThread = std::thread(&MinerApp::runMineThread, this);
-    
+
+    const auto address = _httpServer.config.address.empty() ? 
+        "localhost" : _httpServer.config.address;
+
+    const auto localUrl = fmt::format("http://{}:{}",
+        address, _httpServer.config.port);
+    utils::openBrowser(localUrl);
+
     while (!_done)
     {
         std::this_thread::yield();
@@ -104,18 +173,16 @@ void MinerApp::run()
 void MinerApp::runMineThread()
 {
     auto index = _blockchain->size();
-    while (!_done)
+    while (!_miningDone && !_done)
     {
         std::cout << fmt::format("Mining block {}", index) << '\n';
-        const std::string data = fmt::format("Block {} Data", index);
+        const std::string data = fmt::format(":coinbase", index);
 
         auto newblock = 
             ash::Block(static_cast<std::uint32_t>(index++), data);
 
-        _blockchain->AddBlock(newblock);
+        _blockchain->AddBlock(newblock); // does mining
         _database->write(newblock);
-
-        std::this_thread::yield();
     }
 }
 

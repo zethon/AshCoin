@@ -19,8 +19,12 @@ namespace ash
 {
 
 using HttpServer = SimpleWeb::Server<SimpleWeb::HTTP>;
+
 using HttpRequest = HttpServer::Request;
+using HttpRequestPtr = std::shared_ptr<HttpRequest>;
+
 using HttpResponse = HttpServer::Response;
+using HttpResponsePtr = std::shared_ptr<HttpResponse>;
 
 using WsServer = SimpleWeb::SocketServer<SimpleWeb::WS>;
 
@@ -32,10 +36,14 @@ public:
     ~MinerApp();
 
     void run();
+    void signalExit() { _done = true; }
+    void stopMining() { _miningDone = true; }
 
 private:
     void initRest();
     void runMineThread();
+
+    void printIndex(HttpResponsePtr response);
 
 private:
     ChainDatabasePtr        _database;
@@ -47,6 +55,7 @@ private:
     std::thread             _httpThread;
 
     bool                    _done = false;
+    bool                    _miningDone = false;
     std::thread             _mineThread;
 };
 

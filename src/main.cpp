@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string_view>
 
+#ifndef _WINDOWS
+#include <signal.h>
+#endif
+
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 

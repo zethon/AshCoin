@@ -32,7 +32,7 @@ bool Blockchain::isValidBlockPair(std::size_t idx) const
 
 bool Blockchain::isValidChain() const
 {
-    if (_blocks.at(0) == Block{ 0, "Gensis Block" })
+    if (_blocks.size() == 0)
     {
         return false;
     }

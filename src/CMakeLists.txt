@@ -22,18 +22,22 @@ set(HEADER_FILES
     sha256.h
     utils.h
 )
+if(WIN32)
+    set(CMAKE_EXE_LINKER_FLAGS "/NODEFAULTLIB:library")
+endif()
+
+if(APPLE)
+# utils.h/.cpp needs these two libraries if curl
+# is not included
+find_library(COREFOUNDATION_LIBRARY CoreFoundation)
+find_library(CARBON_LIBRARY Carbon)
+endif()
+
 
 add_executable(ash
     ${SOURCE_FILES}
     ${HEADER_FILES}
 )
-
-if (APPLE)
-# utils.h/.cpp needs these two libraries if curl
-# is not included
-find_library(COREFOUNDATION_LIBRARY CoreFoundation)
-find_library(CARBON_LIBRARY Carbon)
-endif(APPLE)
 
 target_link_libraries(ash
     PUBLIC

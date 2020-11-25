@@ -6,6 +6,8 @@
 namespace ash
 {
 
+constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
+
 void write_block(std::ostream& stream, const Block& block)
 {
     ashdb::write_data<std::uint32_t>(stream, block.index());
@@ -54,7 +56,7 @@ void ChainDatabase::initialize(Blockchain& blockchain)
 
     if (!boost::filesystem::exists(_dbfile))
     {
-        write(Block{ 0, "Genesis Block" });
+        write(Block{ 0, GENESIS_BLOCK });
     }
 
     std::ifstream ifs(_dbfile.c_str(), std::ios_base::binary);

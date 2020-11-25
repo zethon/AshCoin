@@ -10,3 +10,12 @@ This is a list of useful links that I encountered while developing Ash.
 ### Saving to binary file
 * https://stackoverflow.com/questions/54436690/how-to-use-boost-serialization-for-binary-output
 * https://stackoverflow.com/questions/5343173/returning-to-beginning-of-file-after-getline
+
+## UUID Per Computers
+
+* https://stackoverflow.com/questions/16858782/how-to-obtain-almost-unique-system-identifier-in-a-cross-platform-way
+
+## Capture CTRL-C
+
+* https://stackoverflow.com/questions/4217037/catch-ctrl-c-in-c
+*https://stackoverflow.com/questions/343219/is-it-possible-to-use-signal-inside-a-c-class
