@@ -14,6 +14,20 @@ conan_basic_setup(NO_OUTPUT_DIRS KEEP_RPATHS)
 option(BUILD_ASH_TESTS "Build unit tests (default OFF)" OFF)
 
 if (MSVC)
+    add_definitions(
+        -DWIN32
+        -D_WIN32
+        -D_WINDOWS
+        -DNOMINMAX
+        -D_SCL_SECURE_NO_WARNINGS
+        -D_WIN32_WINNT=0x0600
+        -DWIN32_LEAN_AND_MEAN
+
+        # use this to supress the boost generated "warning C4996"
+        # on Windows
+        -D_SILENCE_FPOS_SEEKPOS_DEPRECATION_WARNING
+    )
+
     add_compile_options(
         # treat warnings as errors
         /WX
