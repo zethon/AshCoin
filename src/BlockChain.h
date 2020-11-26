@@ -52,6 +52,8 @@ public:
 
     bool isValidBlockPair(std::size_t idx) const;
     bool isValidChain() const;
+
+    std::uint32_t difficulty() const { return _difficulty; }
 };
 
 }

@@ -1,49 +1,135 @@
 <!DOCTYPE HTML>
-
 <html>
-   <head>
-      
-      <script type = "text/javascript">
-         function WebSocketTest() 
-         {
-            
-            if ("WebSocket" in window) {
-               alert("WebSocket is supported by your Browser!");
-               
-               // Let us open a web socket
-               var ws = new WebSocket("ws://localhost:9998/echo");
-				
-               ws.onopen = function() {
-                  
-                  // Web Socket is connected, send data using send()
-                  ws.send("Message to send");
-                  alert("Message is sent...");
-               };
-				
-               ws.onmessage = function (evt) { 
-                  var received_msg = evt.data;
-                  alert("Message is received...");
-               };
-				
-               ws.onclose = function() { 
-                  
-                  // websocket is closed.
-                  alert("Connection is closed..."); 
-               };
-            } else {
-              
-               // The browser doesn't support WebSocket
-               alert("WebSocket NOT supported by your Browser!");
-            }
-         }
-      </script>
-		
-   </head>
-   
-   <body>
-      <div id = "sse">
-         <a href = "javascript:WebSocketTest()">Run WebSocket</a>
-      </div>
-      
-   </body>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type = "text/javascript">
+if (typeof console  != "undefined")
+{
+    if (typeof console.log != 'undefined')
+    {
+        console.olog = console.log;
+    }
+    else
+    {
+        console.olog = function() {};
+    }
+}
+
+console.log = function(message) 
+    {
+        console.olog(message);
+        $('#output').append(message + "\n");
+    };
+
+console.error = console.debug = console.info =  console.log
+
+
+function getendpoint()
+{
+    var address = $('#address').val();
+    var port = $('#port').val();
+    var command = $('#command').val();
+    return "ws://" + address + ":" + port + command;
+}
+
+var _webSocket = null;
+function OpenWebSocket()
+{
+    var request = getendpoint();
+    console.log("opening connection to " + request);
+
+    if ("WebSocket" in window) 
+    {
+        _webSocket = new WebSocket(request);
+
+        _webSocket.onopen = function()
+        {
+            console.log("connection opened");
+            $('#status').text('connected');
+        }
+
+        _webSocket.onclose = function()
+        {
+            console.log("connection closed");
+        }
+
+        _webSocket.onmessage = function(evt) 
+        { 
+            var received_msg = evt.data;
+            console.log("RECV: " + received_msg);
+        };
+    }
+    else
+    {
+        console.log("WebSocket NOT supported by your Browser!");
+    }
+}
+
+function WebSocketTest() 
+{
+    if (_webSocket === null)
+    {
+        console.log("must connect first");
+        return;
+    }
+
+    var message = $('#message').val();
+    console.log("SENT: " + message);
+    _webSocket.send(message);
+}
+</script>
+</head>
+
+<body>
+    <ul>
+        <li>
+            <b>address:</b>&nbsp;
+            <input id="address" type="text" value="localhost"/>&nbsp;
+            <input id="port" type="text" value="14142"/>&nbsp;
+            <input id="command" type="text" value="/echo"/>
+        </li>
+        <br/>
+        <li>
+            <button id="connectbtn" onclick="javascript:OpenWebSocket()">Connect</button>&nbsp;
+            <foo id="status">offline</foo>
+        </li>
+        <br/>
+        <li>
+            <b>message:</b>
+            <br/>
+            <textarea id="message" cols="45" rows="5"></textarea>
+        </li>
+        <br/>
+        <li><b>endpoint:</b>&nbsp;<foo id="command_text"/></foo></li>
+        <li><button onclick="javascript:WebSocketTest()">Send</button></li>
+        <br/>
+        <li>
+            <b>console:</b>
+            <br/>
+            <textarea cols="80" rows="25" id="output"></textarea>
+        </li>
+    </ul>
+
+<script>
+    $("#command_text").text( getendpoint() );
+
+    $('#address').keyup(function()
+    {
+        $("#command_text").text( getendpoint() );
+    });
+
+    $('#port').keyup(function()
+    {
+        $("#command_text").text( getendpoint() );
+    });
+
+    $('#command').keyup(function()
+    {
+        $("#command_text").text( getendpoint() );
+    });
+
+
+</script>
+    
+</body>
 </html>

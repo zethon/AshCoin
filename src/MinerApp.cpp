@@ -197,12 +197,14 @@ void MinerApp::run()
         [this]()
         {
             _httpServer.start();
+            _logger->debug("http server listening on port {}", _httpServer.config.port);
         });
 
     _wsThread = std::thread(
         [this]()
         {
             _wsServer.start();
+            _logger->debug("websocket server listening on port {}", _wsServer.config.port);
         });
 
     if (_settings->value("mining.autostart", false))
@@ -235,8 +237,10 @@ void MinerApp::runMineThread()
     auto index = _blockchain->size();
     while (!_miningDone && !_done)
     {
-        std::cout << fmt::format("Mining block {}", index) << '\n';
-        const std::string data = fmt::format(":coinbase", index);
+        _logger->info("mining block at index {} with difficult {}", 
+            index, _blockchain->difficulty());
+
+        const std::string data = fmt::format(":coinbase{}", index);
 
         auto newblock = 
             ash::Block(static_cast<std::uint32_t>(index++), data);

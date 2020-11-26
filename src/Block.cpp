@@ -5,6 +5,8 @@
 #include "Block.h"
 #include "sha256.h"
 
+namespace nl = nlohmann;
+
 namespace ash
 {
 
@@ -20,7 +22,6 @@ std::string CalculateBlockHash(const Block& block)
 
     return sha256(ss.str());
 }
-
 
 void to_json(nl::json& j, const Block& b)
 {
@@ -46,7 +47,8 @@ void from_json(const nl::json& j, Block& b)
 
 Block::Block(uint32_t nIndexIn, std::string_view sDataIn)
     : _index(nIndexIn), 
-      _data(sDataIn)
+      _data(sDataIn),
+      _logger(ash::initializeLogger("Block"))
 {
     _nonce = 0;
     _time = std::time(nullptr);
@@ -75,7 +77,8 @@ void Block::MineBlock(std::uint32_t nDifficulty)
     }
     while (_hash.compare(0, _difficulty, zeros) != 0);
 
-    std::cout << "Block mined: " << _hash << std::endl;
+    const nl::json temp = *this;
+    _logger->info("block mined: {}", temp.dump());
 }
 
 } // namespace

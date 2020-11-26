@@ -5,6 +5,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "AshLogger.h"
+
 namespace nl = nlohmann;
 
 namespace ash
@@ -50,6 +52,7 @@ private:
     time_t          _time; // std::uint64_t 
     std::string     _hash;
     std::string     _prev;
+    SpdLogPtr       _logger;
 };
 
 } // namespace ash
