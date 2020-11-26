@@ -65,6 +65,7 @@ public:
     bool isValidChain() const;
 
     std::uint32_t difficulty() const { return _difficulty; }
+    void setDifficulty(std::uint32_t v) { _difficulty = v; }
 };
 
 }

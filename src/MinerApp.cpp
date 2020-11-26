@@ -10,6 +10,12 @@ namespace nl = nlohmann;
 namespace ash
 {
 
+// in seconds
+constexpr auto BLOCK_GENERATION_INTERVAL = 10u;
+
+// in blocks
+constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL= 10;
+
 MinerApp::MinerApp(SettingsPtr settings)
     : _settings{ std::move(settings) },
       _httpThread{},
@@ -189,20 +195,20 @@ void MinerApp::initWebSocket()
         [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
         {
             _logger->trace("ws:/block/chain message received message on connection {}", static_cast<void*>(connection.get()));
-            nl::json json = nl::json::parse(in_message->string(), nullptr, false);
-            if (json.is_discarded())
-            {
-                _logger->info("invalid message request on connection {}", 
-                    static_cast<void*>(connection.get()));
+            //nl::json json = nl::json::parse(in_message->string(), nullptr, false);
+            //if (json.is_discarded())
+            //{
+            //    _logger->info("invalid message request on connection {}", 
+            //        static_cast<void*>(connection.get()));
 
 
-                nl::json response = R"({ "blocks": [] })";
-                connection->send(response.dump());
-                return;
-            }
-            
-            auto id1 = json["id1"].get<std::uint32_t>();
-            auto id2 = json["id2"].get<std::uint32_t>();
+            //    nl::json response = R"({ "blocks": [] })";
+            //    connection->send(response.dump());
+            //    return;
+            //}
+            //
+            //auto id1 = json["id1"].get<std::uint32_t>();
+            //auto id2 = json["id2"].get<std::uint32_t>();
 
             nl::json j = *(this->_blockchain);
             std::stringstream response;
@@ -254,7 +260,11 @@ void MinerApp::run()
 
 void MinerApp::runMineThread()
 {
+    auto blockAdjustmentCount = 0u;
+    ash::CumulativeMovingAverage<std::uint64_t> avg;
+
     auto index = _blockchain->size();
+
     while (!_miningDone && !_done)
     {
         _logger->info("mining block at index {} with difficult {}", 
@@ -262,12 +272,43 @@ void MinerApp::runMineThread()
 
         const std::string data = fmt::format(":coinbase{}", index);
 
+        auto prevTime = static_cast<std::uint64_t>(_blockchain->back().time());
+
         auto newblock = 
             ash::Block(static_cast<std::uint32_t>(index++), data);
 
-        _blockchain->AddBlock(newblock); // does mining
+        // do mining
+        _blockchain->AddBlock(newblock);
+
+        // persist to database
         _database->write(newblock);
 
+        // adjust difficulty if needed
+        if (blockAdjustmentCount > DIFFICULTY_ADJUSTMENT_INTERVAL)
+        {
+            auto difficulty = _blockchain->difficulty();
+            auto avgTime = avg.value();
+            if (avgTime < (BLOCK_GENERATION_INTERVAL / 2.0f))
+            {
+                _logger->info("increasing difficulty from {} to {}", difficulty++, difficulty);
+                _blockchain->setDifficulty(difficulty);
+            }
+            else if (avgTime > (BLOCK_GENERATION_INTERVAL * 2))
+            {
+                _logger->info("decreasing difficulty from {} to {}", difficulty--, difficulty);
+                _blockchain->setDifficulty(difficulty);
+            }
+
+            blockAdjustmentCount = 0;
+            avg.reset();
+        }
+        else
+        {
+            avg.addValue(newblock.time() - prevTime);
+            blockAdjustmentCount++;
+        }
+
+        // sync the network
         syncBlockchain();
     }
 }

@@ -51,7 +51,7 @@ Block::Block(uint32_t nIndexIn, std::string_view sDataIn)
       _logger(ash::initializeLogger("Block"))
 {
     _nonce = 0;
-    _time = std::time(nullptr);
+    _time = 0;
     _hash = CalculateBlockHash(*this);
 }
 
@@ -73,9 +73,12 @@ void Block::MineBlock(std::uint32_t nDifficulty)
     do
     {
         _nonce++;
+        _time = std::time(nullptr); // this is probably bad
         _hash = CalculateBlockHash(*this);
     }
     while (_hash.compare(0, _difficulty, zeros) != 0);
+
+    
 
     const nl::json temp = *this;
     _logger->info("block mined: {}", temp.dump());
