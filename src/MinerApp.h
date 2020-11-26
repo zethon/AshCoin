@@ -10,6 +10,8 @@
 #if _WINDOWS
 #pragma warning(pop)
 #endif
+
+#include "AshLogger.h"
 #include "Blockchain.h"
 #include "ChainDatabase.h"
 #include "Settings.h"
@@ -61,10 +63,11 @@ private:
     WsServer                _wsServer;
     std::thread             _wsThread;
 
-
     bool                    _done = false;
     bool                    _miningDone = false;
     std::thread             _mineThread;
+
+    SpdLogPtr                _logger;
 };
 
 } // namespace

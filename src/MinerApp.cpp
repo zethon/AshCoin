@@ -13,7 +13,8 @@ namespace ash
 MinerApp::MinerApp(SettingsPtr settings)
     : _settings{ std::move(settings) },
       _httpThread{},
-      _mineThread{}
+      _mineThread{},
+      _logger(ash::initializeLogger("MinerApp"))
 {
     initRest();
     initWebSocket();
@@ -159,34 +160,32 @@ void MinerApp::initWebSocket()
 {
     _wsServer.config.port = _settings->value("websocket.port", WebSocketServerPorDefault);
     _wsServer.endpoint["^/echo/?$"].on_open = 
-        [](std::shared_ptr<WsServer::Connection> connection) 
+        [this](std::shared_ptr<WsServer::Connection> connection) 
         {
-            std::cout << "Server: Opened connection " << connection.get() << std::endl;
-            std::cout << "P1: " << static_cast<void*>(connection.get()) << '\n';
+            _logger->trace("ws:/echo opened connection {}", static_cast<void*>(connection.get()));
         };
 
     _wsServer.endpoint["^/echo/?$"].on_message =
-        [](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
+        [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
         {
-            auto out_message = in_message->string();
-            std::cout << "Server: Message received: \"" << out_message << "\" from " << connection.get() << std::endl;
-            std::cout << "Server: Sending message \"" << out_message << "\" to " << connection.get() << std::endl;
-            std::cout << "P2: " << static_cast<void*>(connection.get()) << '\n';
+            _logger->trace("ws:/echo received message on connection {}", static_cast<void*>(connection.get()));
 
-            // connection->send is an asynchronous function
+            // connection->send is an asynchronous function (you can pass a lambda)
+            auto out_message = in_message->string();
             connection->send(out_message);
         };
 
     _wsServer.endpoint["^/block/latest$"].on_message =
         [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage>)
         {
+            _logger->trace("ws:/block/latest message received message on connection {}", static_cast<void*>(connection.get()));
             nl::json j = this->_blockchain->back();
             std::stringstream response;
             response << j;
             connection->send(response.str());
         };
 
-    _wsServer.endpoint["^/block-response$"].on_message = 
+    _wsServer.endpoint["^/block/response$"].on_message = 
         [](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
         {
         };

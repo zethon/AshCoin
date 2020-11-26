@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 
 #include "Block.h"
+#include "AshLogger.h"
 
 namespace ash
 {
@@ -29,6 +30,8 @@ private:
     boost::filesystem::path     _path;
     boost::filesystem::path     _dbfile;
     boost::filesystem::path     _anchorFile;
+    
+    SpdLogPtr                   _logger;
 };
 
 } // namespace

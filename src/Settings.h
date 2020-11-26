@@ -18,7 +18,7 @@ namespace ash
 {
 
  class Settings;
- using SettingsPtr = std::unique_ptr<Settings>;
+ using SettingsPtr = std::shared_ptr<Settings>;
 
 class Validator
 {

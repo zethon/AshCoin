@@ -43,7 +43,8 @@ constexpr std::string_view DatabaseFile = "chain.ashdb";
 ChainDatabase::ChainDatabase(std::string_view folder)
     : _folder{ folder },
       _path{ boost::filesystem::path { _folder.data()} },
-      _dbfile { _path / DatabaseFile.data()}
+      _dbfile { _path / DatabaseFile.data()},
+      _logger(ash::initializeLogger("ChainDatabase"))
 {
 }
 
@@ -51,11 +52,13 @@ void ChainDatabase::initialize(Blockchain& blockchain)
 {
     if (!boost::filesystem::exists(_path))
     {
+        _logger->debug("creating chain database folder {}", _path.c_str());
         boost::filesystem::create_directories(_path);
     }
 
     if (!boost::filesystem::exists(_dbfile))
     {
+        _logger->warn("creating genesis block, starting new crypto?");
         write(Block{ 0, GENESIS_BLOCK });
     }
 
@@ -67,7 +70,7 @@ void ChainDatabase::initialize(Blockchain& blockchain)
         blockchain._blocks.push_back(block);
     }
 
-    std::cout << "loaded " << blockchain.size() << " block(s)\n";
+    _logger->info("loaded {} blocks from saved chain", blockchain.size());
     if (!blockchain.isValidChain())
     {
         throw std::logic_error("invalid chain");
