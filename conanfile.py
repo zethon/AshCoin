@@ -13,12 +13,12 @@ class AshConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     requires = (
-        "boost/1.71.0@conan/stable",
-        "spdlog/1.4.2@bincrafters/stable",
-        "jsonformoderncpp/3.6.0@vthiery/stable",
-        "Simple-Web-Server/v3.1.1@owl/stable",
+        "boost/1.74.0",
+        "spdlog/1.8.1",
         "simple-websocket-server/2.0.2",
-        "asio/1.18.0"
+        "asio/1.18.0",
+        "jsonformoderncpp/3.7.0",
+        "Simple-Web-Server/v3.1.1@owl/stable"
     )
 
     generators = "cmake"
