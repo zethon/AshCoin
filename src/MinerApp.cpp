@@ -192,8 +192,17 @@ void MinerApp::initWebSocket()
             nl::json json = nl::json::parse(in_message->string(), nullptr, false);
             if (json.is_discarded())
             {
-                // error
+                _logger->info("invalid message request on connection {}", 
+                    static_cast<void*>(connection.get()));
+
+
+                nl::json response = R"({ "blocks": [] })";
+                connection->send(response.dump());
+                return;
             }
+            
+            auto id1 = json["id1"].get<std::uint32_t>();
+            auto id2 = json["id2"].get<std::uint32_t>();
 
             nl::json j = *(this->_blockchain);
             std::stringstream response;
@@ -207,15 +216,15 @@ void MinerApp::run()
     _httpThread = std::thread(
         [this]()
         {
-            _httpServer.start();
             _logger->debug("http server listening on port {}", _httpServer.config.port);
+            _httpServer.start();
         });
 
     _wsThread = std::thread(
         [this]()
         {
-            _wsServer.start();
             _logger->debug("websocket server listening on port {}", _wsServer.config.port);
+            _wsServer.start();
         });
 
     if (_settings->value("mining.autostart", false))
