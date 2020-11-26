@@ -52,7 +52,7 @@ void ChainDatabase::initialize(Blockchain& blockchain)
 {
     if (!boost::filesystem::exists(_path))
     {
-        _logger->debug("creating chain database folder {}", _path.c_str());
+        _logger->debug("creating chain database folder {}", _path.generic_string());
         boost::filesystem::create_directories(_path);
     }
 

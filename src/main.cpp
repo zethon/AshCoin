@@ -106,7 +106,7 @@ void initializeLogs(ash::SettingsPtr settings)
             }
 
             boost::filesystem::path folder { logfolder };
-            loggerfilename = boost::filesystem::path(folder / "ash.log").c_str();
+            loggerfilename = boost::filesystem::path(folder / "ash.log").generic_string();
             auto rotating = std::make_shared<spdlog::sinks::rotating_file_sink_mt>
                 (loggerfilename, 1024 * 1024 * 5, 3);
 
