@@ -12,6 +12,9 @@ namespace ash
 class Blockchain;
 using BlockChainPtr = std::unique_ptr<Blockchain>;
 
+void to_json(nl::json& j, const Blockchain& b);
+void from_json(const nl::json& j, Blockchain& b);
+
 class Blockchain 
 {
 
@@ -19,6 +22,9 @@ friend class ChainDatabase;
     
     std::vector<Block>  _blocks;
     std::uint32_t       _difficulty;
+
+    friend void to_json(nl::json& j, const Blockchain& b);
+    friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
     Blockchain(std::uint32_t difficulty);
@@ -43,6 +49,11 @@ public:
     std::size_t size() const 
     { 
         return _blocks.size(); 
+    }
+
+    void clear()
+    {
+        _blocks.clear();
     }
 
     const Block& getBlockByIndex(std::size_t idx) 

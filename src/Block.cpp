@@ -10,19 +10,6 @@ namespace nl = nlohmann;
 namespace ash
 {
 
-std::string CalculateBlockHash(const Block& block)
-{
-    std::stringstream ss;
-    ss << block.index()
-        << block.nonce()
-        << block.difficulty()
-        << block.data()
-        << block.time()
-        << block.previousHash();
-
-    return sha256(ss.str());
-}
-
 void to_json(nl::json& j, const Block& b)
 {
     j["index"] = b.index();
@@ -43,6 +30,19 @@ void from_json(const nl::json& j, Block& b)
     j["time"].get_to(b._time);
     j["hash"].get_to(b._hash);
     j["prev"].get_to(b._prev);
+}
+
+std::string CalculateBlockHash(const Block& block)
+{
+    std::stringstream ss;
+    ss << block.index()
+        << block.nonce()
+        << block.difficulty()
+        << block.data()
+        << block.time()
+        << block.previousHash();
+
+    return sha256(ss.str());
 }
 
 Block::Block(uint32_t nIndexIn, std::string_view sDataIn)

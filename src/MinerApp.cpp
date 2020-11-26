@@ -175,7 +175,7 @@ void MinerApp::initWebSocket()
             connection->send(out_message);
         };
 
-    _wsServer.endpoint["^/block/latest$"].on_message =
+    _wsServer.endpoint["^/blocks/latest$"].on_message =
         [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage>)
         {
             _logger->trace("ws:/block/latest message received message on connection {}", static_cast<void*>(connection.get()));
@@ -185,9 +185,20 @@ void MinerApp::initWebSocket()
             connection->send(response.str());
         };
 
-    _wsServer.endpoint["^/block/response$"].on_message = 
-        [](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
+    _wsServer.endpoint["^/blocks/chain$"].on_message = 
+        [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
         {
+            _logger->trace("ws:/block/chain message received message on connection {}", static_cast<void*>(connection.get()));
+            nl::json json = nl::json::parse(in_message->string(), nullptr, false);
+            if (json.is_discarded())
+            {
+                // error
+            }
+
+            nl::json j = *(this->_blockchain);
+            std::stringstream response;
+            response << j;
+            connection->send(response.str());
         };
 }
 

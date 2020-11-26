@@ -13,9 +13,10 @@ namespace ash
 {
 class Block;
 
-std::string CalculateBlockHash(const Block& block);
 void to_json(nl::json& j, const Block& b);
 void from_json(const nl::json& j, Block& b);
+
+std::string CalculateBlockHash(const Block& block);
 
 class Block 
 {
