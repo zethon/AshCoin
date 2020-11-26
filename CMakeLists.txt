@@ -13,6 +13,11 @@ conan_basic_setup(NO_OUTPUT_DIRS KEEP_RPATHS)
 
 option(BUILD_ASH_TESTS "Build unit tests (default OFF)" OFF)
 
+# Add a RELEASE definition that we can count on regardless
+# of platform
+string(APPEND CMAKE_CXX_FLAGS_RELEASE " -D_RELEASE")
+string(APPEND CMAKE_CXX_FLAGS_MINSIZEREL " -D_RELEASE")
+
 if (MSVC)
     add_definitions(
         -DWIN32
