@@ -22,6 +22,7 @@
 #   include <windows.h>
 #   include <shellapi.h>
 #   include <Shlobj.h>
+#   include <codecvt>
 #else
 #   include <unistd.h>
 #   include <sys/types.h>
@@ -75,7 +76,8 @@ std::string getUserFolder()
     if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path)))
     {
         std::wstring temp(path);
-        retval.assign(temp.begin(), temp.end());
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+        retval = convert.to_bytes(temp);
     }
     else
     {
@@ -98,7 +100,8 @@ std::string getDataFolder()
     if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL, 0, path)))
     {
         std::wstring temp(path);
-        retval.assign(temp.begin(), temp.end());
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+        retval = convert.to_bytes(temp);
     }
     else
     {

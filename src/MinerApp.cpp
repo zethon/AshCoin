@@ -13,7 +13,7 @@ namespace ash
 
 #ifdef _RELEASE
 constexpr auto BLOCK_GENERATION_INTERVAL = 10u * 60u; // in seconds
-constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 10u; // in blocks
+constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 100u; // in blocks
 #else
 constexpr auto BLOCK_GENERATION_INTERVAL = 10u; // in seconds
 constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 10; // in blocks
@@ -273,7 +273,7 @@ void MinerApp::runMineThread()
 
     while (!_miningDone && !_done)
     {
-        _logger->info("mining block at index {} with difficult {}", 
+        _logger->info("mining block at index {} with difficulty {}", 
             index, _blockchain->difficulty());
 
         const std::string data = fmt::format(":coinbase{}", index);
