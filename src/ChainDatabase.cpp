@@ -62,6 +62,8 @@ void ChainDatabase::initialize(Blockchain& blockchain)
         write(Block{ 0, GENESIS_BLOCK });
     }
 
+    _logger->info("loading blockchain from {}", _dbfile.string());
+
     std::ifstream ifs(_dbfile.c_str(), std::ios_base::binary);
     while (ifs.peek() != EOF)
     {
