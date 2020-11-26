@@ -67,13 +67,13 @@ std::string getOsString()
 #endif
 }
 
-std::string getUserFolder()
+#ifdef _WINDOWS
+std::string getWindowsFolder(int csidl)
 {
     std::string retval;
 
-#ifdef _WINDOWS
     WCHAR path[MAX_PATH];
-    if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path)))
+    if (SUCCEEDED(SHGetFolderPathW(NULL, csidl, NULL, 0, path)))
     {
         std::wstring temp(path);
         std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
@@ -83,6 +83,17 @@ std::string getUserFolder()
     {
         throw std::runtime_error("could not retrieve user folder");
     }
+
+    return retval;
+}
+#endif
+
+std::string getUserFolder()
+{
+    std::string retval;
+
+#ifdef _WINDOWS
+    retval = getWindowsFolder(CSIDL_PROFILE);
 #else    
 struct passwd *pw = getpwuid(getuid());
 retval = pw->pw_dir;
@@ -96,17 +107,7 @@ std::string getDataFolder()
     std::string retval;
 
 #ifdef _WINDOWS
-    WCHAR path[MAX_PATH];
-    if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL, 0, path)))
-    {
-        std::wstring temp(path);
-        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
-        retval = convert.to_bytes(temp);
-    }
-    else
-    {
-        throw std::runtime_error("could not retrieve user folder");
-    }
+    retval = getWindowsFolder(CSIDL_COMMON_APPDATA);
 #else    
     struct passwd *pw = getpwuid(getuid());
     retval = pw->pw_dir;
@@ -160,7 +161,6 @@ bool isNumeric(const std::string_view& s)
                 return !std::isdigit(c); 
             }) == s.end();
 }
-
 
 static const std::vector<std::string> trueStrings = { "true", "on", "1" };
 static const std::vector<std::string> falseStrings = { "false", "off", "0" };
