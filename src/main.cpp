@@ -51,6 +51,9 @@ ash::SettingsPtr registerSettings()
 
     retval->registerBool("rest.autoload", false);
 
+    retval->registerString("peers.file", dbfolder,
+        std::make_shared<ash::NotEmptyValidator>());
+
     return std::move(retval);
 }
 

@@ -25,6 +25,8 @@ MinerApp::MinerApp(SettingsPtr settings)
     _blockchain = std::make_unique<Blockchain>(difficulty);
 
     _database->initialize(*_blockchain);
+
+    syncBlockchain();
 }
 
 MinerApp::~MinerApp()
@@ -156,15 +158,37 @@ void MinerApp::initRest()
 void MinerApp::initWebSocket()
 {
     _wsServer.config.port = _settings->value("websocket.port", WebSocketServerPorDefault);
+    _wsServer.endpoint["^/echo/?$"].on_open = 
+        [](std::shared_ptr<WsServer::Connection> connection) 
+        {
+            std::cout << "Server: Opened connection " << connection.get() << std::endl;
+            std::cout << "P1: " << static_cast<void*>(connection.get()) << '\n';
+        };
+
     _wsServer.endpoint["^/echo/?$"].on_message =
         [](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
         {
             auto out_message = in_message->string();
             std::cout << "Server: Message received: \"" << out_message << "\" from " << connection.get() << std::endl;
             std::cout << "Server: Sending message \"" << out_message << "\" to " << connection.get() << std::endl;
+            std::cout << "P2: " << static_cast<void*>(connection.get()) << '\n';
 
             // connection->send is an asynchronous function
             connection->send(out_message);
+        };
+
+    _wsServer.endpoint["^/block/latest$"].on_message =
+        [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage>)
+        {
+            nl::json j = this->_blockchain->back();
+            std::stringstream response;
+            response << j;
+            connection->send(response.str());
+        };
+
+    _wsServer.endpoint["^/block-response$"].on_message = 
+        [](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
+        {
         };
 }
 
@@ -220,7 +244,16 @@ void MinerApp::runMineThread()
 
         _blockchain->AddBlock(newblock); // does mining
         _database->write(newblock);
+
+        syncBlockchain();
     }
+}
+
+// the blockchain is synced at startup and
+// after each block is mined
+void MinerApp::syncBlockchain()
+{
+
 }
 
 } // namespace

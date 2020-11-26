@@ -33,6 +33,17 @@ void to_json(nl::json& j, const Block& b)
     j["prev"] = b.previousHash();
 }
 
+void from_json(const nl::json& j, Block& b)
+{
+    j["index"].get_to(b._index);
+    j["nonce"].get_to(b._nonce);
+    j["difficulty"].get_to(b._difficulty);
+    j["data"].get_to(b._data);
+    j["time"].get_to(b._time);
+    j["hash"].get_to(b._hash);
+    j["prev"].get_to(b._prev);
+}
+
 Block::Block(uint32_t nIndexIn, std::string_view sDataIn)
     : _index(nIndexIn), 
       _data(sDataIn)

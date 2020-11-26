@@ -46,6 +46,7 @@ private:
     void initWebSocket();
 
     void runMineThread();
+    void syncBlockchain();
 
     void printIndex(HttpResponsePtr response);
 

@@ -13,11 +13,14 @@ class Block;
 
 std::string CalculateBlockHash(const Block& block);
 void to_json(nl::json& j, const Block& b);
+void from_json(const nl::json& j, Block& b);
 
 class Block 
 {
     friend void read_block(std::istream& stream, Block& block);
     friend void write_block(std::ostream& stream, const Block& block);
+
+    friend void from_json(const nl::json& j, Block& b);
 
 public:
     Block() = default;

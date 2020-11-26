@@ -33,6 +33,11 @@ public:
         return _blocks.end();
     }
 
+    auto back() const -> decltype(_blocks.back())
+    {
+        return _blocks.back();
+    }
+
     void AddBlock(Block& bNew);
 
     std::size_t size() const 
