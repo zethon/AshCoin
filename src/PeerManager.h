@@ -11,6 +11,8 @@
 #pragma warning(pop)
 #endif
 
+#include "AshLogger.h"
+
 namespace ash
 {
 
@@ -25,9 +27,12 @@ class PeerManager
 {
     std::set<std::string>   _peers;
     PeerMap                 _peerMap;
-    ConnectionMap           _connections;    
+    ConnectionMap           _connections;
+    SpdLogPtr               _logger;
 
 public:
+    PeerManager();
+
     void loadPeers(std::string_view filename);
     void savePeers(std::string_view filename);
 

@@ -5,6 +5,11 @@
 namespace ash
 {
 
+PeerManager::PeerManager()
+    : _logger(ash::initializeLogger("PeerManager"))
+{
+}
+
 void PeerManager::loadPeers(std::string_view filename)
 {
     std::ifstream in(filename.data());
@@ -29,20 +34,34 @@ void PeerManager::connectAll()
 {
     for (const auto& peer : _peers)
     {
-        auto client = std::make_shared<WsClient>(peer);
+        const auto endpoint = fmt::format("{}/blocks", peer);
+        _logger->debug("connecting to {}", endpoint);
+        auto client = std::make_shared<WsClient>(endpoint);
+
         client->on_open =
-            [this, peer = peer](WsClientConnPtr connection)
+            [this, client, peer = peer](WsClientConnPtr connection)
             {
                 _connections.insert_or_assign(peer, connection);
             };
 
-        client->start();
+        client->on_error =
+            [this, peer = peer](WsClientConnPtr /*connection*/, const SimpleWeb::error_code &ec)
+            {
+                _logger->warn("could not connect to {} because: {}", peer, ec.message());
+            };
+
         _peerMap.insert_or_assign(peer, client);
+        client->start();
     }
 }
     
 void PeerManager::broadcast(std::string_view message)
 {
+    for (const auto& [peer, connection] : _connections)
+    {
+        _logger->trace("broadcasting to {}: {}", peer, message);
+        connection->send(message);
+    }
 }
 
 } // namespace ash
