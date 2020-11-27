@@ -24,6 +24,9 @@ MinerApp::MinerApp(SettingsPtr settings)
       _mineThread{},
       _logger(ash::initializeLogger("MinerApp"))
 {
+    std::uint32_t difficulty = _settings->value("chain.difficulty", 5u);
+
+    _logger->info("current difficulty set to {}", difficulty);
     _logger->debug("target block generation interval is {} seconds", BLOCK_GENERATION_INTERVAL);
     _logger->debug("difficulty adjustment interval is every {} blocks", DIFFICULTY_ADJUSTMENT_INTERVAL);
 
@@ -33,7 +36,7 @@ MinerApp::MinerApp(SettingsPtr settings)
     const std::string dbfolder = _settings->value("database.folder", "");
     _database = std::make_unique<ChainDatabase>(dbfolder);
 
-    std::uint32_t difficulty = _settings->value("chain.difficulty", 5u);
+    
     _blockchain = std::make_unique<Blockchain>(difficulty);
 
     _database->initialize(*_blockchain);
