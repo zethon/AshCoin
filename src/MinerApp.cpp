@@ -278,6 +278,30 @@ void MinerApp::initWebSocket()
                 jresponse["id2"] = this->_blockchain->back().index();
                 jresponse["hash2"] = this->_blockchain->back().hash();
             }
+            else if (message == "newblock")
+            {
+                const auto& latestBlock = _blockchain->back();
+                auto latestIndex = latestBlock.index();
+
+                auto newblock = json["block"].get<ash::Block>();
+                auto newIndex = newblock.index();
+
+                if (newIndex > latestIndex)
+                {
+                    _logger->info("newblock index ({}) is greater or than local index ({})",
+                        newIndex, latestIndex);
+                }
+                else if (newIndex < latestIndex)
+                {
+                    _logger->info("newblock index ({}) is greater than local index ({})",
+                        newIndex, latestIndex);
+                }
+                else
+                {
+                    _logger->info("newblock index ({}) IS EQUAL local index ({})",
+                        newIndex, latestIndex);
+                }
+            }
             else
             {
                 jresponse["error"] = fmt::format("unknown message '{}'", message);
@@ -400,7 +424,10 @@ void MinerApp::runMineThread()
 // after each block is mined
 void MinerApp::syncBlockchain()
 {
-
+    nl::json j;
+    j["message"] = "newblock";
+    j["block"] = _blockchain->back();
+    _peers.broadcast(j.dump());
 }
 
 } // namespace
