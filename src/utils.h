@@ -28,5 +28,6 @@ std::string getUserFolder();
 std::string getDataFolder();
 std::string getDefaultConfigFile();
 std::string getDefaultDatabaseFolder();
+std::string getDefaultPeersFile();
 
 } // namespace

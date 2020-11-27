@@ -7,6 +7,7 @@ set(SOURCE_FILES
     ChainDatabase.cpp
     main.cpp
     MinerApp.cpp
+    PeerManager.cpp
     Settings.cpp
     sha256.cpp
     utils.cpp
@@ -20,6 +21,7 @@ set(HEADER_FILES
     ChainDatabase.h
     core.h
     MinerApp.h
+    PeerManager.h
     Settings.h
     sha256.h
     utils.h

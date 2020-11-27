@@ -15,6 +15,7 @@
 #include "Blockchain.h"
 #include "ChainDatabase.h"
 #include "Settings.h"
+#include "PeerManager.h"
 
 namespace ash
 {
@@ -56,6 +57,7 @@ private:
     ChainDatabasePtr        _database;
     BlockChainPtr           _blockchain;
     SettingsPtr             _settings;
+    PeerManager             _peers;
 
     HttpServer              _httpServer;
     std::thread             _httpThread;

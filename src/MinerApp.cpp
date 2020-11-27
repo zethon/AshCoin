@@ -10,7 +10,6 @@ namespace nl = nlohmann;
 namespace ash
 {
 
-
 #ifdef _RELEASE
 constexpr auto BLOCK_GENERATION_INTERVAL = 10u * 60u; // in seconds
 constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 100u; // in blocks

@@ -214,5 +214,11 @@ std::string getDefaultDatabaseFolder()
         utils::getDataFolder(), PATH_SEPERATOR, "AshChain");
 }
 
+std::string getDefaultPeersFile()
+{
+    return fmt::format("{}{}{}",
+        utils::getDefaultDatabaseFolder(), PATH_SEPERATOR, "peers.txt");
+}
+
 
 } // namespace

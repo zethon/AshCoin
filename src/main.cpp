@@ -55,7 +55,7 @@ ash::SettingsPtr registerSettings()
 
     retval->registerBool("rest.autoload", false);
 
-    retval->registerString("peers.file", dbfolder,
+    retval->registerString("peers.file", utils::getDefaultPeersFile(),
         std::make_shared<ash::NotEmptyValidator>());
 
     // log settings
