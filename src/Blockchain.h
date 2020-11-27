@@ -39,6 +39,11 @@ public:
         return _blocks.end();
     }
 
+    auto front() const -> decltype(_blocks.front())
+    {
+        return _blocks.front();
+    }
+
     auto back() const -> decltype(_blocks.back())
     {
         return _blocks.back();

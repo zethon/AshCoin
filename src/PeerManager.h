@@ -15,10 +15,17 @@ namespace ash
 {
 
 using WsClient = SimpleWeb::SocketClient<SimpleWeb::WS>;
+using WsClientPtr = std::shared_ptr<WsClient>;
+using WsClientConnPtr = std::shared_ptr<WsClient::Connection>;
+
+using PeerMap = std::map<std::string, WSClientPtr>;
+using ConnectionMap = std::map<std::string, WsClientConnPtr>;
 
 class PeerManager
 {
     std::set<std::string>   _peers;
+    PeerMap                 _peerMap;
+    ConnectionMap           _connections;    
 
 public:
     void loadPeers(std::string_view filename);

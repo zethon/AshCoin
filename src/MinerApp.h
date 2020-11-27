@@ -47,6 +47,7 @@ public:
 private:
     void initRest();
     void initWebSocket();
+    void initPeers();
 
     void runMineThread();
     void syncBlockchain();

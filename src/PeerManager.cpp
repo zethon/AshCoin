@@ -29,7 +29,14 @@ void PeerManager::connectAll()
 {
     for (const auto& peer : _peers)
     {
+        auto client = std::make_shared<WsClient>(peer);
+        client->on_open =
+            [this, peer = peer](WsClientConnPtr connection)
+            {
+                _connections.insert_or_assign(peer, connection);
+            };
 
+        client->start();
     }
 }
     

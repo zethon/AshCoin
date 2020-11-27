@@ -186,40 +186,109 @@ void MinerApp::initWebSocket()
             connection->send(out_message);
         };
 
-    _wsServer.endpoint["^/blocks/latest$"].on_message =
-        [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage>)
-        {
-            _logger->trace("ws:/block/latest message received message on connection {}", static_cast<void*>(connection.get()));
-            nl::json j = this->_blockchain->back();
-            std::stringstream response;
-            response << j;
-            connection->send(response.str());
-        };
+    // _wsServer.endpoint["^/blocks/latest$"].on_message =
+    //     [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage>)
+    //     {
+    //         _logger->trace("ws:/block/latest message received message on connection {}", static_cast<void*>(connection.get()));
+    //         nl::json j = this->_blockchain->back();
+    //         std::stringstream response;
+    //         response << j;
+    //         connection->send(response.str());
+    //     };
 
-    _wsServer.endpoint["^/blocks/chain$"].on_message = 
+    _wsServer.endpoint["^/blocks$"].on_message = 
         [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)
         {
-            _logger->trace("ws:/block/chain message received message on connection {}", static_cast<void*>(connection.get()));
-            //nl::json json = nl::json::parse(in_message->string(), nullptr, false);
-            //if (json.is_discarded())
-            //{
-            //    _logger->info("invalid message request on connection {}", 
-            //        static_cast<void*>(connection.get()));
+            _logger->trace("ws:/blocks request received on connection {}", static_cast<void*>(connection.get()));
 
+            nl::json json = nl::json::parse(in_message->string(), nullptr, false);
+            if (json.is_discarded()
+                || !json.contains("message"))
+            {
+               _logger->info("malformed ws:/blocks request on connection {}", 
+                   static_cast<void*>(connection.get()));
 
-            //    nl::json response = R"({ "blocks": [] })";
-            //    connection->send(response.dump());
-            //    return;
-            //}
-            //
-            //auto id1 = json["id1"].get<std::uint32_t>();
-            //auto id2 = json["id2"].get<std::uint32_t>();
+               nl::json response = R"({ "error": "malformed request" })";
+               connection->send(response.dump());
+               return;
+            }
 
-            nl::json j = *(this->_blockchain);
+            const auto message = json["message"].get<std::string>();
+
+            _logger->trace("ws:/blocks message='{}' received message on connection {}", 
+                message, static_cast<void*>(connection.get()));
+            
             std::stringstream response;
-            response << j;
+
+            nl::json jresponse;
+            if (message == "latest")
+            {
+                jresponse = this->_blockchain->back();
+            }
+            else if (message == "chain")
+            {
+                if (!json.contains("id1") && !json.contains("id2"))
+                {
+                    jresponse = *(this->_blockchain);
+                }
+                else if (!json["id1"].is_number())
+                {
+                    jresponse["error"] = "invalid 'id1' value";
+                }
+                else if (!json["id2"].is_number())
+                {
+                    jresponse["error"] = "invalid 'id2' value";
+                }
+                else
+                {
+                    auto id1 = json["id1"].get<std::uint32_t>();
+                    auto id2 = json["id2"].get<std::uint32_t>();
+
+                    auto startIt = std::find_if(_blockchain->begin(), _blockchain->end(),
+                        [id1](const Block& block)
+                        {
+                            return block.index() == id1;
+                        });
+
+                    if (startIt == _blockchain->end())
+                    {
+                        jresponse["error"] = "could not find id1 in chain";
+                    }
+                    else
+                    {
+                        for (auto currentIt = startIt; 
+                            currentIt != _blockchain->end() && currentIt->index() <= id2; currentIt++)
+                        {
+                            jresponse["blocks"].push_back(*currentIt);
+
+                        }
+                    }
+                }
+            }
+            else if (message == "summary")
+            {
+                nl::json j;
+                jresponse["id1"] = this->_blockchain->front().index();
+                jresponse["hash1"] = this->_blockchain->front().hash();
+                jresponse["id2"] = this->_blockchain->back().index();
+                jresponse["hash2"] = this->_blockchain->back().hash();
+            }
+            else
+            {
+                jresponse["error"] = fmt::format("unknown message '{}'", message);
+            }
+
+            response << jresponse.dump();
             connection->send(response.str());
         };
+}
+
+void MinerApp::initPeers()
+{
+    const std::string peersfile = _settings->value("peers.file", "");
+    if (peersfile.size() == 0) return;
+    _peers.loadPeers(peersfile);
+    _peers.connectAll();
 }
 
 void MinerApp::run()

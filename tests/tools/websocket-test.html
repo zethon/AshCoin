@@ -35,33 +35,47 @@ function getendpoint()
 var _webSocket = null;
 function OpenWebSocket()
 {
-    var request = getendpoint();
-    console.log("opening connection to " + request);
-
-    if ("WebSocket" in window) 
+    if (!(_webSocket === null))
     {
-        _webSocket = new WebSocket(request);
-
-        _webSocket.onopen = function()
-        {
-            console.log("connection opened");
-            $('#status').text('connected');
-        }
-
-        _webSocket.onclose = function()
-        {
-            console.log("connection closed");
-        }
-
-        _webSocket.onmessage = function(evt) 
-        { 
-            var received_msg = evt.data;
-            console.log("RECV: " + received_msg);
-        };
+        _webSocket.close();
+        _webSocket = null;
     }
     else
     {
-        console.log("WebSocket NOT supported by your Browser!");
+        var request = getendpoint();
+        console.log("opening connection to " + request);
+
+        if ("WebSocket" in window) 
+        {
+            _webSocket = new WebSocket(request);
+
+            _webSocket.onopen = function()
+            {
+                console.log("connection opened");
+
+                $('#connectbtn').text("Disonnect");
+                $('#status').text('connected');
+            }
+
+            _webSocket.onclose = function()
+            {
+                console.log("connection closed");
+
+                $('#connectbtn').text("Connect");
+                $('#status').text('offline');
+                _webSocket = null;
+            }
+
+            _webSocket.onmessage = function(evt) 
+            { 
+                var received_msg = evt.data;
+                console.log("RECV: " + received_msg);
+            };
+        }
+        else
+        {
+            console.log("WebSocket NOT supported by your Browser!");
+        }
     }
 }
 
@@ -76,6 +90,12 @@ function WebSocketTest()
     var message = $('#message').val();
     console.log("SENT: " + message);
     _webSocket.send(message);
+}
+
+function clearOutput()
+{
+    // $('#output').text('');
+    document.getElementById("output").value='';
 }
 </script>
 </head>
@@ -104,8 +124,8 @@ function WebSocketTest()
         <li><button onclick="javascript:WebSocketTest()">Send</button></li>
         <br/>
         <li>
-            <b>console:</b>
-            <br/>
+            <button onclick="javascript:clearOutput()">Clear Text</button>
+            <br/><br/>
             <textarea cols="80" rows="20" id="output"></textarea>
         </li>
     </ul>
