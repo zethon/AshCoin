@@ -32,11 +32,11 @@ MinerApp::MinerApp(SettingsPtr settings)
 
     initRest();
     initWebSocket();
+    // initPeers();
 
     const std::string dbfolder = _settings->value("database.folder", "");
     _database = std::make_unique<ChainDatabase>(dbfolder);
-
-    
+   
     _blockchain = std::make_unique<Blockchain>(difficulty);
 
     _database->initialize(*_blockchain);
@@ -189,15 +189,11 @@ void MinerApp::initWebSocket()
             connection->send(out_message);
         };
 
-    // _wsServer.endpoint["^/blocks/latest$"].on_message =
-    //     [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage>)
-    //     {
-    //         _logger->trace("ws:/block/latest message received message on connection {}", static_cast<void*>(connection.get()));
-    //         nl::json j = this->_blockchain->back();
-    //         std::stringstream response;
-    //         response << j;
-    //         connection->send(response.str());
-    //     };
+    _wsServer.endpoint["^/blocks$"].on_open = 
+        [this](std::shared_ptr<WsServer::Connection> connection) 
+        {
+            _logger->trace("ws:/blocks opened connection {}", static_cast<void*>(connection.get()));
+        };
 
     _wsServer.endpoint["^/blocks$"].on_message = 
         [this](std::shared_ptr<WsServer::Connection> connection, std::shared_ptr<WsServer::InMessage> in_message)

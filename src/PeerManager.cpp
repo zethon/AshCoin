@@ -37,6 +37,7 @@ void PeerManager::connectAll()
             };
 
         client->start();
+        _peerMap.insert_or_assign(peer, client);
     }
 }
     
