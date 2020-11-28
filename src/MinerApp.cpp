@@ -290,7 +290,8 @@ void MinerApp::initWebSocket()
 
                 if (newblock.previousHash() == latestBlock.hash())
                 {
-                    _logger->debug("recieved new block")
+                    _logger->debug("recieved new block");
+                    _blockchain->addNewBlock(newblock);
                 }
 
                 if (newIndex > latestIndex)
@@ -388,7 +389,7 @@ void MinerApp::runMineThread()
             ash::Block(static_cast<std::uint32_t>(index++), data);
 
         // do mining
-        _blockchain->AddBlock(newblock);
+        _blockchain->MineBlock(newblock);
 
         // persist to database
         _database->write(newblock);

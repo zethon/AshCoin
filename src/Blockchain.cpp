@@ -29,11 +29,26 @@ Blockchain::Blockchain(std::uint32_t difficulty)
 {
 }
 
-void Blockchain::AddBlock(Block& newblock)
+void Blockchain::MineBlock(Block& newblock)
 {
     newblock.setPrevious(_blocks.back().hash());
     newblock.MineBlock(_difficulty);
     _blocks.push_back(newblock);
+}
+
+bool Blockchain::addNewBlock(const Block& block)
+{
+    if (block.hash() != CalculateBlockHash(block))
+    {
+        return false;
+    }
+    else if (block.previousHash() != _blocks.back().hash())
+    {
+        return false;
+    }
+
+    _blocks.push_back(block);
+    return true;
 }
 
 bool Blockchain::isValidBlockPair(std::size_t idx) const

@@ -49,8 +49,6 @@ public:
         return _blocks.back();
     }
 
-    void AddBlock(Block& bNew);
-
     std::size_t size() const 
     { 
         return _blocks.size(); 
@@ -60,6 +58,9 @@ public:
     {
         _blocks.clear();
     }
+
+    void MineBlock(Block& bNew);
+    bool addNewBlock(const Block& block);
 
     const Block& getBlockByIndex(std::size_t idx) 
     { 
