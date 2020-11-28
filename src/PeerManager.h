@@ -25,10 +25,11 @@ using ConnectionMap = std::map<std::string, WsClientConnPtr>;
 
 class PeerManager
 {
-    std::set<std::string>   _peers;
-    PeerMap                 _peerMap;
-    ConnectionMap           _connections;
-    SpdLogPtr               _logger;
+    std::set<std::string>               _peers;
+    PeerMap                             _peerMap;
+    ConnectionMap                       _connections;
+    std::map<std::string, std::thread>  _threadPool;
+    SpdLogPtr                           _logger;
 
 public:
     PeerManager();

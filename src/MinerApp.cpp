@@ -280,11 +280,18 @@ void MinerApp::initWebSocket()
             }
             else if (message == "newblock")
             {
+                // a remote machine has mined a new block and is letting
+                // us know about it
                 const auto& latestBlock = _blockchain->back();
                 auto latestIndex = latestBlock.index();
 
                 auto newblock = json["block"].get<ash::Block>();
                 auto newIndex = newblock.index();
+
+                if (newblock.previousHash() == latestBlock.hash())
+                {
+                    _logger->debug("recieved new block")
+                }
 
                 if (newIndex > latestIndex)
                 {
@@ -293,12 +300,12 @@ void MinerApp::initWebSocket()
                 }
                 else if (newIndex < latestIndex)
                 {
-                    _logger->info("newblock index ({}) is greater than local index ({})",
+                    _logger->info("newblock index ({}) is less than local index ({})",
                         newIndex, latestIndex);
                 }
                 else
                 {
-                    _logger->info("newblock index ({}) IS EQUAL local index ({})",
+                    _logger->trace("newblock index ({}) IS EQUAL local index ({})",
                         newIndex, latestIndex);
                 }
             }

@@ -51,7 +51,14 @@ void PeerManager::connectAll()
             };
 
         _peerMap.insert_or_assign(peer, client);
-        client->start();
+
+        auto thread = std::thread(
+            [client]() 
+            {
+                client->start();
+            });
+
+        _threadPool.insert_or_assign(peer, std::move(thread));
     }
 }
     
