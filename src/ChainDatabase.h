@@ -69,7 +69,6 @@ private:
 
     boost::filesystem::path     _path;
     boost::filesystem::path     _dbfile;
-    boost::filesystem::path     _anchorFile;
     
     SpdLogPtr                   _logger;
 };

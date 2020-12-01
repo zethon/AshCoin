@@ -1,5 +1,4 @@
 #include "Blockchain.h"
-// #include "AshDb.h"
 
 #include "ChainDatabase.h"
 
@@ -37,7 +36,6 @@ void read_block(std::istream& stream, Block& block)
     ash::db::read_data(stream, block._prev);
 }
 
-constexpr std::string_view AnchorFile = "anchor.bin";
 constexpr std::string_view DatabaseFile = "chain.ashdb";
 
 ChainDatabase::ChainDatabase(std::string_view folder)

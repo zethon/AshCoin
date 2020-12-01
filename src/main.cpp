@@ -20,8 +20,6 @@
 #include "Settings.h"
 #include "MinerApp.h"
 
-#include "AshDb.h"
-
 namespace po = boost::program_options;
 
 ash::SettingsPtr registerSettings()
