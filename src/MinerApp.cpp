@@ -272,7 +272,6 @@ void MinerApp::initWebSocket()
             }
             else if (message == "summary")
             {
-                nl::json j;
                 jresponse["id1"] = this->_blockchain->front().index();
                 jresponse["hash1"] = this->_blockchain->front().hash();
                 jresponse["id2"] = this->_blockchain->back().index();
@@ -290,24 +289,24 @@ void MinerApp::initWebSocket()
 
                 if (newblock.previousHash() == latestBlock.hash())
                 {
-                    _logger->debug("recieved new block");
+                    assert(newIndex ==  latestIndex+1);
+                    _logger->debug("local idx {}, remote idx: {} -> remote chain one ahead, adding next block",
+                        latestIndex, newIndex);
+
                     _blockchain->addNewBlock(newblock);
                 }
+                else if (newIndex > latestIndex)
+                {
+                    _logger->debug("local {}, remote: {} -> remote chain many ahead, requesting full chain",
+                        latestIndex, newIndex);
 
-                if (newIndex > latestIndex)
-                {
-                    _logger->info("newblock index ({}) is greater or than local index ({})",
-                        newIndex, latestIndex);
+                    _peers.broadcast(R"({"message":"chain"})");
                 }
-                else if (newIndex < latestIndex)
+                else 
                 {
-                    _logger->info("newblock index ({}) is less than local index ({})",
-                        newIndex, latestIndex);
-                }
-                else
-                {
-                    _logger->trace("newblock index ({}) IS EQUAL local index ({})",
-                        newIndex, latestIndex);
+                    assert(newIndex < latestIndex);
+                    _logger->debug("local {}, remote: {} -> remote chain behind, doing nothing",
+                        latestIndex, newIndex);
                 }
             }
             else

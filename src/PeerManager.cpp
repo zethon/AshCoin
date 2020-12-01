@@ -50,6 +50,11 @@ void PeerManager::connectAll()
                 _logger->warn("could not connect to {} because: {}", peer, ec.message());
             };
 
+        client->on_message =
+            [](WsClientConnPtr connection, std::shared_ptr<WsClient::InMessage> message)
+            {
+            };
+
         _peerMap.insert_or_assign(peer, client);
 
         auto thread = std::thread(
