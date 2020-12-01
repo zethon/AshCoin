@@ -78,10 +78,8 @@ void Block::MineBlock(std::uint32_t nDifficulty)
     }
     while (_hash.compare(0, _difficulty, zeros) != 0);
 
-    
-
     const nl::json temp = *this;
-    _logger->info("block mined: {}", temp.dump());
+    _logger->debug("block mined: {}", temp.dump());
 }
 
 } // namespace

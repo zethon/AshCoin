@@ -1,5 +1,5 @@
 #include "Blockchain.h"
-#include "AshDb.h"
+// #include "AshDb.h"
 
 #include "ChainDatabase.h"
 
@@ -10,31 +10,31 @@ constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
 
 void write_block(std::ostream& stream, const Block& block)
 {
-    ashdb::write_data<std::uint32_t>(stream, block.index());
-    ashdb::write_data<std::uint32_t>(stream, block.nonce());
-    ashdb::write_data<std::uint32_t>(stream, block.difficulty());
-    ashdb::write_data(stream, block.data());
+    ash::db::write_data<std::uint32_t>(stream, block.index());
+    ash::db::write_data<std::uint32_t>(stream, block.nonce());
+    ash::db::write_data<std::uint32_t>(stream, block.difficulty());
+    ash::db::write_data(stream, block.data());
 
     std::uint64_t dtime = static_cast<std::uint64_t>(block.time());
-    ashdb::write_data<std::uint64_t>(stream, dtime);
+    ash::db::write_data<std::uint64_t>(stream, dtime);
 
-    ashdb::write_data(stream, block.hash());
-    ashdb::write_data(stream, block.previousHash());
+    ash::db::write_data(stream, block.hash());
+    ash::db::write_data(stream, block.previousHash());
 }
 
 void read_block(std::istream& stream, Block& block)
 {
-    ashdb::read_data(stream, block._index);
-    ashdb::read_data(stream, block._nonce);
-    ashdb::read_data(stream, block._difficulty);
-    ashdb::read_data(stream, block._data);
+    ash::db::read_data(stream, block._index);
+    ash::db::read_data(stream, block._nonce);
+    ash::db::read_data(stream, block._difficulty);
+    ash::db::read_data(stream, block._data);
 
     std::uint64_t dtime;
-    ashdb::read_data(stream, dtime);
+    ash::db::read_data(stream, dtime);
     block._time = static_cast<time_t>(dtime);
 
-    ashdb::read_data(stream, block._hash);
-    ashdb::read_data(stream, block._prev);
+    ash::db::read_data(stream, block._hash);
+    ash::db::read_data(stream, block._prev);
 }
 
 constexpr std::string_view AnchorFile = "anchor.bin";
