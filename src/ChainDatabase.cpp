@@ -1,5 +1,6 @@
-#include "Blockchain.h"
+#include <fmt/chrono.h>
 
+#include "Blockchain.h"
 #include "ChainDatabase.h"
 
 namespace ash
@@ -56,8 +57,12 @@ void ChainDatabase::initialize(Blockchain& blockchain)
 
     if (!boost::filesystem::exists(_dbfile))
     {
-        _logger->warn("creating genesis block, starting new crypto?");
-        write(Block{ 0, GENESIS_BLOCK });
+        _logger->info("creating genesis block, starting new chain");
+
+        std::time_t t = std::time(nullptr);
+        const auto gendata = fmt::format("{} {:%Y-%m-%d %H:%M:%S %Z}.",GENESIS_BLOCK, *std::localtime(&t));
+        _logger->trace("generating genesis block with data '{}'", gendata);
+        write(Block{ 0, gendata });
     }
 
     _logger->info("loading blockchain from {}", _dbfile.string());
