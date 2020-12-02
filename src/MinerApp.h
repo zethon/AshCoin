@@ -52,6 +52,9 @@ private:
     void runMineThread();
     void syncBlockchain();
 
+    void dispatchRequest(WsServerConnPtr, std::string_view);
+    void handleResponse(WsClientConnPtr, std::string_view);
+
     void printIndex(HttpResponsePtr response);
 
 private:
@@ -62,9 +65,6 @@ private:
 
     HttpServer              _httpServer;
     std::thread             _httpThread;
-
-    WsServer                _wsServer;
-    std::thread             _wsThread;
 
     bool                    _done = false;
     bool                    _miningDone = false;

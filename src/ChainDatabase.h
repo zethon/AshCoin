@@ -60,9 +60,10 @@ public:
     ChainDatabase(std::string_view folder);
 
     void write(const Block& block);
-    std::optional<Block> read(std::uint32_t index);
+    void writeChain(const Blockchain& chain);
 
     void initialize(Blockchain& chain);
+    void reset();
 
 private:
     std::string                 _folder;

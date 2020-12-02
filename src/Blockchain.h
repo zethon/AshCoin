@@ -27,6 +27,7 @@ friend class ChainDatabase;
     friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
+    Blockchain() = default;
     Blockchain(std::uint32_t difficulty);
 
     auto begin() const -> decltype(_blocks.begin())
