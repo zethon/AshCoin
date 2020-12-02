@@ -81,31 +81,31 @@ void ChainDatabase::initialize(Blockchain& blockchain)
         throw std::logic_error("invalid chain");
     }
 }
+
 void ChainDatabase::write(const Block& block)
 {
     std::ofstream ofs(_dbfile.c_str(), std::ios::app | std::ios::out | std::ios::binary);
     write_block(ofs, block);
 }
 
-std::optional<Block> ChainDatabase::read(std::uint32_t index)
+void ChainDatabase::writeChain(const Blockchain& chain)
 {
-    //Block retval;
-    //std::uint32_t current = 0;
+    _logger->debug("writing {} blocks to file {}", chain.size(), _dbfile.string());
+    std::ofstream ofs(_dbfile.c_str(), std::ios::app | std::ios::out | std::ios::binary);
+    for (const auto& block : chain)
+    {
+        write_block(ofs, block);
+    }
+}
 
-    //std::ifstream ifs(_dbfile.c_str());
-    //boost::archive::binary_iarchive ia(ifs);
-    //while (!ifs.eof())
-    //{
-    //    ia >> retval;
-    //    if (current == index)
-    //    {
-    //        return retval;
-    //    }
+void ChainDatabase::reset()
+{
+    _logger->debug("deleting datbase file {}", _dbfile.string());
 
-    //    current++;
-    //}
-
-    return std::optional<Block>{};
+    if (boost::filesystem::exists(_dbfile))
+    {
+        boost::filesystem::remove(_dbfile);
+    }
 }
 
 } // namespace

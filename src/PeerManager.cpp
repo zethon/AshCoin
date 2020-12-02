@@ -10,6 +10,25 @@ PeerManager::PeerManager()
 {
 }
 
+PeerManager::~PeerManager()
+{
+    for (auto&[peer, thread] : _threadPool)
+    {
+        if (thread.joinable())
+        {
+            _peerMap.at(peer)->stop();
+            thread.join();
+        }
+    }
+
+    if (_wsThread.joinable())
+    {
+        _logger->debug("wss:/chain shutting down");
+        _wsServer.stop();
+        _wsThread.join();
+    }
+}
+
 void PeerManager::loadPeers(std::string_view filename)
 {
     _logger->info("attempting to load peers file '{}'", filename);
@@ -35,7 +54,7 @@ void PeerManager::savePeers(std::string_view filename)
 {
 }
     
-void PeerManager::connectAll()
+void PeerManager::connectAll(std::function<void(WsClientConnPtr)> cb)
 {
     for (const auto& peer : _peers)
     {
@@ -44,10 +63,14 @@ void PeerManager::connectAll()
         auto client = std::make_shared<WsClient>(endpoint);
 
         client->on_open =
-            [this, client, peer = peer](WsClientConnPtr connection)
+            [this, client, peer = peer, cb = cb](WsClientConnPtr connection)
             {
                 _logger->trace("wsc:/chain opened connection {}", static_cast<void*>(connection.get()));
                 _connections.insert_or_assign(peer, connection);
+                if (cb)
+                {
+                    cb(connection);
+                }
             };
 
         client->on_error =
@@ -60,7 +83,7 @@ void PeerManager::connectAll()
             [this](WsClientConnPtr connection, std::shared_ptr<WsClient::InMessage> message)
             {
                 _logger->trace("wsc:/chain message on connection {}", static_cast<void*>(connection.get()));
-                this->onChainResponse(message->string());
+                this->onChainResponse(connection, message->string());
             };
 
         _peerMap.insert_or_assign(peer, client);

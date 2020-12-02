@@ -42,17 +42,18 @@ class PeerManager
 
 public:
     PeerManager();
+    ~PeerManager();
 
     void loadPeers(std::string_view filename);
     void savePeers(std::string_view filename);
 
-    void connectAll();
+    void connectAll(std::function<void(WsClientConnPtr)> cb);
     void broadcast(std::string_view message);
 
     void initWebSocketServer(std::uint32_t port);
 
     boost::signals2::signal<void(WsServerConnPtr, const std::string&)> onChainRequest;
-    boost::signals2::signal<void(const std::string& message)> onChainResponse;
+    boost::signals2::signal<void(WsClientConnPtr, const std::string&)> onChainResponse;
 };
 
 } // namespace ash

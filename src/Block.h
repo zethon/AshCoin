@@ -30,6 +30,10 @@ public:
     Block(uint32_t nIndexIn, std::string_view sDataIn);
 
     bool operator==(const Block& other) const;
+    bool operator!=(const Block& other) const
+    {
+        return !(*this == other);
+    }
 
     std::uint32_t index() const { return _index; }
     std::uint32_t nonce() const { return _nonce; }
@@ -38,8 +42,7 @@ public:
     std::string data() const { return _data;  }
     time_t time() const { return _time; }
     std::string hash() const { return _hash; }
-    std::string previousHash() const { return _prev; }
-   
+    std::string previousHash() const { return _prev; }   
 
     void setPrevious(const std::string& val) { _prev = val; }
     void MineBlock(uint32_t nDifficulty);
