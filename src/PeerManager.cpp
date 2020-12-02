@@ -12,9 +12,14 @@ PeerManager::PeerManager()
 
 void PeerManager::loadPeers(std::string_view filename)
 {
+    _logger->info("attempting to load peers file '{}'", filename);
     std::ifstream in(filename.data());
 
-    if (!in) return;
+    if (!in)
+    {
+        _logger->warn("no peers file found at '{}'", filename);
+        return;
+    }
 
     std::string line;
     while (std::getline(in, line))
