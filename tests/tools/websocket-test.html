@@ -3,25 +3,7 @@
 <head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type = "text/javascript">
-if (typeof console  != "undefined")
-{
-    if (typeof console.log != 'undefined')
-    {
-        console.olog = console.log;
-    }
-    else
-    {
-        console.olog = function() {};
-    }
-}
 
-console.log = function(message) 
-    {
-        console.olog(message);
-        $('#output').append(message + "\n");
-    };
-
-console.error = console.debug = console.info =  console.log
 
 
 function getendpoint()
@@ -94,8 +76,7 @@ function WebSocketTest()
 
 function clearOutput()
 {
-    // $('#output').text('');
-    document.getElementById("output").value='';
+    $("#output").val('');
 }
 </script>
 </head>
@@ -148,7 +129,25 @@ function clearOutput()
         $("#command_text").text( getendpoint() );
     });
 
+    if (typeof console  != "undefined")
+    {
+        if (typeof console.log != 'undefined')
+        {
+            console.olog = console.log;
+        }
+        else
+        {
+            console.olog = function() {};
+        }
+    }
 
+    console.log = function(message) 
+        {
+            console.olog(message);
+            $('#output').append(message + "\n");
+        };
+
+    console.error = console.debug = console.info =  console.log
 </script>
     
 </body>

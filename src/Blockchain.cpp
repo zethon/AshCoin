@@ -7,7 +7,7 @@ void to_json(nl::json& j, const Blockchain& b)
 {
     for (const auto& block : b._blocks)
     {
-        j["blocks"].push_back(block);
+        j.push_back(block);
     }
 }
 
@@ -15,10 +15,7 @@ void from_json(const nl::json& j, Blockchain& b)
 {
     b.clear();
 
-    if (!j.contains("blocks")) return;
-    if (!j["blocks"].is_array()) return;
-
-    for (const auto& jblock : j["blocks"].items())
+    for (const auto& jblock : j.items())
     {
         b._blocks.push_back(jblock.value().get<Block>());
     }

@@ -247,6 +247,7 @@ void MinerApp::runMineThread()
         auto newblock = 
             ash::Block(static_cast<std::uint32_t>(index++), data);
 
+        // TODO: LOCKING!!
         // do mining
         _blockchain->MineBlock(newblock);
 
@@ -376,7 +377,7 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
     nl::json json = nl::json::parse(rawmsg, nullptr, false);
     if (json.is_discarded() || !json.contains("message"))
     {
-        _logger->warn("malformed ws:/chain response on connection {}", 
+        _logger->warn("malformed wc:/chain response on connection {}", 
             static_cast<void*>(connection.get()));
 
         return;
@@ -384,7 +385,7 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
 
     const auto message = json["message"].get<std::string>();
 
-    _logger->trace("wc:/chain received response on connection {}: {}", 
+    _logger->trace("wsc:/chain received response on connection {}, message='{}'", 
         static_cast<void*>(connection.get()), message);
 
     if (message == "summary")
@@ -402,11 +403,11 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
         const auto& remote_last = json["blocks"].at(1).get<ash::Block>();
         
         const auto& genesis = _blockchain->front();
-        const auto& latestblock = _blockchain->back();
+        const auto& lastblock = _blockchain->back();
 
-        if (remote_gen != genesis)
+        if (genesis != remote_gen)
         {
-            _logger->warn("ws:/chain 'summary' returned unknown chain on connection {}", 
+            _logger->warn("wsc:/chain 'summary' returned unknown chain on connection {}", 
                 static_cast<void*>(connection.get()));
 
             if (_settings->value("chain.reset.enable", false))
@@ -415,24 +416,53 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
                 connection->send(R"({"message":"chain"})");
             }
         }
+        else if (lastblock.index() < remote_last.index())
+        {
+            auto startIdx = lastblock.index() + 1;
+            auto stopIdx = remote_last.index();
+
+            _logger->info("'summary' returned larger chain on connection {}, requesting blocks {}-{}", 
+                static_cast<void*>(connection.get()), startIdx, stopIdx);
+
+            const auto msg = fmt::format(R"({{ "message":"chain","id1":{},"id2":{} }})",startIdx, stopIdx);
+            connection->send(msg);
+        }
     }
     else if (message == "chain")
     {
-        const auto tempchain = json["blocks"].get<ash::Blockchain>();
-        if (!tempchain.isValidChain())
+        if (const auto tempchain = json["blocks"].get<ash::Blockchain>();
+                tempchain.size() <= 0 || !tempchain.isValidChain())
         {
             _logger->info("received invalid chain from connection {}", 
                 static_cast<void*>(connection.get()));
-
-            return;
         }
+        else if (tempchain.front().index() == 0)
+        {
+            std::lock_guard<std::mutex> lock(_chainMutex);
 
-        *_blockchain = std::move(tempchain);
-        _logger->info("updating chain with existing chain of height {} on connection {}",
-            _blockchain->size(), static_cast<void*>(connection.get()));
+            _logger->info("updating chain with existing chain of height {} on connection {}",
+                tempchain.size(), static_cast<void*>(connection.get()));
 
-        _database->reset();
-        _database->writeChain(*_blockchain);
+            *_blockchain = std::move(tempchain);
+            _database->reset();
+            _database->writeChain(*_blockchain);
+        }
+        else if (tempchain.front().index() == _blockchain->back().index() + 1)
+        {
+            std::lock_guard<std::mutex> lock(_chainMutex);
+            for (const auto& block : tempchain)
+            {
+                if (_blockchain->addNewBlock(block))
+                {
+                    _database->write(block);
+                }
+            }
+        }
+        // else if (tempchain.front().index < _blockchain->back().index() )
+        // {
+        //     // need to cover cases where we mined a few blocks but
+        //     // the remote chain already had them
+        // }
     }
 }
 

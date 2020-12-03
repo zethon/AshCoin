@@ -60,6 +60,8 @@ private:
 private:
     ChainDatabasePtr        _database;
     BlockChainPtr           _blockchain;
+    std::mutex              _chainMutex;
+
     SettingsPtr             _settings;
     PeerManager             _peers;
 
