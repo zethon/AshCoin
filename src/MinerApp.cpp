@@ -233,8 +233,12 @@ void MinerApp::runMineThread()
     auto blockAdjustmentCount = 0u;
     ash::CumulativeMovingAverage<std::uint64_t> avg;
 
-    auto index = _blockchain->size();
-
+    std::uint64_t index = 0;
+    {
+        std::lock_guard<std::mutex> lock{_chainMutex};
+        index = _blockchain->size();
+    }
+    
     while (!_miningDone && !_done)
     {
         _logger->info("mining block at index {} with difficulty {}", 
@@ -283,8 +287,8 @@ void MinerApp::runMineThread()
             blockAdjustmentCount++;
         }
 
-        // sync the network
-        syncBlockchain();
+        // inform the network of our chain
+        _peers.broadcast(R"({"message":"summary"})");
     }
 }
 
@@ -292,16 +296,11 @@ void MinerApp::runMineThread()
 // after each block is mined
 void MinerApp::syncBlockchain()
 {
-    nl::json j;
-    j["message"] = "chain";
-    j["block"] = _blockchain->back();
-    _peers.broadcast(j.dump());
+    
 }
 
 void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawmsg)
 {
-    _logger->trace("ws:/chain dispatching request from connection {}", static_cast<void*>(connection.get()));
-
     nl::json json = nl::json::parse(rawmsg, nullptr, false);
     if (json.is_discarded() || !json.contains("message"))
     {
@@ -315,7 +314,7 @@ void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawm
 
     const auto message = json["message"].get<std::string>();
 
-    _logger->trace("ws:/chain received request on connection {}: {}", 
+    _logger->debug("ws:/chain received request on connection {}: {}", 
         static_cast<void*>(connection.get()), message);
 
     std::stringstream response;
@@ -440,8 +439,8 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
         {
             std::lock_guard<std::mutex> lock(_chainMutex);
 
-            _logger->info("updating chain with existing chain of height {} on connection {}",
-                tempchain.size(), static_cast<void*>(connection.get()));
+            _logger->info("using remote chain with blocks {}-{}",
+                tempchain.front().index(), tempchain.back().index());
 
             *_blockchain = std::move(tempchain);
             _database->reset();
@@ -450,6 +449,10 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
         else if (tempchain.front().index() == _blockchain->back().index() + 1)
         {
             std::lock_guard<std::mutex> lock(_chainMutex);
+
+            _logger->info("adding blocks {}-{}",
+                tempchain.front().index(), tempchain.back().index());
+
             for (const auto& block : tempchain)
             {
                 if (_blockchain->addNewBlock(block))
@@ -458,11 +461,17 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
                 }
             }
         }
-        // else if (tempchain.front().index < _blockchain->back().index() )
-        // {
-        //     // need to cover cases where we mined a few blocks but
-        //     // the remote chain already had them
-        // }
+        else if (tempchain.front().index() < _blockchain->back().index())
+        {
+            std::lock_guard<std::mutex> lock(_chainMutex);
+
+            _logger->info("updating chain from {}-{} and adding blocks {}-{}",
+                tempchain.front().index(), _blockchain->back().index(),
+                _blockchain->back().index() + 1, tempchain.back().index());
+
+            // need to cover cases where we mined a few blocks but
+            // the remote chain already had them
+        }
     }
 }
 
