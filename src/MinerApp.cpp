@@ -232,16 +232,16 @@ void MinerApp::runMineThread()
 {
     auto blockAdjustmentCount = 0u;
     ash::CumulativeMovingAverage<std::uint64_t> avg;
-
     std::uint64_t index = 0;
-    {
-        std::lock_guard<std::mutex> lock{_chainMutex};
-        index = _blockchain->size();
-    }
-    
+
     while (!_miningDone && !_done)
     {
-        _logger->info("mining block at index {} with difficulty {}", 
+        {
+            std::lock_guard<std::mutex> lock{_chainMutex};
+            index = _blockchain->size();
+        }
+    
+        _logger->info("mining block {} with difficulty {}", 
             index, _blockchain->difficulty());
 
         const std::string data = fmt::format(":coinbase{}", index);
@@ -249,7 +249,7 @@ void MinerApp::runMineThread()
         auto prevTime = static_cast<std::uint64_t>(_blockchain->back().time());
 
         auto newblock = 
-            ash::Block(static_cast<std::uint32_t>(index++), data);
+            ash::Block(static_cast<std::uint32_t>(index), data);
 
         // TODO: LOCKING!!
         // do mining
@@ -288,7 +288,7 @@ void MinerApp::runMineThread()
         }
 
         // inform the network of our chain
-        _peers.broadcast(R"({"message":"summary"})");
+        syncBlockchain();
     }
 }
 
@@ -296,7 +296,25 @@ void MinerApp::runMineThread()
 // after each block is mined
 void MinerApp::syncBlockchain()
 {
-    
+    if (std::lock_guard<std::mutex>{_chainMutex}; 
+        _tempchain)
+    {
+        // we're replacing the full chaing
+        if (_tempchain->front().index() == 0)
+        {
+            _blockchain.swap(_tempchain);
+            _database->reset();
+            _database->writeChain(*_blockchain);
+        }
+        else
+        {
+            std::cout << "hi there\n";
+        }
+
+        _tempchain.reset();
+    }
+
+    _peers.broadcast(R"({"message":"summary"})");
 }
 
 void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawmsg)
@@ -401,8 +419,12 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
         const auto& remote_gen = json["blocks"].at(0).get<ash::Block>();
         const auto& remote_last = json["blocks"].at(1).get<ash::Block>();
         
-        const auto& genesis = _blockchain->front();
-        const auto& lastblock = _blockchain->back();
+        // TODO: we're using the 'summary' command to dermine
+        // if we need to replace/update the chain, but we only
+        // do those checks in 'summary'. We should do the thing
+        // in the 'chain' command.
+        const auto& genesis = _tempchain ? _tempchain->front() : _blockchain->front();
+        const auto& lastblock = _tempchain ? _tempchain->back() : _blockchain->back();
 
         if (genesis != remote_gen)
         {
@@ -442,9 +464,9 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
             _logger->info("using remote chain with blocks {}-{}",
                 tempchain.front().index(), tempchain.back().index());
 
-            *_blockchain = std::move(tempchain);
-            _database->reset();
-            _database->writeChain(*_blockchain);
+            _tempchain = std::make_unique<ash::Blockchain>();
+            *_tempchain = std::move(tempchain);
+            _tempchain->setDifficulty(_blockchain->difficulty());
         }
         else if (tempchain.front().index() == _blockchain->back().index() + 1)
         {
@@ -453,11 +475,14 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
             _logger->info("adding blocks {}-{}",
                 tempchain.front().index(), tempchain.back().index());
 
+            _tempchain = std::make_unique<ash::Blockchain>(_blockchain->difficulty());
             for (const auto& block : tempchain)
             {
-                if (_blockchain->addNewBlock(block))
+                if (!_tempchain->addNewBlock(block))
                 {
-                    _database->write(block);
+                    _logger->warn("invalid block at index {} while updating chain", block.index());
+                    _tempchain.reset();
+                    break;
                 }
             }
         }
@@ -471,6 +496,9 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
 
             // need to cover cases where we mined a few blocks but
             // the remote chain already had them
+            // _tempchain = std::make_unique<ash::Blockchain>();
+            // *_tempchain = std::move(tempchain);
+            // _tempchain->setDifficulty(_blockchain->difficulty());
         }
     }
 }
