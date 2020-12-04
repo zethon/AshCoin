@@ -65,6 +65,11 @@ public:
         _blocks.resize(size);
     }
 
+    auto at(std::size_t index) -> decltype(_blocks.at(index))
+    {
+        return _blocks.at(index);
+    }
+
     void MineBlock(Block& bNew);
 
     bool addNewBlock(const Block& block);

@@ -55,6 +55,9 @@ private:
     void dispatchRequest(WsServerConnPtr, std::string_view);
     void handleResponse(WsClientConnPtr, std::string_view);
 
+    void handleChainResponse(WsClientConnPtr, const Blockchain&);
+
+    // TODO: should be moved to an HttpServer class
     void printIndex(HttpResponsePtr response);
 
 private:

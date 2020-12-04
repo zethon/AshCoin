@@ -1,4 +1,5 @@
 #include <charconv>
+#include <cassert>
 
 #include <nlohmann/json.hpp>
 
@@ -342,8 +343,6 @@ void MinerApp::syncBlockchain()
 
         _tempchain.reset();
     }
-
-    // _peers.broadcast(R"({"message":"summary"})");
 }
 
 void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawmsg)
@@ -490,55 +489,72 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
         {
             _logger->info("received invalid chain from connection {}", 
                 static_cast<void*>(connection.get()));
+
+            return;
         }
-        else if (tempchain.front().index() == 0)
+        else
         {
             std::lock_guard<std::mutex> lock(_chainMutex);
-
-            _logger->info("replacing local chain with remote chain with blocks {}-{}",
-                tempchain.front().index(), tempchain.back().index());
-
-            _tempchain = std::make_unique<ash::Blockchain>();
-            *_tempchain = std::move(tempchain);
-            _tempchain->setDifficulty(_blockchain->difficulty());
-        }
-        else if (tempchain.front().index() == _blockchain->back().index() + 1)
-        {
-            std::lock_guard<std::mutex> lock(_chainMutex);
-
-            _logger->info("appending blocks {}-{} to local chain",
-                tempchain.front().index(), tempchain.back().index());
-
-            bool checkPreviousBlock = false;
-            _tempchain = std::make_unique<ash::Blockchain>(_blockchain->difficulty());
-            for (const auto& block : tempchain)
-            {
-                if (!_tempchain->addNewBlock(block, checkPreviousBlock))
-                {
-                    _logger->warn("invalid block at index {} while updating chain", block.index());
-                    _tempchain.reset();
-                    break;
-                }
-
-                checkPreviousBlock = true;
-            }
-        }
-        else if (tempchain.size() > 0)
-        {
-            std::lock_guard<std::mutex> lock(_chainMutex);
-
-            _logger->info("updating local chain from {}-{} and adding blocks {}-{}",
-                tempchain.front().index(), _blockchain->back().index(),
-                _blockchain->back().index() + 1, tempchain.back().index());
-
-            _tempchain = std::make_unique<ash::Blockchain>();
-            *_tempchain = std::move(tempchain);
-        }
+            handleChainResponse(connection, tempchain);
+        }        
     }
 
     if (this->_miningDone)
     {
         syncBlockchain();
+    }
+}
+
+void MinerApp::handleChainResponse(WsClientConnPtr connection, const Blockchain& tempchain)
+{
+    if (tempchain.front().index() == 0)
+    {
+        _logger->info("queuing replacement for local chain with with blocks {}-{}",
+            tempchain.front().index(), tempchain.back().index());
+
+        _tempchain = std::make_unique<ash::Blockchain>();
+        *_tempchain = std::move(tempchain);
+        _tempchain->setDifficulty(_blockchain->difficulty());
+    }
+    else if (tempchain.front().index() > _blockchain->back().index() + 1)
+    {
+        // we have a gap, so request the blocks in between
+        auto startIdx = _blockchain->back().index() + 1;
+        auto stopIdx = tempchain.back().index();
+
+        _logger->info("temp chain has gap, requesting remote blocks {}-{}", startIdx, stopIdx);
+
+        const auto msg = fmt::format(R"({{ "message":"chain","id1":{},"id2":{} }})",startIdx, stopIdx);
+        connection->send(msg);
+    }
+    else
+    {
+        // at this point the first block of the temp chain exists within our
+        // local chain or is just ONE ahead, but we don't know if that first 
+        // block is valid, and if it is not then we will have to walk backwards 
+        // by requesting one more block from the remote chain
+
+        auto tempStartIdx = tempchain.front().index() - 1;
+        assert(tempStartIdx < _blockchain->size() && tempStartIdx > 0);
+
+        if (tempchain.front().previousHash() == _blockchain->at(tempStartIdx).hash())
+        {
+            _logger->info("caching update for local chain with remote blocks {}-{}",
+                tempchain.front().index(), tempchain.back().index());
+
+            _tempchain = std::make_unique<ash::Blockchain>();
+            *_tempchain = tempchain;
+        }
+        else
+        {
+            auto startIdx = tempchain.front().index() - 1;
+            auto stopIdx = tempchain.back().index();
+            
+            _logger->info("temp chain is misaligned, requesting remote blocks {}-{}", startIdx, stopIdx);
+
+            const auto msg = fmt::format(R"({{ "message":"chain","id1":{},"id2":{} }})",startIdx, stopIdx);
+            connection->send(msg);
+        }
     }
 }
 
