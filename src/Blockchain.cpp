@@ -87,4 +87,17 @@ bool Blockchain::isValidChain() const
     return true;
 }
 
+std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
+{
+    std::uint64_t total = 0;
+    auto lastBlockIt = std::next(_blocks.begin(), idx);
+
+    for (auto current = _blocks.begin(); current < lastBlockIt; current++)
+    {
+        total += std::pow(2, current->difficulty());
+    }
+
+    return total;
+}
+
 } // namespace

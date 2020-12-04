@@ -85,6 +85,13 @@ public:
 
     std::uint32_t difficulty() const { return _difficulty; }
     void setDifficulty(std::uint32_t v) { _difficulty = v; }
+
+    std::uint64_t cumDifficulty() const
+    {
+        return cumDifficulty(_blocks.size() - 1);
+    }
+
+    std::uint64_t cumDifficulty(std::size_t idx) const;
 };
 
 }

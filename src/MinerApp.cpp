@@ -372,6 +372,7 @@ void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawm
     {
         jresponse["blocks"].push_back(_blockchain->front());
         jresponse["blocks"].push_back(_blockchain->back());
+        jresponse["cumdiff"] = _blockchain->cumDifficulty();
     }
     else if (message == "chain")
     {
