@@ -35,11 +35,17 @@ void Blockchain::MineBlock(Block& newblock)
 
 bool Blockchain::addNewBlock(const Block& block)
 {
+    return addNewBlock(block, true);
+}
+
+bool Blockchain::addNewBlock(const Block& block, bool checkPreviousBlock)
+{
     if (block.hash() != CalculateBlockHash(block))
     {
         return false;
     }
-    else if (block.previousHash() != _blocks.back().hash())
+    else if (checkPreviousBlock
+        && block.previousHash() != _blocks.back().hash())
     {
         return false;
     }

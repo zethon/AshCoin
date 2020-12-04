@@ -60,8 +60,15 @@ public:
         _blocks.clear();
     }
 
+    void resize(std::size_t size)
+    {
+        _blocks.resize(size);
+    }
+
     void MineBlock(Block& bNew);
+
     bool addNewBlock(const Block& block);
+    bool addNewBlock(const Block& block, bool checkPreviousBlock);
 
     const Block& getBlockByIndex(std::size_t idx) 
     { 

@@ -287,7 +287,7 @@ void MinerApp::runMineThread()
             blockAdjustmentCount++;
         }
 
-        // inform the network of our chain
+        // update our blockchain
         syncBlockchain();
     }
 }
@@ -306,15 +306,44 @@ void MinerApp::syncBlockchain()
             _database->reset();
             _database->writeChain(*_blockchain);
         }
+        else if (_tempchain->front().index() < _blockchain->back().index())
+        {
+            auto startIdx = _tempchain->front().index();
+            _blockchain->resize(startIdx);
+            for (const auto& block : *_tempchain)
+            {
+                // add up until a point of failure (if there
+                // is one)
+                if (!_blockchain->addNewBlock(block))
+                {
+                    _logger->warn("failed to add block while updating chain at index");
+                }
+            }
+
+            _database->reset();
+            _database->writeChain(*_blockchain);
+        }
+        else if (_tempchain->front().index() == _blockchain->back().index() + 1)
+        {
+            for (const auto& block : *_tempchain)
+            {
+                if (_blockchain->addNewBlock(block))
+                {
+                    _database->write(block);
+                }
+            }
+        }
         else
         {
-            std::cout << "hi there\n";
+            _logger->warn("temp chain is too far ahead with blocks {}-{} and local chain {}-{}",
+                _tempchain->front().index(), _tempchain->back().index(),
+                _blockchain->front().index(), _blockchain->back().index());
         }
 
         _tempchain.reset();
     }
 
-    _peers.broadcast(R"({"message":"summary"})");
+    // _peers.broadcast(R"({"message":"summary"})");
 }
 
 void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawmsg)
@@ -433,7 +462,7 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
 
             if (_settings->value("chain.reset.enable", false))
             {
-                _logger->info("requesting full remote block");
+                _logger->info("requesting full remote chain");
                 connection->send(R"({"message":"chain"})");
             }
         }
@@ -448,6 +477,11 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
             const auto msg = fmt::format(R"({{ "message":"chain","id1":{},"id2":{} }})",startIdx, stopIdx);
             connection->send(msg);
         }
+        else
+        {
+            _logger->info("local blockchain up to date with connection {}",
+                static_cast<void*>(connection.get()));
+        }
     }
     else if (message == "chain")
     {
@@ -461,7 +495,7 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
         {
             std::lock_guard<std::mutex> lock(_chainMutex);
 
-            _logger->info("using remote chain with blocks {}-{}",
+            _logger->info("replacing local chain with remote chain with blocks {}-{}",
                 tempchain.front().index(), tempchain.back().index());
 
             _tempchain = std::make_unique<ash::Blockchain>();
@@ -472,34 +506,39 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
         {
             std::lock_guard<std::mutex> lock(_chainMutex);
 
-            _logger->info("adding blocks {}-{}",
+            _logger->info("appending blocks {}-{} to local chain",
                 tempchain.front().index(), tempchain.back().index());
 
+            bool checkPreviousBlock = false;
             _tempchain = std::make_unique<ash::Blockchain>(_blockchain->difficulty());
             for (const auto& block : tempchain)
             {
-                if (!_tempchain->addNewBlock(block))
+                if (!_tempchain->addNewBlock(block, checkPreviousBlock))
                 {
                     _logger->warn("invalid block at index {} while updating chain", block.index());
                     _tempchain.reset();
                     break;
                 }
+
+                checkPreviousBlock = true;
             }
         }
-        else if (tempchain.front().index() < _blockchain->back().index())
+        else if (tempchain.size() > 0)
         {
             std::lock_guard<std::mutex> lock(_chainMutex);
 
-            _logger->info("updating chain from {}-{} and adding blocks {}-{}",
+            _logger->info("updating local chain from {}-{} and adding blocks {}-{}",
                 tempchain.front().index(), _blockchain->back().index(),
                 _blockchain->back().index() + 1, tempchain.back().index());
 
-            // need to cover cases where we mined a few blocks but
-            // the remote chain already had them
-            // _tempchain = std::make_unique<ash::Blockchain>();
-            // *_tempchain = std::move(tempchain);
-            // _tempchain->setDifficulty(_blockchain->difficulty());
+            _tempchain = std::make_unique<ash::Blockchain>();
+            *_tempchain = std::move(tempchain);
         }
+    }
+
+    if (this->_miningDone)
+    {
+        syncBlockchain();
     }
 }
 
