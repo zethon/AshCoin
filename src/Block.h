@@ -18,6 +18,16 @@ void from_json(const nl::json& j, Block& b);
 
 std::string CalculateBlockHash(const Block& block);
 
+struct BlockInfo
+{
+    std::uint64_t   index;
+    std::uint32_t   nonce;
+    std::uint32_t   difficulty;
+    time_t          time;
+    std::string     data;
+    std::string     previous;
+};
+
 class Block 
 {
     friend void read_block(std::istream& stream, Block& block);
@@ -46,6 +56,8 @@ public:
 
     void setPrevious(const std::string& val) { _prev = val; }
     void MineBlock(uint32_t nDifficulty);
+
+    BlockInfo info() const;
 
 private:
     std::uint64_t        _index;

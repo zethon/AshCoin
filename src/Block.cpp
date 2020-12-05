@@ -32,6 +32,25 @@ void from_json(const nl::json& j, Block& b)
     j["prev"].get_to(b._prev);
 }
 
+std::string CalculateBlockHash(
+    std::uint64_t index, 
+    std::uint32_t nonce, 
+    std::uint32_t difficulty,
+    time_t time, 
+    const std::string& data, 
+    const std::string& previous)
+{
+    std::stringstream ss;
+    ss << index
+        << nonce
+        << difficulty
+        << data
+        << time
+        << previous;
+
+    return sha256(ss.str());
+}
+
 std::string CalculateBlockHash(const Block& block)
 {
     std::stringstream ss;
@@ -74,12 +93,17 @@ void Block::MineBlock(std::uint32_t nDifficulty)
     {
         _nonce++;
         _time = std::time(nullptr); // this is probably bad
-        _hash = CalculateBlockHash(*this);
+        _hash = CalculateBlockHash(_index, _nonce, _difficulty, _time, _data, _prev);
     }
     while (_hash.compare(0, _difficulty, zeros) != 0);
 
     const nl::json temp = *this;
     _logger->debug("block mined: {}", temp.dump());
+}
+
+BlockInfo Block::info() const
+{
+    return { _index, _nonce, _difficulty, _time, _data, _prev };
 }
 
 } // namespace
