@@ -17,6 +17,13 @@ void to_json(nl::json& j, const Block& b);
 void from_json(const nl::json& j, Block& b);
 
 std::string CalculateBlockHash(const Block& block);
+std::string CalculateBlockHash(
+    std::uint64_t index, 
+    std::uint32_t nonce, 
+    std::uint32_t difficulty,
+    time_t time, 
+    const std::string& data, 
+    const std::string& previous);
 
 struct BlockInfo
 {

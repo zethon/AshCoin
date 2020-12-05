@@ -9,12 +9,18 @@ class Miner
     std::uint32_t       _difficulty = 0;
     std::uint64_t       _maxTries = 0;
     std::atomic_bool    _keepTrying = true;
+    std::uint32_t       _timeout; // seconds
 
 public:
     enum ResultType { SUCCESS, TIMEOUT, ABORT };
     using Result = std::tuple<ResultType, Block>;
 
-    Miner() = default;
+    Miner()
+        : Miner(0)
+    {
+        // nothing to do
+    }
+
     Miner(std::uint32_t difficulty)
         : _difficulty{difficulty}
     {
@@ -24,26 +30,30 @@ public:
     std::uint32_t difficulty() const noexcept { return _difficulty; }
     void setDifficulty(std::uint32_t val) { _difficulty = val; }
 
-    Result mineBlock(const BlockInfo& info)
+    void abort() { _keepTrying = false; }
+
+    Result mineBlock(std::uint64_t index, 
+        const std::string& data, const std::string& prev)
     {
-        assert(input.index > 0);
-        assert(input.previous.size() > 0);
+        assert(index > 0);
+        assert(prev.size() > 0);
 
         std::string zeros;
-        zeros.assign(info.difficulty, '0');
+        zeros.assign(_difficulty, '0');
 
         std::uint32_t nonce = 0;
         time_t time = std::time(nullptr);
         std::string hash = 
-            CalculateBlockHash(info.index, nonce, info.difficulty, time, info.data, info.prev);
+            CalculateBlockHash(index, nonce, _difficulty, time, data, prev);
 
-        while (_keepTrying && hash.compare(0, info.difficulty, zeros) != 0)
+        while (_keepTrying 
+            && hash.compare(0, _difficulty, zeros) != 0)
         {
             // TODO: might only need to return these three things
             // instead of creating a new block?
             nonce++;
             time = std::time(nullptr); // this is probably bad
-            hash = CalculateBlockHash(info.index, nonce, info.difficulty, time, info.data, info.prev);
+            hash = CalculateBlockHash(index, nonce, _difficulty, time, data, prev);
         }
 
         if (!_keepTrying)
@@ -51,12 +61,12 @@ public:
             return { ResultType::ABORT, {} };
         }
 
-        Block retval { info.index, info.data };
+        Block retval { index, data };
         retval._nonce = nonce;
-        retval._difficulty = info.difficulty;
+        retval._difficulty = _difficulty;
         retval._time = time;
         retval._hash = hash;
-        retval._prev = info.prev;
+        retval._prev = prev;
 
         return { ResultType::SUCCESS, retval };
     }

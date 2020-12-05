@@ -16,6 +16,7 @@
 #include "ChainDatabase.h"
 #include "Settings.h"
 #include "PeerManager.h"
+#include "Miner.h"
 
 namespace ash
 {
@@ -75,6 +76,8 @@ private:
 
     bool                    _done = false;
     bool                    _miningDone = false;
+    
+    Miner                   _miner;
     std::thread             _mineThread;
 
     SpdLogPtr                _logger;

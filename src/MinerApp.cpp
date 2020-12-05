@@ -35,6 +35,8 @@ MinerApp::MinerApp(SettingsPtr settings)
     initWebSocket();
     initPeers();
 
+    _miner.setDifficulty(difficulty);
+
     const std::string dbfolder = _settings->value("database.folder", "");
     _database = std::make_unique<ChainDatabase>(dbfolder);
    
@@ -242,37 +244,42 @@ void MinerApp::runMineThread()
             index = _blockchain->size();
         }
     
-        _logger->info("mining block {} with difficulty {}", 
+        _logger->debug("mining block {} with difficulty {}", 
             index, _blockchain->difficulty());
-
-        const std::string data = fmt::format(":coinbase{}", index);
 
         auto prevTime = static_cast<std::uint64_t>(_blockchain->back().time());
 
-        auto newblock = 
-            ash::Block(index, data);
+        const std::string data = fmt::format(":coinbase{}", index);
+        auto result = _miner.mineBlock(index, data, _blockchain->back().hash());
 
-        // TODO: LOCKING!!
-        // do mining
-        _blockchain->MineBlock(newblock);
+        if (std::get<0>(result) == Miner::ABORT)
+        {
+            _logger->debug("mining block {} was aborted", index);
+            break;
+        }
 
-        // persist to database
-        _database->write(newblock);
+        // append the block to the chain
+        _blockchain->addNewBlock(std::get<1>(result));
+
+        // write the block to the database
+        _database->write(std::get<1>(result));
+
+        _logger->info("successfully mined bock {}", index);
 
         // adjust difficulty if needed
         if (blockAdjustmentCount > DIFFICULTY_ADJUSTMENT_INTERVAL)
         {
-            auto difficulty = _blockchain->difficulty();
+            auto difficulty = _miner.difficulty();
             auto avgTime = avg.value();
             if (avgTime < (BLOCK_GENERATION_INTERVAL / 2.0f))
             {
                 _logger->info("increasing difficulty from {} to {}", difficulty++, difficulty);
-                _blockchain->setDifficulty(difficulty);
+                _miner.setDifficulty(difficulty);
             }
             else if (avgTime > (BLOCK_GENERATION_INTERVAL * 2))
             {
                 _logger->info("decreasing difficulty from {} to {}", difficulty--, difficulty);
-                _blockchain->setDifficulty(difficulty);
+                _miner.setDifficulty(difficulty);
             }
             else
             {
@@ -284,7 +291,7 @@ void MinerApp::runMineThread()
         }
         else
         {
-            avg.addValue(newblock.time() - prevTime);
+            avg.addValue(_blockchain->back().time() - prevTime);
             blockAdjustmentCount++;
         }
 
