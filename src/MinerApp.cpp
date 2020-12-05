@@ -36,7 +36,7 @@ MinerApp::MinerApp(SettingsPtr settings)
     initPeers();
 
     _miner.setDifficulty(difficulty);
-    
+
     _blockchain = std::make_unique<Blockchain>();
     
     const std::string dbfolder = _settings->value("database.folder", "");
@@ -254,7 +254,7 @@ void MinerApp::runMineThread()
         if (std::get<0>(result) == Miner::ABORT)
         {
             _logger->debug("mining block {} was aborted", index);
-            break;
+            continue;
         }
 
         // append the block to the chain

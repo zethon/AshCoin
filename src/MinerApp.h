@@ -42,8 +42,18 @@ public:
     ~MinerApp();
 
     void run();
-    void signalExit() { _done = true; }
-    void stopMining() { _miningDone = true; }
+
+    void stopMining() 
+    { 
+        _miningDone = true; 
+        _miner.abort();
+    }
+
+    void signalExit()
+    { 
+        stopMining();
+        _done = true; 
+    }
 
 private:
     void initRest();
@@ -74,8 +84,8 @@ private:
     HttpServer              _httpServer;
     std::thread             _httpThread;
 
-    bool                    _done = false;
-    bool                    _miningDone = false;
+    std::atomic_bool        _done = false;
+    std::atomic_bool        _miningDone = false;
     
     Miner                   _miner;
     std::thread             _mineThread;
