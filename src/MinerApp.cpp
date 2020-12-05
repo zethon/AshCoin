@@ -290,6 +290,9 @@ void MinerApp::runMineThread()
 
         // update our blockchain
         syncBlockchain();
+
+        // request an update from the network
+        _peers.broadcast(R"({"message":"summary"})");
     }
 }
 
@@ -413,6 +416,10 @@ void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawm
             }
         }
     }
+    else
+    {
+        jresponse["error"] = fmt::format("unknown message '{}'", message);
+    }
 
     response << jresponse.dump();
     connection->send(response.str());
@@ -448,7 +455,7 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
         const auto& remote_gen = json["blocks"].at(0).get<ash::Block>();
         const auto& remote_last = json["blocks"].at(1).get<ash::Block>();
         
-        // TODO: we're using the 'summary' command to dermine
+        // TODO: we're using the 'summary' command to determine
         // if we need to replace/update the chain, but we only
         // do those checks in 'summary'. We should do the thing
         // in the 'chain' command.
