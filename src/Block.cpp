@@ -32,6 +32,15 @@ void from_json(const nl::json& j, Block& b)
     j["prev"].get_to(b._prev);
 }
 
+// using MineBlockResult = std::tuple<bool, ash::Block>;
+// MineBlockResult DoMineBlock(const BlockInfo& input)
+// {
+//     assert(input.index > 0);
+//     assert(input.previous.size() > 0);
+
+    
+// }
+
 std::string CalculateBlockHash(
     std::uint64_t index, 
     std::uint32_t nonce, 

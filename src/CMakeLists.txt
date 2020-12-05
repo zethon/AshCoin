@@ -18,6 +18,7 @@ set(HEADER_FILES
     Blockchain.h
     ChainDatabase.h
     core.h
+    Miner.h
     MinerApp.h
     PeerManager.h
     Settings.h

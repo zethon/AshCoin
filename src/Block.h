@@ -25,7 +25,7 @@ struct BlockInfo
     std::uint32_t   difficulty;
     time_t          time;
     std::string     data;
-    std::string     previous;
+    std::string     prev;
 };
 
 class Block 
@@ -34,6 +34,8 @@ class Block
     friend void write_block(std::ostream& stream, const Block& block);
 
     friend void from_json(const nl::json& j, Block& b);
+
+    friend class Miner;
 
 public:
     Block() = default;
