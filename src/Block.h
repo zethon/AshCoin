@@ -27,7 +27,7 @@ class Block
 
 public:
     Block() = default;
-    Block(uint32_t nIndexIn, std::string_view sDataIn);
+    Block(uint64_t nIndexIn, std::string_view sDataIn);
 
     bool operator==(const Block& other) const;
     bool operator!=(const Block& other) const
@@ -35,7 +35,7 @@ public:
         return !(*this == other);
     }
 
-    std::uint32_t index() const { return _index; }
+    std::uint64_t index() const { return _index; }
     std::uint32_t nonce() const { return _nonce; }
     std::uint32_t difficulty() const { return _difficulty; }
 
@@ -48,7 +48,7 @@ public:
     void MineBlock(uint32_t nDifficulty);
 
 private:
-    std::uint32_t        _index;
+    std::uint64_t        _index;
     std::uint32_t        _nonce;
     std::uint32_t        _difficulty;
 

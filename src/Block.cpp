@@ -45,7 +45,7 @@ std::string CalculateBlockHash(const Block& block)
     return sha256(ss.str());
 }
 
-Block::Block(uint32_t nIndexIn, std::string_view sDataIn)
+Block::Block(uint64_t nIndexIn, std::string_view sDataIn)
     : _index(nIndexIn), 
       _data(sDataIn),
       _logger(ash::initializeLogger("Block"))

@@ -250,7 +250,7 @@ void MinerApp::runMineThread()
         auto prevTime = static_cast<std::uint64_t>(_blockchain->back().time());
 
         auto newblock = 
-            ash::Block(static_cast<std::uint32_t>(index), data);
+            ash::Block(index, data);
 
         // TODO: LOCKING!!
         // do mining
@@ -393,8 +393,8 @@ void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawm
         }
         else
         {
-            auto id1 = json["id1"].get<std::uint32_t>();
-            auto id2 = json["id2"].get<std::uint32_t>();
+            auto id1 = json["id1"].get<std::uint64_t>();
+            auto id2 = json["id2"].get<std::uint64_t>();
 
             auto startIt = std::find_if(_blockchain->begin(), _blockchain->end(),
                 [id1](const Block& block)
