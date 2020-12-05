@@ -24,30 +24,30 @@ The folder in which to persist the local copy of the blockchain.
 
 Whether or not log messages should be saved to a file.
 
-`logs.file.folder`
+#### `logs.file.folder`
 
 The folder in which to store log messages if they are being saved to a file.
 
-`logs.level`
+#### `logs.level`
 
 The level of log messages.
 
-`mining.autostart`
+#### `mining.autostart`
 
 Whether or not mining should start automatically when the service is started.
 
-`peers.file`
+#### `peers.file`
 
 The file from which to load the list of peers.
 
-`rest.autoload`
+#### `rest.autoload`
 
 Whether or not load a browser with the REST interface when the process is started in console mode.
 
-`rest.port`
+#### `rest.port`
 
 The port on which the HTTP service should listen.
 
-`websocket.port`
+#### `websocket.port`
 
 The websocket port on which the websocket service should listen.
