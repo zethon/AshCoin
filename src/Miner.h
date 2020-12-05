@@ -6,9 +6,9 @@ namespace ash
 
 class Miner
 {
-    std::uint32_t   _difficulty = 0;
-    std::uint64_t   _maxTries = 0;
-    bool            _keepTrying = true;
+    std::uint32_t       _difficulty = 0;
+    std::uint64_t       _maxTries = 0;
+    std::atomic_bool    _keepTrying = true;
 
 public:
     enum ResultType { SUCCESS, TIMEOUT, ABORT };
@@ -37,11 +37,18 @@ public:
         std::string hash = 
             CalculateBlockHash(info.index, nonce, info.difficulty, time, info.data, info.prev);
 
-        while (hash.compare(0, info.difficulty, zeros) != 0)
+        while (_keepTrying && hash.compare(0, info.difficulty, zeros) != 0)
         {
+            // TODO: might only need to return these three things
+            // instead of creating a new block?
             nonce++;
             time = std::time(nullptr); // this is probably bad
             hash = CalculateBlockHash(info.index, nonce, info.difficulty, time, info.data, info.prev);
+        }
+
+        if (!_keepTrying)
+        {
+            return { ResultType::ABORT, {} };
         }
 
         Block retval { info.index, info.data };
@@ -51,7 +58,7 @@ public:
         retval._hash = hash;
         retval._prev = info.prev;
 
-        return { ResultType::SUCCESS, retval };        
+        return { ResultType::SUCCESS, retval };
     }
 };
 
