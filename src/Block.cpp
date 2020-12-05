@@ -82,30 +82,6 @@ bool Block::operator==(const Block & other) const
         && _time == other._time;
 }
 
-void Block::MineBlock(std::uint32_t nDifficulty)
-{
-    _difficulty = nDifficulty;
-
-    std::string zeros;
-    zeros.assign(_difficulty, '0');
-
-    do
-    {
-        _nonce++;
-        _time = std::time(nullptr); // this is probably bad
-        _hash = CalculateBlockHash(_index, _nonce, _difficulty, _time, _data, _prev);
-    }
-    while (_hash.compare(0, _difficulty, zeros) != 0);
-
-    const nl::json temp = *this;
-    _logger->debug("block mined: {}", temp.dump());
-}
-
-BlockInfo Block::info() const
-{
-    return { _index, _nonce, _difficulty, _time, _data, _prev };
-}
-
 } // namespace
 
 namespace std

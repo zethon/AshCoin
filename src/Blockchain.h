@@ -21,14 +21,12 @@ class Blockchain
 friend class ChainDatabase;
     
     std::vector<Block>  _blocks;
-    std::uint32_t       _difficulty;
 
     friend void to_json(nl::json& j, const Blockchain& b);
     friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
     Blockchain() = default;
-    Blockchain(std::uint32_t difficulty);
 
     auto begin() const -> decltype(_blocks.begin())
     {
@@ -70,8 +68,6 @@ public:
         return _blocks.at(index);
     }
 
-    void MineBlock(Block& bNew);
-
     bool addNewBlock(const Block& block);
     bool addNewBlock(const Block& block, bool checkPreviousBlock);
 
@@ -82,9 +78,6 @@ public:
 
     bool isValidBlockPair(std::size_t idx) const;
     bool isValidChain() const;
-
-    std::uint32_t difficulty() const { return _difficulty; }
-    void setDifficulty(std::uint32_t v) { _difficulty = v; }
 
     std::uint64_t cumDifficulty() const
     {

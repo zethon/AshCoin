@@ -21,18 +21,6 @@ void from_json(const nl::json& j, Blockchain& b)
     }
 }
 
-Blockchain::Blockchain(std::uint32_t difficulty)
-    : _difficulty{ difficulty }
-{
-}
-
-void Blockchain::MineBlock(Block& newblock)
-{
-    newblock.setPrevious(_blocks.back().hash());
-    newblock.MineBlock(_difficulty);
-    _blocks.push_back(newblock);
-}
-
 bool Blockchain::addNewBlock(const Block& block)
 {
     return addNewBlock(block, true);

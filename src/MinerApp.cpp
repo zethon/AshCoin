@@ -36,12 +36,11 @@ MinerApp::MinerApp(SettingsPtr settings)
     initPeers();
 
     _miner.setDifficulty(difficulty);
-
+    
+    _blockchain = std::make_unique<Blockchain>();
+    
     const std::string dbfolder = _settings->value("database.folder", "");
     _database = std::make_unique<ChainDatabase>(dbfolder);
-   
-    _blockchain = std::make_unique<Blockchain>(difficulty);
-
     _database->initialize(*_blockchain);
 
     _peers.broadcast(R"({"message":"summary"})");
@@ -245,7 +244,7 @@ void MinerApp::runMineThread()
         }
     
         _logger->debug("mining block {} with difficulty {}", 
-            index, _blockchain->difficulty());
+            index, _miner.difficulty());
 
         auto prevTime = static_cast<std::uint64_t>(_blockchain->back().time());
 
@@ -529,7 +528,6 @@ void MinerApp::handleChainResponse(WsClientConnPtr connection, const Blockchain&
 
         _tempchain = std::make_unique<ash::Blockchain>();
         *_tempchain = std::move(tempchain);
-        _tempchain->setDifficulty(_blockchain->difficulty());
     }
     else if (tempchain.front().index() > _blockchain->back().index() + 1)
     {

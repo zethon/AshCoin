@@ -25,16 +25,6 @@ std::string CalculateBlockHash(
     const std::string& data, 
     const std::string& previous);
 
-struct BlockInfo
-{
-    std::uint64_t   index;
-    std::uint32_t   nonce;
-    std::uint32_t   difficulty;
-    time_t          time;
-    std::string     data;
-    std::string     prev;
-};
-
 class Block 
 {
     friend void read_block(std::istream& stream, Block& block);
@@ -64,9 +54,6 @@ public:
     std::string previousHash() const { return _prev; }   
 
     void setPrevious(const std::string& val) { _prev = val; }
-    void MineBlock(uint32_t nDifficulty);
-
-    BlockInfo info() const;
 
 private:
     std::uint64_t        _index;
