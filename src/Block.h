@@ -29,9 +29,7 @@ class Block
 {
     friend void read_block(std::istream& stream, Block& block);
     friend void write_block(std::ostream& stream, const Block& block);
-
     friend void from_json(const nl::json& j, Block& b);
-
     friend class Miner;
 
 public:
@@ -55,6 +53,9 @@ public:
 
     void setPrevious(const std::string& val) { _prev = val; }
 
+    std::string miner() const { return _miner; }
+    void setMiner(std::string_view val) { _miner = val; }
+
 private:
     std::uint64_t        _index;
     std::uint32_t        _nonce;
@@ -64,6 +65,7 @@ private:
     time_t          _time; // std::uint64_t 
     std::string     _hash;
     std::string     _prev;
+    std::string     _miner;
     SpdLogPtr       _logger;
 };
 

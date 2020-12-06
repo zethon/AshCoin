@@ -24,6 +24,13 @@ table
 .floatLeft { width: 49%; float: left; }
 .floatRight {width: 49%; float: right; }
 .container { overflow: hidden; }
+.mineruuid
+{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
 </style>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -52,7 +59,7 @@ var updateStatsWorker =
                 complete: function() 
                 {
                     // Schedule the next request when the current one's complete
-                    setTimeout(updateStatsWorker, 750);
+                    setTimeout(updateStatsWorker, 1000);
                 }
             });
     };
@@ -152,7 +159,11 @@ function clickShutdown()
     <tbody>
         <tr>
             <th colspan="2" class="tableheader">Service Information</th>
-        </tr
+        </tr>
+        <tr>
+            <td>Miner UUID2</td>
+            <td class="mineruuid">%mining-uuid%</td>
+        </tr>
         <tr>
             <td>Full Version</td>
             <td>%build-version%</td>

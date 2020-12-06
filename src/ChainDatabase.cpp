@@ -20,6 +20,8 @@ void write_block(std::ostream& stream, const Block& block)
 
     ash::db::write_data(stream, block.hash());
     ash::db::write_data(stream, block.previousHash());
+
+    ash::db::write_data(stream, block.miner());
 }
 
 void read_block(std::istream& stream, Block& block)
@@ -35,6 +37,7 @@ void read_block(std::istream& stream, Block& block)
 
     ash::db::read_data(stream, block._hash);
     ash::db::read_data(stream, block._prev);
+    ash::db::read_data(stream, block._miner);
 }
 
 constexpr std::string_view DatabaseFile = "chain.ashdb";

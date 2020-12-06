@@ -72,6 +72,8 @@ private:
     void printIndex(HttpResponsePtr response);
 
 private:
+    std::string             _uuid;
+
     ChainDatabasePtr        _database;
     
     std::mutex              _chainMutex;

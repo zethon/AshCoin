@@ -17,6 +17,7 @@ set(HEADER_FILES
     Block.h
     Blockchain.h
     ChainDatabase.h
+    ComputerUUID.h
     core.h
     Miner.h
     MinerApp.h
@@ -28,13 +29,22 @@ set(HEADER_FILES
 
 if(WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "/NODEFAULTLIB:library")
+    list(APPEND SOURCE_FILES
+        ComputerUUIDWindows.h
+    )
 endif()
 
 if(APPLE)
-# utils.h/.cpp needs these two libraries if curl
-# is not included
-find_library(COREFOUNDATION_LIBRARY CoreFoundation)
-find_library(CARBON_LIBRARY Carbon)
+    # utils.h/.cpp needs these two libraries if curl
+    # is not included
+    find_library(COREFOUNDATION_LIBRARY CoreFoundation)
+    find_library(CARBON_LIBRARY Carbon)
+endif()
+
+if (APPLE OR UNIX)
+    list(APPEND SOURCE_FILES
+        ComputerUUIDPosix.cpp
+    )
 endif()
 
 z_compile_resources(RESOURCE_FILES

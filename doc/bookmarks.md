@@ -23,3 +23,9 @@ This is a list of useful links that I encountered while developing Ash.
 ## Javascript/Ajax
 
 https://stackoverflow.com/questions/5052543/how-to-fire-ajax-request-periodically
+
+## Get Mac Address
+
+http://boost.2283326.n4.nabble.com/MAC-Address-td2581617.html#a2581618
+https://github.com/ashishinterra/windows-linux-client-new/blob/4d7c42d099b185e89f5d6e150251fba3fe169064/Software/SysInfra/Projects/libtacommon/ta/netutils.cpp
+https://github.com/bumptop/BumpTop/blob/466d23597a07ae738f4265262fa01087fc6e257c/trunk/mac/Dependencies/ThirdParty/GetPrimaryMACAddress.cpp

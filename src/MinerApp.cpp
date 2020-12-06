@@ -7,6 +7,7 @@
 
 #include "utils.h"
 #include "core.h"
+#include "ComputerUUID.h"
 #include "MinerApp.h"
 
 namespace nl = nlohmann;
@@ -28,6 +29,14 @@ MinerApp::MinerApp(SettingsPtr settings)
       _mineThread{},
       _logger(ash::initializeLogger("MinerApp"))
 {
+    const std::string dbfolder = _settings->value("database.folder", "");
+
+    utils::ComputerUUID uuid;
+    uuid.setCustomData(dbfolder);
+    _uuid = uuid.getUUID();
+    
+    _logger->debug("current miner uuid is {}", _uuid);
+
     std::uint32_t difficulty = _settings->value("chain.difficulty", 5u);
 
     _logger->info("current difficulty set to {}", difficulty);
@@ -41,8 +50,7 @@ MinerApp::MinerApp(SettingsPtr settings)
     _miner.setDifficulty(difficulty);
 
     _blockchain = std::make_unique<Blockchain>();
-    
-    const std::string dbfolder = _settings->value("database.folder", "");
+
     _database = std::make_unique<ChainDatabase>(dbfolder);
     _database->initialize(*_blockchain);
 
@@ -76,6 +84,7 @@ void MinerApp::printIndex(HttpResponsePtr response)
     dict["%chain-diff%"] = std::to_string(_miner.difficulty());
     dict["%chain-cumdiff%"] = std::to_string(_blockchain->cumDifficulty());
     dict["%mining-status%"] = (_miningDone ? "stopped" : "started");
+    dict["%mining-uuid%"] = _uuid;
     dict["%rest-port%"] 
         = std::to_string(_settings->value("rest.port", HTTPServerPortDefault));
 
@@ -287,11 +296,19 @@ void MinerApp::runMineThread()
             continue;
         }
 
+        auto& newblock = std::get<1>(result);
+        newblock.setMiner(_uuid);
+
         // append the block to the chain
-        _blockchain->addNewBlock(std::get<1>(result));
+        if (!_blockchain->addNewBlock(newblock))
+        {
+            _logger->error("could not add new block #{} to blockchain, stopping mining", newblock.index());
+            _miningDone = true;
+            break;
+        }
 
         // write the block to the database
-        _database->write(std::get<1>(result));
+        _database->write(newblock);
 
         _logger->info("successfully mined bock {}", index);
 

@@ -19,6 +19,7 @@ void to_json(nl::json& j, const Block& b)
     j["time"] = b.time();
     j["hash"] = b.hash();
     j["prev"] = b.previousHash();
+    j["miner"] = b.miner();
 }
 
 void from_json(const nl::json& j, Block& b)
@@ -30,6 +31,7 @@ void from_json(const nl::json& j, Block& b)
     j["time"].get_to(b._time);
     j["hash"].get_to(b._hash);
     j["prev"].get_to(b._prev);
+    j["miner"].get_to(b._miner);
 }
 
 std::string CalculateBlockHash(
