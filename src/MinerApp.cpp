@@ -175,6 +175,17 @@ void MinerApp::initRest()
             jresponse["blocks"].push_back(_blockchain->back());
             jresponse["cumdiff"] = _blockchain->cumDifficulty();
             jresponse["difficulty"] = _miner.difficulty();
+
+            if (!this->_miningDone)
+            {
+                jresponse["status"] = fmt::format("mining block #{}",
+                    this->_blockchain->size());
+            }
+            else
+            {
+                jresponse["status"] = "stopped";
+            }
+
             response->write(jresponse.dump());
         };
 

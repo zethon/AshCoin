@@ -2,15 +2,25 @@
 <head>
 <link rel="shortcut icon" href="#" />
 <style>
-table, td, th 
+table, tr, td
 {
     border: 1px solid black;
+    padding-left: 5px;
 }
 table 
 {
     width:100%;
     border-collapse: collapse;
 }
+
+.tableheader
+{ 
+    border: 1px solid black;
+    background-color:lightblue;
+    text-align: left;
+    font-size: larger;
+}
+
 .floatLeft { width: 49%; float: left; }
 .floatRight {width: 49%; float: right; }
 .container { overflow: hidden; }
@@ -37,11 +47,12 @@ var updateStatsWorker =
                     $("#cumdiff").text(data.cumdiff);
                     $("#chainsize").text(data.blocks[0].index);
                     $("#currentdiff").text(data.difficulty);
+                    $("#mining-status").text(data.status);
                 },
                 complete: function() 
                 {
                     // Schedule the next request when the current one's complete
-                    setTimeout(updateStatsWorker, 1500);
+                    setTimeout(updateStatsWorker, 750);
                 }
             });
     };
@@ -103,7 +114,7 @@ function clickShutdown()
 </script>
 
 </head>
-<body onload="javascript:onLoad();" style="font-family:'courier new';">
+<body onload="javascript:onLoad();" style="font-family:'courier new'; margin-left:3%;margin-right:3%;">
 <h2>%app-title% (%app-domain%)</h2>
 
 <div class="container">
@@ -113,22 +124,22 @@ function clickShutdown()
 <table>
     <tbody>
         <tr>
-            <th colspan="2">Service Status</th>
+            <th colspan="100%" class="tableheader">Service Status</th>
         </tr
         <tr>
-            <td><b>Mining</b></td>
+            <td class="statname">Mining Status</td>
             <td><div id="mining-status">%mining-status%</div></td>
         </tr>
         <tr>
-            <td><b>Last Block</b></td>
+            <td>Last Block</td>
             <td><div id="chainsize">%chain-size%</div></td>
         </tr>
         <tr>
-            <td><b>Current Difficulty</b></td>
+            <td>Current Difficulty</td>
             <td><div id="currentdiff">%chain-diff%</div></td>
         </tr>
         <tr>
-            <td><b>Cumulative Difficulty</b></td>
+            <td>Cumulative Difficulty</td>
             <td><div id="cumdiff">%chain-cumdiff%</div></td>
         </tr>
     </tbody>
@@ -140,14 +151,14 @@ function clickShutdown()
 <table>
     <tbody>
         <tr>
-            <th colspan="2">Service Information</th>
+            <th colspan="2" class="tableheader">Service Information</th>
         </tr
         <tr>
-            <td><b>Full Version</b></td>
+            <td>Full Version</td>
             <td>%build-version%</td>
         </tr>
         <tr>
-            <td><b>Build Date</b></td>
+            <td>Build Date</td>
             <td>%build-date%</td>
         </tr>
     </tbody>
@@ -156,13 +167,29 @@ function clickShutdown()
 </div>
 </div>
 
-<br/>
-
 <hr/>
+
+<div style="text-align:center;">
 <button id="miningbtn" onclick="javascript:clickMiningButton();">Start Mining</button>
 &nbsp;&nbsp;<button id="shutdownbtn" onclick="javascript:clickShutdown();">Shutdown</button>
-<br/>
+</div>
+
 <hr/>
+
+<table>
+    <tr>
+        <td class="tableheader" colspan="100%" >Latest Blocks</td>
+    </tr>
+
+    <tr>
+        <td><b>Block</b></td>
+        <td><b>Time</b></td>
+        <td><b>Txn</b></td>
+        <td><b>Miner</b></td>
+        <td><b>Difficulty</b></td>
+    </tr>
+
+</table>
 
 <br/>
 <small>%app-copyright% (<a href="%app-github%" target="_blank">%app-github%</a>)</small>
