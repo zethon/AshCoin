@@ -1,12 +1,5 @@
 // Ash Crypto
 // Copyright (c) 2017-2020, Adalid Claure <aclaure@gmail.com>
-
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/range/join.hpp>
-#include <fmt/core.h>
-
-#include "utils.h"
-
 #include <stdexcept>
 #include <algorithm>
 #include <functional>
@@ -34,6 +27,14 @@
 #   include <CoreFoundation/CFBundle.h>
 #   include <ApplicationServices/ApplicationServices.h>
 #endif
+
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/range/join.hpp>
+#include <boost/algorithm/string/replace.hpp>
+
+#include <fmt/core.h>
+
+#include "utils.h"
 
 // There's some weirdness going on in Ubuntu where using the / operator
 // on Ubuntu was throwing an error in some instances. Instead I set out
@@ -200,6 +201,16 @@ bool convertToBool(const std::string_view s)
     }
 
     throw std::runtime_error(fmt::format("invalid value '{}'", s));
+}
+
+std::string DoDictionary(const std::string& source, const Dictionary& valmap)
+{
+    std::string retval { source };
+    for (const auto& [key, value] : valmap)
+    {
+        boost::replace_all(retval, key, value);
+    }
+    return retval;
 }
 
 std::string getDefaultConfigFile()

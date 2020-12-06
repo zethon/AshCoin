@@ -24,6 +24,9 @@ bool isNumeric(const std::string_view& s);
 bool isBoolean(const std::string_view s);
 bool convertToBool(const std::string_view s);
 
+using Dictionary = std::map<std::string, std::string>;
+std::string DoDictionary(const std::string& source, const Dictionary& valmap);
+
 std::string getUserFolder();
 std::string getDataFolder();
 std::string getDefaultConfigFile();

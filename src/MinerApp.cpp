@@ -6,6 +6,7 @@
 #include "index_html.h"
 
 #include "utils.h"
+#include "core.h"
 #include "MinerApp.h"
 
 namespace nl = nlohmann;
@@ -64,36 +65,17 @@ MinerApp::~MinerApp()
 
 void MinerApp::printIndex(HttpResponsePtr response)
 {
-    // std::stringstream out;
-    // out << "<html><body>";
-    // out << "<h3>mining status: <b>"
-    //     << (_miningDone ? "stopped" : "started")
-    //     << "</b></h3>";
-
-    // out << "<h3>blockchain size: <b>"
-    //     << "<a href='/block-idx/" 
-    //         << (_blockchain->size() - 1) 
-    //         << "'>" 
-    //         << (_blockchain->size() - 1) 
-    //         << "</a>"
-    //     << "</b></h3>";
-
-    // if (_miningDone)
-    // {
-    //     out << "<a href='/startMining'>start mining</a><br/>";
-    // }
-    // else
-    // {
-    //     out << "<a href='/stopMining'>stop mining</a><br/>";
-    // }
-    
-    // out << "<a href='/quit'>quit</a>";
-   
-    // out << "</body></html>";
-    // response->write(out);
+    utils::Dictionary dict;
+    dict["%app-title%"] = APP_TITLE;
+    dict["%build-date%"] = BUILDTIMESTAMP;
+    dict["%build-version%"] = VERSION;
+    dict["%mining-status%"] = (_miningDone ? "stopped" : "started");
+    dict["%chain-size%"] = std::to_string(_blockchain->size() - 1);
+    dict["%chain-diff%"] = std::to_string(_miner.difficulty());
+    dict["%chain-cumdiff%"] = std::to_string(_blockchain->cumDifficulty());
 
     std::stringstream out;
-    out << index_html;
+    out << utils::DoDictionary(index_html, dict);
     response->write(out);
 }
 

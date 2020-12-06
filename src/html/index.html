@@ -1,5 +1,71 @@
 <html>
+<head>
+<style>
+table, td, th 
+{
+    border: 1px solid black;
+}
+
+table 
+{
+    width:100%;
+    border-collapse: collapse;
+}
+</style>
+</head>
 <body>
-This is a test!
+<h2>%app-title%</h2>
+
+<table>
+    <tr>
+        <td>
+
+<table>
+    <tbody>
+        <tr>
+            <th colspan="2">Service Status</th>
+        </tr
+        <tr>
+            <td><b>Mining</b></td>
+            <td>%mining-status%</td>
+        </tr>
+        <tr>
+            <td><b>Last Block</b></td>
+            <td>%chain-size%</td>
+        </tr>
+        <tr>
+            <td><b>Current Difficulty</b></td>
+            <td>%chain-diff%</td>
+        </tr>
+        <tr>
+            <td><b>Cumulative Difficulty</b></td>
+            <td>%chain-cumdiff%</td>
+        </tr>
+    </tbody>
+</table>
+
+        </td>
+        <td>
+
+<table>
+    <tbody>
+        <tr>
+            <th colspan="2">Service Information</th>
+        </tr
+        <tr>
+            <td><b>Full Version</b></td>
+            <td>%build-version%</td>
+        </tr>
+        <tr>
+            <td><b>Build Date</b></td>
+            <td>%build-date%</td>
+        </tr>
+    </tbody>
+</table>
+
+        </td>
+    </tr>
+</table>
+
 </body>
 </html>
