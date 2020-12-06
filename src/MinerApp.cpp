@@ -3,6 +3,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "index_html.h"
+
 #include "utils.h"
 #include "MinerApp.h"
 
@@ -62,32 +64,36 @@ MinerApp::~MinerApp()
 
 void MinerApp::printIndex(HttpResponsePtr response)
 {
-    std::stringstream out;
-    out << "<html><body>";
-    out << "<h3>mining status: <b>"
-        << (_miningDone ? "stopped" : "started")
-        << "</b></h3>";
+    // std::stringstream out;
+    // out << "<html><body>";
+    // out << "<h3>mining status: <b>"
+    //     << (_miningDone ? "stopped" : "started")
+    //     << "</b></h3>";
 
-    out << "<h3>blockchain size: <b>"
-        << "<a href='/block-idx/" 
-            << (_blockchain->size() - 1) 
-            << "'>" 
-            << (_blockchain->size() - 1) 
-            << "</a>"
-        << "</b></h3>";
+    // out << "<h3>blockchain size: <b>"
+    //     << "<a href='/block-idx/" 
+    //         << (_blockchain->size() - 1) 
+    //         << "'>" 
+    //         << (_blockchain->size() - 1) 
+    //         << "</a>"
+    //     << "</b></h3>";
 
-    if (_miningDone)
-    {
-        out << "<a href='/startMining'>start mining</a><br/>";
-    }
-    else
-    {
-        out << "<a href='/stopMining'>stop mining</a><br/>";
-    }
+    // if (_miningDone)
+    // {
+    //     out << "<a href='/startMining'>start mining</a><br/>";
+    // }
+    // else
+    // {
+    //     out << "<a href='/stopMining'>stop mining</a><br/>";
+    // }
     
-    out << "<a href='/quit'>quit</a>";
+    // out << "<a href='/quit'>quit</a>";
    
-    out << "</body></html>";
+    // out << "</body></html>";
+    // response->write(out);
+
+    std::stringstream out;
+    out << index_html;
     response->write(out);
 }
 

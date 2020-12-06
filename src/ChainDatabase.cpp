@@ -57,7 +57,7 @@ void ChainDatabase::initialize(Blockchain& blockchain)
 
     if (!boost::filesystem::exists(_dbfile))
     {
-        _logger->info("creating genesis block, starting new chain");
+        _logger->warn("creating genesis block, starting new chain");
 
         std::time_t t = std::time(nullptr);
         const auto gendata = fmt::format("{} {:%Y-%m-%d %H:%M:%S %Z}.",GENESIS_BLOCK, *std::localtime(&t));
