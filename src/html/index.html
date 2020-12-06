@@ -5,20 +5,41 @@ table, td, th
 {
     border: 1px solid black;
 }
-
 table 
 {
     width:100%;
     border-collapse: collapse;
 }
+.floatLeft { width: 49%; float: left; }
+.floatRight {width: 49%; float: right; }
+.container { overflow: hidden; }
 </style>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript">
+var ismining = !("%mining-status%" == "stopped");
+
+function onLoad()
+{
+    if (ismining)
+    {
+        $("miningbtn").val("Stop Mining");
+    }
+}
+
+function clickMiningButton()
+{
+    
+}
+</script>
+
 </head>
-<body>
+<body onload="javascript:onLoad();">
 <h2>%app-title%</h2>
 
-<table>
+<div class="container">
+    <div class="floatLeft">
     <tr>
-        <td>
 
 <table>
     <tbody>
@@ -44,8 +65,8 @@ table
     </tbody>
 </table>
 
-        </td>
-        <td>
+</div>
+<div class="floatRight">
 
 <table>
     <tbody>
@@ -63,9 +84,11 @@ table
     </tbody>
 </table>
 
-        </td>
-    </tr>
-</table>
+</div>
+</div>
+
+<br/>
+<button id="miningbtn" onclick="javascript:clickMiningButton();">Start Mining</button>
 
 </body>
 </html>
