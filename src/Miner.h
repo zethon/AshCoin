@@ -46,6 +46,8 @@ public:
         std::string hash = 
             CalculateBlockHash(index, nonce, _difficulty, time, data, prev);
 
+        _keepTrying = true;
+
         while (_keepTrying 
             && hash.compare(0, _difficulty, zeros) != 0)
         {

@@ -66,13 +66,16 @@ MinerApp::~MinerApp()
 void MinerApp::printIndex(HttpResponsePtr response)
 {
     utils::Dictionary dict;
-    dict["%app-title%"] = APP_TITLE;
+    dict["%app-title%"] = APP_NAME_LONG;
+    dict["%app-domain%"] = APP_DOMAIN;
     dict["%build-date%"] = BUILDTIMESTAMP;
     dict["%build-version%"] = VERSION;
-    dict["%mining-status%"] = (_miningDone ? "stopped" : "started");
     dict["%chain-size%"] = std::to_string(_blockchain->size() - 1);
     dict["%chain-diff%"] = std::to_string(_miner.difficulty());
     dict["%chain-cumdiff%"] = std::to_string(_blockchain->cumDifficulty());
+    dict["%mining-status%"] = (_miningDone ? "stopped" : "started");
+    dict["%rest-port%"] 
+        = std::to_string(_settings->value("rest.port", HTTPServerPortDefault));
 
     std::stringstream out;
     out << utils::DoDictionary(index_html, dict);
@@ -123,28 +126,43 @@ void MinerApp::initRest()
             response->write(stream);
         };
 
-    _httpServer.resource["^/stopMining$"]["GET"] = 
+    _httpServer.resource["^/stopMining$"]["POST"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
-            this->stopMining();
-            std::stringstream stream;
-            stream << "<html><body><h1>Mining shutdown requested</h1></body></html>";
-            response->write(stream);
+            _logger->trace("stopMining request from {}", 
+                request->remote_endpoint().address().to_string());
 
-            if (this->_mineThread.joinable())
+            if (!this->_miningDone)
             {
-                this->_mineThread.join();
+                this->stopMining();
+                if (this->_mineThread.joinable())
+                {
+                    this->_mineThread.join();
+                }
+                response->write(SimpleWeb::StatusCode::success_ok, "OK");
+            }
+            else
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
             }
         };
 
-    _httpServer.resource["^/startMining$"]["GET"] = 
+    _httpServer.resource["^/startMining$"]["POST"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
-            this->_miningDone = false;
-            this->_mineThread = std::thread(&MinerApp::runMineThread, this);
-            std::stringstream stream;
-            stream << "<html><body><h1>Mining startup requested</h1></body></html>";
-            response->write(stream);
+            _logger->trace("startMining request from {}", 
+                request->remote_endpoint().address().to_string());
+
+            if (this->_miningDone)
+            {
+                this->_miningDone = false;
+                this->_mineThread = std::thread(&MinerApp::runMineThread, this);
+                response->write(SimpleWeb::StatusCode::success_ok, "OK");
+            }
+            else
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+            }
         };
 
     _httpServer.resource["^/addPeer/((?:[0-9]{1,3}\\.){3}[0-9]{1,3})$"]["GET"] = 
