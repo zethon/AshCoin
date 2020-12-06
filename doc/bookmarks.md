@@ -19,3 +19,7 @@ This is a list of useful links that I encountered while developing Ash.
 
 * https://stackoverflow.com/questions/4217037/catch-ctrl-c-in-c
 *https://stackoverflow.com/questions/343219/is-it-possible-to-use-signal-inside-a-c-class
+
+## Javascript/Ajax
+
+https://stackoverflow.com/questions/5052543/how-to-fire-ajax-request-periodically

@@ -68,6 +68,8 @@ void MinerApp::printIndex(HttpResponsePtr response)
     utils::Dictionary dict;
     dict["%app-title%"] = APP_NAME_LONG;
     dict["%app-domain%"] = APP_DOMAIN;
+    dict["%app-github%"] = GITHUB_PAGE;
+    dict["%app-copyright%"] = COPYRIGHT;
     dict["%build-date%"] = BUILDTIMESTAMP;
     dict["%build-version%"] = VERSION;
     dict["%chain-size%"] = std::to_string(_blockchain->size() - 1);
@@ -117,19 +119,20 @@ void MinerApp::initRest()
             response->write(ss);
         };
 
-    _httpServer.resource["^/quit$"]["GET"] = 
+    _httpServer.resource["^/shutdown$"]["POST"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
+            _logger->debug("shutdown request from {}", 
+                request->remote_endpoint().address().to_string());
+
+            response->write(SimpleWeb::StatusCode::success_ok, "OK");
             this->signalExit();
-            std::stringstream stream;
-            stream << "<html><body><h1>Shutdown requested</h1></body></html>";
-            response->write(stream);
         };
 
     _httpServer.resource["^/stopMining$"]["POST"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
-            _logger->trace("stopMining request from {}", 
+            _logger->debug("stopMining request from {}", 
                 request->remote_endpoint().address().to_string());
 
             if (!this->_miningDone)
@@ -163,6 +166,16 @@ void MinerApp::initRest()
             {
                 response->write(SimpleWeb::StatusCode::client_error_bad_request);
             }
+        };
+
+    _httpServer.resource["^/summary$"]["POST"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            nl::json jresponse;
+            jresponse["blocks"].push_back(_blockchain->back());
+            jresponse["cumdiff"] = _blockchain->cumDifficulty();
+            jresponse["difficulty"] = _miner.difficulty();
+            response->write(jresponse.dump());
         };
 
     _httpServer.resource["^/addPeer/((?:[0-9]{1,3}\\.){3}[0-9]{1,3})$"]["GET"] = 

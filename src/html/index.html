@@ -19,6 +19,32 @@ table
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript">
 var ismining = false;
+const serviceUrl = 'http://' + window.location.hostname + ':%rest-port%/';
+
+var Http = null;
+var updateHttp = null;
+
+var updateStatsWorker = 
+    function worker() 
+    {
+        $.ajax(
+            {
+                url: serviceUrl + 'summary',
+                type: 'POST', 
+                success: function(datastr) 
+                {
+                    var data = JSON.parse(datastr);
+                    $("#cumdiff").text(data.cumdiff);
+                    $("#chainsize").text(data.blocks[0].index);
+                    $("#currentdiff").text(data.difficulty);
+                },
+                complete: function() 
+                {
+                    // Schedule the next request when the current one's complete
+                    setTimeout(updateStatsWorker, 1500);
+                }
+            });
+    };
 
 function onLoad()
 {
@@ -27,33 +53,28 @@ function onLoad()
     {
         $("#miningbtn").text("Stop Mining");
     }
-}
 
-var Http = null;
-const mineUrl = 'http://' + window.location.hostname + ':%rest-port%/';
+    updateStatsWorker();
+}
 
 function clickMiningButton()
 {
     Http = new XMLHttpRequest();
     if (ismining)
     {
-        console.log("sending stop-mining request");
         $("#mining-status").text('stopping');
-        Http.open("POST", mineUrl+"stopMining");
+        Http.open("POST", serviceUrl+"stopMining");
     }
     else
     {
-        console.log("sending start-mining request");
         $("#mining-status").text('starting');
-        Http.open("POST", mineUrl+"startMining");
+        Http.open("POST", serviceUrl+"startMining");
     }
     
-    Http.send();
     Http.onreadystatechange = (e) => 
         {
             if (Http.responseText == "OK")
             {
-                console.log("response: " + Http.responseText);
                 if (ismining)
                 {
                     ismining = false;
@@ -68,11 +89,21 @@ function clickMiningButton()
                 }
             }
         };
+
+    Http.send();
+}
+
+function clickShutdown()
+{
+    var shutdownHttp = new XMLHttpRequest();
+    shutdownHttp.open("POST", serviceUrl + 'shutdown');
+    shutdownHttp.send();
+    shutdownHttp.onreadystatechange = (e) => { };
 }
 </script>
 
 </head>
-<body onload="javascript:onLoad();">
+<body onload="javascript:onLoad();" style="font-family:'courier new';">
 <h2>%app-title% (%app-domain%)</h2>
 
 <div class="container">
@@ -90,15 +121,15 @@ function clickMiningButton()
         </tr>
         <tr>
             <td><b>Last Block</b></td>
-            <td>%chain-size%</td>
+            <td><div id="chainsize">%chain-size%</div></td>
         </tr>
         <tr>
             <td><b>Current Difficulty</b></td>
-            <td>%chain-diff%</td>
+            <td><div id="currentdiff">%chain-diff%</div></td>
         </tr>
         <tr>
             <td><b>Cumulative Difficulty</b></td>
-            <td>%chain-cumdiff%</td>
+            <td><div id="cumdiff">%chain-cumdiff%</div></td>
         </tr>
     </tbody>
 </table>
@@ -126,7 +157,15 @@ function clickMiningButton()
 </div>
 
 <br/>
+
+<hr/>
 <button id="miningbtn" onclick="javascript:clickMiningButton();">Start Mining</button>
+&nbsp;&nbsp;<button id="shutdownbtn" onclick="javascript:clickShutdown();">Shutdown</button>
+<br/>
+<hr/>
+
+<br/>
+<small>%app-copyright% (<a href="%app-github%" target="_blank">%app-github%</a>)</small>
 
 </body>
 </html>
