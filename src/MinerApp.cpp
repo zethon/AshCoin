@@ -177,7 +177,7 @@ void MinerApp::initRest()
             }
         };
 
-    _httpServer.resource["^/summary$"]["POST"] = 
+    _httpServer.resource["^/summary$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
             nl::json jresponse;
@@ -196,6 +196,47 @@ void MinerApp::initRest()
             }
 
             response->write(jresponse.dump());
+        };
+
+    _httpServer.resource["^/block/([0-9]+)$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            const auto indexStr = request->path_match[1].str();
+            int blockIndex = 0;
+            auto result = 
+                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), blockIndex);
+
+            if (result.ec == std::errc::invalid_argument
+                || blockIndex >= _blockchain->size())
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+                return;
+            }
+
+            nl::json json = _blockchain->at(blockIndex);
+            response->write(json.dump());
+        };
+
+    _httpServer.resource["^/blocks/last/([0-9]+)$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            const auto indexStr = request->path_match[1].str();
+            int startingIdx = 0;
+            auto result = 
+                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), startingIdx);
+
+            if (result.ec == std::errc::invalid_argument)
+            {
+                return;
+            }
+
+            nl::json json;
+            startingIdx = std::max(0ul, _blockchain->size() - startingIdx);
+            for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
+            {
+                json["blocks"].push_back(_blockchain->at(idx));
+            }
+            response->write(json.dump());
         };
 
     _httpServer.resource["^/addPeer/((?:[0-9]{1,3}\\.){3}[0-9]{1,3})$"]["GET"] = 

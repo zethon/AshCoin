@@ -24,7 +24,7 @@ table
 .floatLeft { width: 49%; float: left; }
 .floatRight {width: 49%; float: right; }
 .container { overflow: hidden; }
-.mineruuid
+.mineruuid, .minercol
 {
     white-space: nowrap;
     overflow: hidden;
@@ -35,11 +35,27 @@ table
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript">
+
 var ismining = false;
 const serviceUrl = 'http://' + window.location.hostname + ':%rest-port%/';
 
 var Http = null;
 var updateHttp = null;
+
+var lastChainIndex = -1;
+var firstChainIndex = -1;
+
+//Epoch To Date
+function EpochToDate(epoch) 
+{
+    if (epoch < 10000000000)
+    {
+        epoch *= 1000; // convert to milliseconds (Epoch is usually expressed in seconds, but Javascript uses Milliseconds)
+    }
+
+    var epoch = epoch + (new Date().getTimezoneOffset() * -1); //for timeZone        
+    return new Date(epoch);
+}
 
 var updateStatsWorker = 
     function worker() 
@@ -47,7 +63,7 @@ var updateStatsWorker =
         $.ajax(
             {
                 url: serviceUrl + 'summary',
-                type: 'POST', 
+                type: 'GET', 
                 success: function(datastr) 
                 {
                     var data = JSON.parse(datastr);
@@ -64,6 +80,96 @@ var updateStatsWorker =
             });
     };
 
+function getBlockTableRow(block)
+{
+    var d = EpochToDate(block.time);
+    var row = "<td>" + block.index + "</td>";
+    row += "<td class='minercol'>" + block.hash + "</td>";
+    row += "<td>" + block.nonce + "</td>";
+    row += "<td>" + d.toUTCString() + "</td>";
+    row += "<td class='minercol'>" + block.miner + "</td>";
+    row += "<td>" + block.difficulty + "</td>";
+
+    row = "<tr id='block" + block.index + "'>" + row + "</tr>"
+    return row;
+}
+
+function getBlockRowElement(block)
+{
+    
+    let d = document;
+    let tr = document.createElement('tr');
+    tr.setAttribute('id', 'block' + block.index);
+    tr.appendChild(d.createElement('td')).innerHTML = block.index;
+    tr.appendChild(d.createElement('td')).innerHTML = block.hash;
+    tr.lastElementChild.setAttribute('class', 'minercol');
+
+    tr.appendChild(d.createElement('td')).innerHTML = block.nonce;
+
+    var dt = EpochToDate(block.time);
+    tr.appendChild(d.createElement('td')).innerHTML = dt.toUTCString();
+    
+    tr.appendChild(d.createElement('td')).innerHTML = block.miner;
+    tr.lastElementChild.setAttribute('class', 'minercol');
+
+    tr.appendChild(d.createElement('td')).innerHTML = block.difficulty;
+    return tr;
+}
+
+function onLoadBlocks()
+{
+    $.ajax(
+    {
+        url: serviceUrl + 'blocks/last/10',
+        type: 'GET', 
+        success: function(datastr) 
+        {
+            console.log("onloadblocks()....");
+            var table = $("#blocklist");
+            var data = JSON.parse(datastr);
+            data.blocks.slice().reverse().forEach(block => 
+                {
+                    table.append(getBlockTableRow(block));
+                });
+
+            firstChainIndex = data.blocks[0].index;
+            lastChainIndex = data.blocks[data.blocks.length-1].index;
+            setTimeout(updateChainWorker, 5000);
+        },
+        error: function()
+        {
+            setTimeout(onLoadBlocks, 5000);
+        }
+    });
+}
+
+var updateChainWorker = 
+    function()
+    {
+        $.ajax(
+            {
+                url: serviceUrl + 'block/' + (lastChainIndex + 1),
+                type: 'GET', 
+                success: function(datastr) 
+                {
+                    var block = JSON.parse(datastr);
+                    $("#block" + firstChainIndex).remove();
+                    
+                    var el = document.getElementById("blocklist");
+                    var tr = getBlockRowElement(block);
+                    el.insertBefore(tr, el.firstElementChild);
+
+                    firstChainIndex++;
+                    lastChainIndex++;
+                },
+                complete: function() 
+                {
+                    // Schedule the next request when the current one's complete
+                    setTimeout(updateChainWorker, 5000);
+                }
+            });
+    }
+
 function onLoad()
 {
     ismining = !("%mining-status%" == "stopped");
@@ -73,6 +179,7 @@ function onLoad()
     }
 
     updateStatsWorker();
+    onLoadBlocks();
 }
 
 function clickMiningButton()
@@ -161,7 +268,7 @@ function clickShutdown()
             <th colspan="2" class="tableheader">Service Information</th>
         </tr>
         <tr>
-            <td>Miner UUID2</td>
+            <td>Miner UUID</td>
             <td class="mineruuid">%mining-uuid%</td>
         </tr>
         <tr>
@@ -187,19 +294,21 @@ function clickShutdown()
 
 <hr/>
 
-<table>
+<table id="chaintable">
     <tr>
         <td class="tableheader" colspan="100%" >Latest Blocks</td>
     </tr>
 
     <tr>
         <td><b>Block</b></td>
+        <td><b>Hash</b></td>
+        <td><b>Nonce</b></td>
         <td><b>Time</b></td>
-        <td><b>Txn</b></td>
         <td><b>Miner</b></td>
         <td><b>Difficulty</b></td>
     </tr>
-
+    <tbody id="blocklist">
+    </tbody>
 </table>
 
 <br/>
