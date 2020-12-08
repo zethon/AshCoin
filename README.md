@@ -1,6 +1,6 @@
-# ASH
+# HenryCoin
 
-ASH is a crypto-currency built from scratch.
+HenryCoin is a crypto-currency built from scratch.
 
 ![](doc/images/screenshot.jpeg)
 
