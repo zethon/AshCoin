@@ -1,6 +1,8 @@
 # ASH
 
-ASH is a crypto-currency built from scratch. 
+ASH is a crypto-currency built from scratch.
+
+![](doc/images/screenshot.jpeg)
 
 My goals with this project are as follows:
 
