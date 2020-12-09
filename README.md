@@ -2,6 +2,8 @@
 
 HenryCoin is a crypto-currency built from scratch.
 
+**NOTE**: This project is **a fun project** to help me learn more about blockchains and crypto currency. **I am by no means an expert in either**. Nor is this intended to be a real crypto currency.
+
 ![](doc/images/screenshot.jpeg)
 
 My goals with this project are as follows:
@@ -10,9 +12,7 @@ My goals with this project are as follows:
 * **Wallets**: Users can send coins from one wallet to another.
 * **Security**: Basic security.
 
-A lot of this project is based on [this Javascript tutorial](https://lhartikk.github.io/jekyll/update/2017/07/15/chapter0.html). However this project uses C++ (as of the writing of this I am using C++17, but hope to switch to C++20 soon).
-
-**NOTE**: This implementation is simply a fun project to help me learn more about blockchains and crypto currency. **I am by no means an expert in either**. 
+A lot of this project is based on [this Javascript tutorial](https://lhartikk.github.io/jekyll/update/2017/07/15/chapter0.html). However this project uses C++ (as of the writing of this I am using C++17, but hope to switch to C++20 soon). 
 
 ## Settings
 
