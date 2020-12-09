@@ -20,7 +20,7 @@ constexpr auto BLOCK_GENERATION_INTERVAL = 10u * 60u; // in seconds
 constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 25u; // in blocks
 #else
 constexpr auto BLOCK_GENERATION_INTERVAL = 60u; // in seconds
-constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 10; // in blocks
+constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 10u; // in blocks
 #endif
 
 MinerApp::MinerApp(SettingsPtr settings)
@@ -187,8 +187,7 @@ void MinerApp::initRest()
 
             if (!this->_miningDone)
             {
-                jresponse["status"] = fmt::format("mining block #{}",
-                    this->_blockchain->size());
+                jresponse["status"] = "mining";
             }
             else
             {
@@ -385,21 +384,30 @@ void MinerApp::runMineThread()
         // update our blockchain
         syncBlockchain();
 
-        // request an update from the network
-        _peers.broadcast(R"({"message":"summary"})");
+        // let the network know about our new coin
+        broadcastNewBlock(newblock);
     }
+}
+
+void MinerApp::broadcastNewBlock(const Block& block)
+{
+    // nl::json msg;
+    // msg["message"] = "newblock";
+    // msg["block"] = block;
+    // msg[""]
+
 }
 
 // the blockchain is synced at startup and
 // after each block is mined
 void MinerApp::syncBlockchain()
 {
-    if (std::lock_guard<std::mutex>{_chainMutex}; 
+    if (std::lock_guard<std::mutex> lock{_chainMutex}; 
         _tempchain)
     {
-        // we're replacing the full chaing
         if (_tempchain->front().index() == 0)
         {
+            // we're replacing the full chain
             _blockchain.swap(_tempchain);
             _database->reset();
             _database->writeChain(*_blockchain);
@@ -457,7 +465,7 @@ void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawm
 
     const auto message = json["message"].get<std::string>();
 
-    _logger->debug("ws:/chain received request on connection {}: {}", 
+    _logger->trace("ws:/chain received request on connection {}: {}", 
         static_cast<void*>(connection.get()), message);
 
     std::stringstream response;
@@ -510,6 +518,11 @@ void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawm
             }
         }
     }
+    else if (message == "newblock")
+    {
+        std::lock_guard<std::mutex> _lock(_chainMutex);
+
+    }
     else
     {
         jresponse["error"] = fmt::format("unknown message '{}'", message);
@@ -539,15 +552,19 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
     {
         if (!json.contains("blocks")
             || !json["blocks"].is_array()
-            || json["blocks"].size() != 2)
+            || json["blocks"].size() != 2
+            || !json.contains("cumdiff"))
         {
-            _logger->warn("malformed ws:/chain 'latest' response on connection {}", 
+            _logger->warn("malformed wsc:/chain 'summary' response on connection {}", 
                 static_cast<void*>(connection.get()));
             return;
         }
 
         const auto& remote_gen = json["blocks"].at(0).get<ash::Block>();
         const auto& remote_last = json["blocks"].at(1).get<ash::Block>();
+
+        auto local_cumdiff = _blockchain->cumDifficulty();
+        auto remote_cumdiff = json["cumdiff"].get<std::uint64_t>();
         
         // TODO: we're using the 'summary' command to determine
         // if we need to replace/update the chain, but we only
@@ -567,13 +584,15 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
                 connection->send(R"({"message":"chain"})");
             }
         }
-        else if (lastblock.index() < remote_last.index())
+        else if (local_cumdiff < remote_cumdiff)
         {
             auto startIdx = lastblock.index() + 1;
             auto stopIdx = remote_last.index();
 
-            _logger->info("'summary' returned larger chain on connection {}, requesting blocks {}-{}", 
-                static_cast<void*>(connection.get()), startIdx, stopIdx);
+            _logger->info("remote chain has a greater cumalative difficulty ({}) than local chain ({})",
+                remote_cumdiff, local_cumdiff);
+
+            _logger->debug("requesting blocks {}-{}", startIdx, stopIdx);
 
             const auto msg = fmt::format(R"({{ "message":"chain","id1":{},"id2":{} }})",startIdx, stopIdx);
             connection->send(msg);
@@ -651,7 +670,7 @@ void MinerApp::handleChainResponse(WsClientConnPtr connection, const Blockchain&
             auto startIdx = tempchain.front().index() - 1;
             auto stopIdx = tempchain.back().index();
             
-            _logger->info("temp chain is misaligned, requesting remote blocks {}-{}", startIdx, stopIdx);
+            _logger->debug("temp chain is misaligned, requesting remote blocks {}-{}", startIdx, stopIdx);
 
             const auto msg = fmt::format(R"({{ "message":"chain","id1":{},"id2":{} }})",startIdx, stopIdx);
             connection->send(msg);

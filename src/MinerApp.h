@@ -62,6 +62,7 @@ private:
 
     void runMineThread();
     void syncBlockchain();
+    void broadcastNewBlock(const Block& block);
 
     void dispatchRequest(WsServerConnPtr, std::string_view);
     void handleResponse(WsClientConnPtr, std::string_view);
