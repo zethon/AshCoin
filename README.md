@@ -2,7 +2,7 @@
 
 HenryCoin is a crypto-currency built from scratch.
 
-The goals with this project are as follows:
+The goals with this project are:
 
 * **Mining**: Mining is synced across a peer-to-peer network with a single chain based on cumulative difficulty
 * **Networking**: Miners can join/leave the mining network without any configuration on a central node.
