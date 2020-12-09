@@ -2,7 +2,7 @@
 
 HenryCoin is a crypto-currency built from scratch.
 
-**NOTE**: This is **a fun project**. I am writing this to help me learn more about blockchains and crypto currency. **I am by not an expert in either**. This is not intended to be a real crypto currency.
+**NOTE**: This is **a fun project**. I am writing this to help me learn more about blockchains and crypto currency. **I am not an expert in either**. This is not intended to be a real crypto currency.
 
 ![](doc/images/screenshot.jpeg)
 
