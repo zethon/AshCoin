@@ -1,5 +1,7 @@
 #include <fstream>
 
+#include <boost/algorithm/string.hpp>
+
 #include "PeerManager.h"
 
 namespace ash
@@ -12,12 +14,15 @@ PeerManager::PeerManager()
 
 PeerManager::~PeerManager()
 {
-    for (auto&[peer, thread] : _threadPool)
+    _reconnectWorker.shutdown();
+    _reconnectThread.join();
+
+    for (auto&[peer, data] : _peers)
     {
-        if (thread.joinable())
+        if (data.worker.joinable())
         {
-            _peerMap.at(peer)->stop();
-            thread.join();
+            _peers.at(peer).client->stop();
+            data.worker.join();
         }
     }
 
@@ -45,7 +50,8 @@ void PeerManager::loadPeers(std::string_view filename)
     {
         if (!line.empty())
         {
-            _peers.insert(line);
+            boost::algorithm::trim(line);
+            _peers.insert_or_assign(line, PeerData{});
         }
     }
 }
@@ -56,17 +62,19 @@ void PeerManager::savePeers(std::string_view filename)
     
 void PeerManager::connectAll(std::function<void(WsClientConnPtr)> cb)
 {
-    for (const auto& peer : _peers)
+    for (const auto& [peer, data] : _peers)
     {
         const auto endpoint = fmt::format("{}/chain", peer);
         _logger->debug("connecting to {}", endpoint);
+
         auto client = std::make_shared<WsClient>(endpoint);
+        _peers[peer].client = client;
 
         client->on_open =
             [this, client, peer = peer, cb = cb](WsClientConnPtr connection)
             {
                 _logger->trace("wsc:/chain opened connection {}", static_cast<void*>(connection.get()));
-                _connections.insert_or_assign(peer, connection);
+                _peers[peer].connection = connection;
                 if (cb)
                 {
                     cb(connection);
@@ -86,24 +94,29 @@ void PeerManager::connectAll(std::function<void(WsClientConnPtr)> cb)
                 this->onChainResponse(connection, message->string());
             };
 
-        _peerMap.insert_or_assign(peer, client);
-
         auto thread = std::thread(
             [client]() 
             {
                 client->start();
             });
 
-        _threadPool.insert_or_assign(peer, std::move(thread));
+        _peers[peer].worker = std::move(thread);
     }
+
+    _reconnectThread = std::thread(
+        [this]()
+        {
+            this->_reconnectWorker.run();
+        });
 }
     
 void PeerManager::broadcast(std::string_view message)
 {
-    for (const auto& [peer, connection] : _connections)
+    for (const auto& [peer, data] : _peers)
     {
+        if (!data.connection) continue;
         _logger->trace("broadcasting to {}: {}", peer, message);
-        connection->send(message);
+        data.connection->send(message);
     }
 }
 

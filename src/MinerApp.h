@@ -61,7 +61,7 @@ private:
     void initPeers();
 
     void runMineThread();
-    void syncBlockchain();
+    [[maybe_unused]] bool syncBlockchain();
     void broadcastNewBlock(const Block& block);
 
     void dispatchRequest(WsServerConnPtr, std::string_view);

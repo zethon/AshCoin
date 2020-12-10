@@ -53,8 +53,6 @@ MinerApp::MinerApp(SettingsPtr settings)
 
     _database = std::make_unique<ChainDatabase>(dbfolder);
     _database->initialize(*_blockchain);
-
-    _peers.broadcast(R"({"message":"summary"})");
 }
 
 MinerApp::~MinerApp()
@@ -381,27 +379,34 @@ void MinerApp::runMineThread()
             blockAdjustmentCount++;
         }
 
-        // update our blockchain
-        syncBlockchain();
-
-        // let the network know about our new coin
-        broadcastNewBlock(newblock);
+        // see if there's an update waiting for the local
+        // copy of the chain
+        if (!syncBlockchain())
+        {
+            // let the network know about our new coin
+            broadcastNewBlock(newblock);
+        }
     }
 }
 
 void MinerApp::broadcastNewBlock(const Block& block)
 {
-    // nl::json msg;
-    // msg["message"] = "newblock";
-    // msg["block"] = block;
-    // msg[""]
+    std::lock_guard<std::mutex> lock{_chainMutex};
 
+    nl::json msg;
+    msg["message"] = "newblock";
+    msg["block"] = _blockchain->back();
+    msg["cumdiff"] = _blockchain->cumDifficulty();
+    _peers.broadcast(msg.dump());
 }
 
 // the blockchain is synced at startup and
-// after each block is mined
-void MinerApp::syncBlockchain()
+// after each block is mined. returns 'true'
+// if the local blockchain was modified by 
+// the temp blockchain
+bool MinerApp::syncBlockchain()
 {
+    bool retval = false;
     if (std::lock_guard<std::mutex> lock{_chainMutex}; 
         _tempchain)
     {
@@ -411,6 +416,7 @@ void MinerApp::syncBlockchain()
             _blockchain.swap(_tempchain);
             _database->reset();
             _database->writeChain(*_blockchain);
+            retval = true;
         }
         else if (_tempchain->front().index() < _blockchain->back().index())
         {
@@ -428,6 +434,7 @@ void MinerApp::syncBlockchain()
 
             _database->reset();
             _database->writeChain(*_blockchain);
+            retval = true;
         }
         else if (_tempchain->front().index() == _blockchain->back().index() + 1)
         {
@@ -438,6 +445,7 @@ void MinerApp::syncBlockchain()
                     _database->write(block);
                 }
             }
+            retval = true;
         }
         else
         {
@@ -448,6 +456,8 @@ void MinerApp::syncBlockchain()
 
         _tempchain.reset();
     }
+    
+    return retval;
 }
 
 void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawmsg)
@@ -522,6 +532,23 @@ void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawm
     {
         std::lock_guard<std::mutex> _lock(_chainMutex);
 
+        const auto newblock = json["block"].get<Block>();
+        auto remote_cumdiff = json["cumdiff"].get<std::uint64_t>();
+        auto local_cumdiff = _blockchain->cumDifficulty();
+
+        _logger->trace("received 'newblock' message with block #{} and cumulative diff of {}",
+            newblock.index(), remote_cumdiff);
+
+        if (remote_cumdiff > local_cumdiff
+            || (remote_cumdiff == local_cumdiff && newblock.index() > _blockchain->back().index()))
+        {
+            // TODO: ideally we would send the 'summary' message to the machine
+            // that just sent us the 'newblock' message, however we cannot use
+            // the 'connection' variable in this function since that would be 
+            // handled on the other end inside of 'handResponse', but we want it
+            // to be handled inside of 'dispatchRequest'
+            _peers.broadcast(R"({"message":"summary"})");
+        }
     }
     else
     {
