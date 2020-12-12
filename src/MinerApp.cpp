@@ -460,6 +460,7 @@ bool MinerApp::syncBlockchain()
     return retval;
 }
 
+// handle requests in which WE are the SERVER
 void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawmsg)
 {
     nl::json json = nl::json::parse(rawmsg, nullptr, false);
@@ -559,6 +560,7 @@ void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawm
     connection->send(response.str());
 }
 
+// handle responses form where WE were the CLIENT
 void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawmsg)
 {
     nl::json json = nl::json::parse(rawmsg, nullptr, false);

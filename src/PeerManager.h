@@ -1,6 +1,7 @@
 #pragma once
 #include <string_view>
 #include <set>
+#include <functional>
 
 #include <boost/signals2.hpp>
 #include <boost/asio.hpp>
@@ -20,6 +21,8 @@
 namespace ash
 {
 
+class PeerManager;
+
 using WsServer = SimpleWeb::SocketServer<SimpleWeb::WS>;
 using WsServerConnPtr = std::shared_ptr<WsServer::Connection>;
 
@@ -36,22 +39,22 @@ struct PeerData
 
 using PeerMap = std::map<std::string, PeerData>;
 
-#ifdef _RELEASE
-constexpr auto ConnectionRetryTimeout = 60u; // seconds
-#else
-constexpr auto ConnectionRetryTimeout = 10u; // seconds
-#endif
-
 class ReconnectWorker
 {
+
     boost::asio::io_service         _statIoService;
     boost::asio::deadline_timer     _statTimer { _statIoService };
-    std::chrono::milliseconds       _timeout;
     std::atomic_bool                _shutdown = false;
+    
+    std::chrono::milliseconds       _timeout;
+    
+    using Callback = std::function<void()>;
+    Callback                        _callback;
 
 public:
-    ReconnectWorker(std::size_t timeout)
-        : _timeout { std::chrono::milliseconds(timeout) }
+    ReconnectWorker(std::size_t timeout, Callback f)
+        : _timeout { std::chrono::milliseconds(timeout) },
+          _callback { f }
     {
         // nothing to do
     }
@@ -62,7 +65,6 @@ public:
     {
         _statIoService.reset();
 
-        std::cout << "t: " << _timeout.count() << '\n';
         _statTimer.expires_from_now(boost::posix_time::milliseconds(_timeout.count()));
         _statTimer.async_wait(
             [this](const boost::system::error_code& ec)
@@ -79,7 +81,7 @@ private:
         if (!ec && !_shutdown)
         {
             auto start = std::chrono::steady_clock::now();
-            std::cout << "privateRun\n";
+            _callback();
             auto stop = std::chrono::steady_clock::now();
 
             auto elapsed = stop - start;
@@ -97,18 +99,11 @@ private:
 };
 
 class PeerManager
+    : std::enable_shared_from_this<PeerManager>
 {
-    PeerMap                             _peers;
-
-    ReconnectWorker                     _reconnectWorker { ConnectionRetryTimeout * 1000 };
-    std::thread                         _reconnectThread;
-
-    SpdLogPtr                           _logger;
-
-    WsServer                            _wsServer;
-    std::thread                         _wsThread;
-
 public:
+    using ConnectCallback = std::function<void(WsClientConnPtr)>;
+
     PeerManager();
     ~PeerManager();
 
@@ -122,6 +117,21 @@ public:
 
     boost::signals2::signal<void(WsServerConnPtr, const std::string&)> onChainRequest;
     boost::signals2::signal<void(WsClientConnPtr, const std::string&)> onChainResponse;
+
+private:
+    void createClient(const std::string& endpoint);
+
+    PeerMap                             _peers;      
+    std::mutex                          _peerMutex;
+
+    std::unique_ptr<ReconnectWorker>    _reconnectWorker;
+    std::thread                         _reconnectThread;
+    ConnectCallback                     _connectCallback;
+
+    SpdLogPtr                           _logger;
+
+    WsServer                            _wsServer;
+    std::thread                         _wsThread;
 };
 
 } // namespace ash
