@@ -83,9 +83,9 @@ var updateStatsWorker =
 function getBlockTableRow(block)
 {
     var d = EpochToDate(block.time);
-    var row = "<td>" + block.index + "</td>";
+    var row = "<td>" + block.index.toLocaleString() + "</td>";
     row += "<td class='minercol'>" + block.hash + "</td>";
-    row += "<td>" + block.nonce + "</td>";
+    row += "<td>" + block.nonce.toLocaleString() + "</td>";
     row += "<td>" + d.toISOString() + "</td>";
     row += "<td class='minercol'>" + block.miner + "</td>";
     row += "<td>" + block.difficulty + "</td>";
@@ -100,11 +100,11 @@ function getBlockRowElement(block)
     let d = document;
     let tr = document.createElement('tr');
     tr.setAttribute('id', 'block' + block.index);
-    tr.appendChild(d.createElement('td')).innerHTML = block.index;
+    tr.appendChild(d.createElement('td')).innerHTML = block.index.toLocaleString();
     tr.appendChild(d.createElement('td')).innerHTML = block.hash;
     tr.lastElementChild.setAttribute('class', 'minercol');
 
-    tr.appendChild(d.createElement('td')).innerHTML = block.nonce;
+    tr.appendChild(d.createElement('td')).innerHTML = block.nonce.toLocaleString();
 
     var dt = EpochToDate(block.time);
     tr.appendChild(d.createElement('td')).innerHTML = dt.toISOString();
