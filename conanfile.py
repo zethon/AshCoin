@@ -13,11 +13,12 @@ class AshConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     requires = (
-        "boost/1.74.0",
+        "boost/1.73.0",
         "spdlog/1.8.1",
         "simple-websocket-server/2.0.2",
         "asio/1.18.0",
-        "jsonformoderncpp/3.7.0",
+        "nlohmann_json/3.7.0",
+        "cryptopp/8.2.0",
         "Simple-Web-Server/v3.1.1@owl/stable"
     )
 
@@ -26,17 +27,17 @@ class AshConan(ConanFile):
     default_options = {
         "boost:shared": False,
         "boost:without_test": False,
-        "boost:without_thread": False,
+        "boost:without_thread": True,
         "boost:without_filesystem": False,
         "boost:without_system": False,
         "boost:without_stacktrace": False,
         "boost:without_program_options": False,
         "boost:without_serialization": False,
+        "boost:without_exception": False,
         "boost:without_math": True,
         "boost:without_wave": True,
         "boost:without_container": True,
         "boost:without_contract": True,
-        "boost:without_exception": True,
         "boost:without_graph": True,
         "boost:without_iostreams": True,
         "boost:without_locale": True,
