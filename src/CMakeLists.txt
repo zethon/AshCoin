@@ -8,7 +8,6 @@ set(SOURCE_FILES
     MinerApp.cpp
     PeerManager.cpp
     Settings.cpp
-    sha256.cpp
     utils.cpp
 )
 
@@ -23,7 +22,6 @@ set(HEADER_FILES
     MinerApp.h
     PeerManager.h
     Settings.h
-    sha256.h
     utils.h
 )
 

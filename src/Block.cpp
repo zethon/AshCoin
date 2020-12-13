@@ -2,8 +2,11 @@
 #include <ostream>
 #include <ctime>
 
+#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
+
 #include "Block.h"
-#include "sha256.h"
 
 namespace nl = nlohmann;
 
@@ -34,6 +37,19 @@ void from_json(const nl::json& j, Block& b)
     j["miner"].get_to(b._miner);
 }
 
+std::string SHA256(std::string data)
+{
+    std::string digest;
+    CryptoPP::SHA256 hash;
+
+    CryptoPP::StringSource foo(data, true,
+        new CryptoPP::HashFilter(hash,
+            new CryptoPP::HexEncoder(
+                new CryptoPP::StringSink(digest), false)));
+
+    return digest;
+}
+
 std::string CalculateBlockHash(
     std::uint64_t index, 
     std::uint32_t nonce, 
@@ -50,7 +66,7 @@ std::string CalculateBlockHash(
         << time
         << previous;
 
-    return sha256(ss.str());
+    return SHA256(ss.str());
 }
 
 std::string CalculateBlockHash(const Block& block)
@@ -63,7 +79,7 @@ std::string CalculateBlockHash(const Block& block)
         << block.time()
         << block.previousHash();
 
-    return sha256(ss.str());
+    return SHA256(ss.str());
 }
 
 Block::Block(uint64_t nIndexIn, std::string_view sDataIn)

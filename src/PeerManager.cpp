@@ -108,7 +108,7 @@ void PeerManager::createClient(const std::string& peer)
     client->on_error =
         [this, peer = peer](WsClientConnPtr connection, const SimpleWeb::error_code &ec)
         {
-            _logger->warn("could not connect to {} because: {}", peer, ec.message());
+            _logger->debug("could not connect to {} because: {}", peer, ec.message());
 
             // find the connection in our map
             auto entry = std::find_if(_peers.begin(), _peers.end(),

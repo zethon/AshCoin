@@ -34,6 +34,12 @@ using HttpResponsePtr = std::shared_ptr<HttpResponse>;
 
 using WsServer = SimpleWeb::SocketServer<SimpleWeb::WS>;
 
+struct UpdatePackage
+{
+    BlockChainPtr   tempchain;
+    std::uint64_t   tempcumdiff;
+};
+
 class MinerApp
 {
 
