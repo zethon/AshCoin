@@ -42,29 +42,32 @@ public:
         return !(*this == other);
     }
 
-    std::uint64_t index() const { return _index; }
-    std::uint32_t nonce() const { return _nonce; }
-    std::uint32_t difficulty() const { return _difficulty; }
+    std::uint64_t index() const { return _hashed._index; }
+    std::uint32_t nonce() const { return _hashed._nonce; }
+    std::uint32_t difficulty() const { return _hashed._difficulty; }
+    std::string data() const { return _hashed._data;  }
+    time_t time() const { return _hashed._time; }
+    std::string previousHash() const { return _hashed._prev; }  
 
-    std::string data() const { return _data;  }
-    time_t time() const { return _time; }
     std::string hash() const { return _hash; }
-    std::string previousHash() const { return _prev; }   
-
-    void setPrevious(const std::string& val) { _prev = val; }
 
     std::string miner() const { return _miner; }
     void setMiner(std::string_view val) { _miner = val; }
 
 private:
-    std::uint64_t        _index;
-    std::uint32_t        _nonce;
-    std::uint32_t        _difficulty;
+    struct HashedData
+    {
+        std::uint64_t       _index;
+        std::uint32_t       _nonce;
+        std::uint32_t       _difficulty;
+        std::string         _data;
+        time_t              _time;  // std::uint64_t
+        std::string         _prev;
+    };
 
-    std::string     _data;
-    time_t          _time; // std::uint64_t 
+    HashedData      _hashed;
+
     std::string     _hash;
-    std::string     _prev;
     std::string     _miner;
     SpdLogPtr       _logger;
 };

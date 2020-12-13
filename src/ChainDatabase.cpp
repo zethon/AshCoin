@@ -26,17 +26,17 @@ void write_block(std::ostream& stream, const Block& block)
 
 void read_block(std::istream& stream, Block& block)
 {
-    ash::db::read_data(stream, block._index);
-    ash::db::read_data(stream, block._nonce);
-    ash::db::read_data(stream, block._difficulty);
-    ash::db::read_data(stream, block._data);
+    ash::db::read_data(stream, block._hashed._index);
+    ash::db::read_data(stream, block._hashed._nonce);
+    ash::db::read_data(stream, block._hashed._difficulty);
+    ash::db::read_data(stream, block._hashed._data);
 
     std::uint64_t dtime;
     ash::db::read_data(stream, dtime);
-    block._time = static_cast<time_t>(dtime);
+    block._hashed._time = static_cast<time_t>(dtime);
 
     ash::db::read_data(stream, block._hash);
-    ash::db::read_data(stream, block._prev);
+    ash::db::read_data(stream, block._hashed._prev);
     ash::db::read_data(stream, block._miner);
 }
 

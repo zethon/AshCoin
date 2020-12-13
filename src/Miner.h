@@ -36,7 +36,7 @@ public:
         const std::string& data, const std::string& prev)
     {
         assert(index > 0);
-        assert(prev.size() > 0);
+        assert(prev.size() > 0 || (index - 1 == 0));
 
         std::string zeros;
         zeros.assign(_difficulty, '0');
@@ -64,11 +64,11 @@ public:
         }
 
         Block retval { index, data };
-        retval._nonce = nonce;
-        retval._difficulty = _difficulty;
-        retval._time = time;
+        retval._hashed._nonce = nonce;
+        retval._hashed._difficulty = _difficulty;
+        retval._hashed._time = time;
+        retval._hashed._prev = prev;
         retval._hash = hash;
-        retval._prev = prev;
 
         return { ResultType::SUCCESS, retval };
     }

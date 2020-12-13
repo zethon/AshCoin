@@ -27,13 +27,13 @@ void to_json(nl::json& j, const Block& b)
 
 void from_json(const nl::json& j, Block& b)
 {
-    j["index"].get_to(b._index);
-    j["nonce"].get_to(b._nonce);
-    j["difficulty"].get_to(b._difficulty);
-    j["data"].get_to(b._data);
-    j["time"].get_to(b._time);
+    j["index"].get_to(b._hashed._index);
+    j["nonce"].get_to(b._hashed._nonce);
+    j["difficulty"].get_to(b._hashed._difficulty);
+    j["data"].get_to(b._hashed._data);
+    j["time"].get_to(b._hashed._time);
+    j["prev"].get_to(b._hashed._prev);
     j["hash"].get_to(b._hash);
-    j["prev"].get_to(b._prev);
     j["miner"].get_to(b._miner);
 }
 
@@ -83,21 +83,21 @@ std::string CalculateBlockHash(const Block& block)
 }
 
 Block::Block(uint64_t nIndexIn, std::string_view sDataIn)
-    : _index(nIndexIn), 
-      _data(sDataIn),
-      _logger(ash::initializeLogger("Block"))
+    : _logger(ash::initializeLogger("Block"))
 {
-    _nonce = 0;
-    _time = 0;
-    _hash = CalculateBlockHash(*this);
+    _hashed._index = nIndexIn;
+    _hashed._data = sDataIn;
+    _hashed._nonce = 0;
+    _hashed._time = 0;
+    // _hash = CalculateBlockHash(*this);
 }
 
 bool Block::operator==(const Block & other) const
 {
-    return _index == other._index
-        && _nonce == other._nonce
-        && _data == other._data
-        && _time == other._time;
+    return _hashed._index == other._hashed._index
+        && _hashed._nonce == other._hashed._nonce
+        && _hashed._data == other._hashed._data
+        && _hashed._time == other._hashed._time;
 }
 
 } // namespace
