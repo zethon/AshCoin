@@ -185,7 +185,7 @@ void MinerApp::initRest()
 
             if (!this->_miningDone)
             {
-                jresponse["status"] = "mining #" + std::to_string(_blockchain->back().index());
+                jresponse["status"] = "mining #" + std::to_string(_blockchain->back().index() + 1);
             }
             else
             {
@@ -344,6 +344,19 @@ void MinerApp::runMineThread()
     ash::CumulativeMovingAverage<std::uint64_t> avg;
     std::uint64_t index = 0;
 
+    // TODO: locking and unlocking this mutex inside the
+    // mining loop is likely a bad idea. should probably
+    // store the index in an atomic number when the _tempchain
+    // is updated
+    auto keepMiningCallback = 
+        [this](std::uint64_t index) -> bool
+        {
+            std::lock_guard<std::mutex> lock{_chainMutex};
+            return !_tempchain
+                || _tempchain->size() == 0
+                || _tempchain->back().index() < index;
+        };
+
     while (!_miningDone && !_done)
     {
         {
@@ -357,11 +370,12 @@ void MinerApp::runMineThread()
         auto prevTime = static_cast<std::uint64_t>(_blockchain->back().time());
 
         const std::string data = fmt::format(":coinbase{}", index);
-        auto result = _miner.mineBlock(index, data, _blockchain->back().hash());
+        auto result = _miner.mineBlock(index, data, _blockchain->back().hash(), keepMiningCallback);
 
         if (std::get<0>(result) == Miner::ABORT)
         {
             _logger->debug("mining block {} was aborted", index);
+            syncBlockchain();
             continue;
         }
 
