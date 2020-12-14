@@ -185,7 +185,7 @@ void MinerApp::initRest()
 
             if (!this->_miningDone)
             {
-                jresponse["status"] = "mining";
+                jresponse["status"] = "mining #" + std::to_string(_blockchain->back().index());
             }
             else
             {
@@ -248,18 +248,6 @@ void MinerApp::initWebSocket()
     auto port = _settings->value("websocket.port", WebSocketServerPorDefault);
     _peers.initWebSocketServer(port);
 
-    // _peers.onChainRequest.connect(
-    //     [this](WsServerConnPtr connection, const std::string& message)
-    //     {
-    //         this->dispatchRequest(connection, message);
-    //     });
-
-    // _peers.onChainResponse.connect(
-    //     [this](WsClientConnPtr connection, const std::string& response)
-    //     {
-    //         this->handleResponse(connection, response);
-    //     });
-
     _peers.onChainMessage.connect(
         [this](PeerManager::ConnectionProxyPtr connection, std::string_view rawmsg)
         {
@@ -268,11 +256,17 @@ void MinerApp::initWebSocket()
                 || !json.contains("message")
                 || !json.contains("message-type"))
             {
-                _logger->warn("malformed ws:/chain message from on connection {}",
+                _logger->warn("ws:/chain received malformed message from node {}",
                     connection->address());
-                    
+
+                connection->sendError("the recieved message was malformed");
                 return;
             }
+            
+            _logger->debug("message='{}' message-type='{}' received from {}",
+                json["message"].get<std::string>(), 
+                json["message-type"].get<std::string>(),
+                connection->address()); 
 
             if (auto msgtype = json["message-type"].get<std::string>(); 
                 msgtype == "request")
@@ -283,12 +277,16 @@ void MinerApp::initWebSocket()
             {
                 this->handleResponse(connection, json);
             }
+            else if (msgtype == "error")
+            {
+                this->handleError(connection, json);
+            }
             else
             {
-                _logger->warn("malformed ws:/chain message-type '{}' from on connection {}",
+                _logger->warn("ws:/chain received unknown message-type '{}' from node {}",
                     msgtype, connection->address());
 
-                connection->send(R"({ "error": "malformed request" })");
+                connection->sendErrorFmt("the received message-type was unknown '{}'", msgtype);
                 return;
             }
         });
@@ -302,7 +300,8 @@ void MinerApp::initPeers()
     _peers.connectAll(
         [](WsClientConnPtr conn)
         {
-            conn->send(R"({"message":"summary"})");
+            // when connecting to a peer, ask if for its peer
+            conn->send(R"({"message":"summary", "message-type":"request"})");
         });
 }
 
@@ -329,8 +328,7 @@ void MinerApp::run()
         const auto address = _httpServer.config.address.empty() ? 
             "localhost" : _httpServer.config.address;
 
-        const auto localUrl = fmt::format("http://{}:{}",
-            address, _httpServer.config.port);
+        const auto localUrl = fmt::format("http://{}:{}", address, _httpServer.config.port);
         utils::openBrowser(localUrl);
     }
 
@@ -428,6 +426,7 @@ void MinerApp::broadcastNewBlock(const Block& block)
 
     nl::json msg;
     msg["message"] = "newblock";
+    msg["message-type"] = "request";
     msg["block"] = _blockchain->back();
     msg["cumdiff"] = _blockchain->cumDifficulty();
     _peers.broadcast(msg.dump());
@@ -498,14 +497,7 @@ void MinerApp::dispatchRequest(HcConnectionPtr connection, const nl::json& json)
 {
     const auto message = json["message"].get<std::string>();
 
-    _logger->trace("ws:/chain received request on connection {}: {}", 
-        static_cast<void*>(connection.get()), message);
-
-    std::stringstream response;
-
     nl::json jresponse;
-    jresponse["message"] = message;
-
     if (message == "summary")
     {
         jresponse["blocks"].push_back(_blockchain->front());
@@ -565,30 +557,27 @@ void MinerApp::dispatchRequest(HcConnectionPtr connection, const nl::json& json)
         if (remote_cumdiff > local_cumdiff
             || (remote_cumdiff == local_cumdiff && newblock.index() > _blockchain->back().index()))
         {
-            // TODO: ideally we would send the 'summary' message to the machine
-            // that just sent us the 'newblock' message, however we cannot use
-            // the 'connection' variable in this function since that would be 
-            // handled on the other end inside of 'handResponse', but we want it
-            // to be handled inside of 'dispatchRequest'
-            _peers.broadcast(R"({"message":"summary"})");
+            // TODO: it would probably be best here to check if `newblock` is the next
+            // in our chain and add it to our tempchain
+
+            // get a summary from the machine that sent us this longer chain
+            connection->sendRequest("summary");
+            return;
         }
     }
     else
     {
-        jresponse["error"] = fmt::format("unknown message '{}'", message);
+        _logger->warn("unknown message '{}' sent from {}", connection->address(), message);
+        return;
     }
 
-    response << jresponse.dump();
-    connection->send(response.str());
+    connection->sendResponse(message, jresponse.dump());
 }
 
 // handle responses form where WE were the CLIENT
 void MinerApp::handleResponse(HcConnectionPtr connection, const nl::json& json)
 {
     const auto message = json["message"].get<std::string>();
-
-    _logger->trace("wsc:/chain received response on connection {}, message='{}'", 
-        static_cast<void*>(connection.get()), message);
 
     if (message == "summary")
     {
@@ -623,7 +612,7 @@ void MinerApp::handleResponse(HcConnectionPtr connection, const nl::json& json)
             if (_settings->value("chain.reset.enable", false))
             {
                 _logger->info("requesting full remote chain");
-                connection->send(R"({"message":"chain"})");
+                connection->sendRequest("chain");
             }
         }
         else if (local_cumdiff < remote_cumdiff)
@@ -631,13 +620,10 @@ void MinerApp::handleResponse(HcConnectionPtr connection, const nl::json& json)
             auto startIdx = lastblock.index() + 1;
             auto stopIdx = remote_last.index();
 
-            _logger->info("remote chain has a greater cumalative difficulty ({}) than local chain ({})",
-                remote_cumdiff, local_cumdiff);
+            _logger->info("remote chain has a greater cumalative difficulty ({}) than local chain ({}), requesting #{}-#{}",
+                remote_cumdiff, local_cumdiff, startIdx, stopIdx);
 
-            _logger->debug("requesting blocks {}-{}", startIdx, stopIdx);
-
-            const auto msg = fmt::format(R"({{ "message":"chain","id1":{},"id2":{} }})",startIdx, stopIdx);
-            connection->send(msg);
+            connection->sendRequestFmt("chain", R"({{ "id1":{},"id2":{} }})", startIdx, stopIdx);
         }
         else
         {
@@ -685,9 +671,7 @@ void MinerApp::handleChainResponse(HcConnectionPtr connection, const Blockchain&
         auto stopIdx = tempchain.back().index();
 
         _logger->info("temp chain has gap, requesting remote blocks {}-{}", startIdx, stopIdx);
-
-        const auto msg = fmt::format(R"({{ "message":"chain","id1":{},"id2":{} }})",startIdx, stopIdx);
-        connection->send(msg);
+        connection->sendRequestFmt("chain", R"({{ "message":"chain","id1":{},"id2":{} }})", startIdx, stopIdx);
     }
     else
     {
@@ -713,11 +697,15 @@ void MinerApp::handleChainResponse(HcConnectionPtr connection, const Blockchain&
             auto stopIdx = tempchain.back().index();
             
             _logger->debug("temp chain is misaligned, requesting remote blocks {}-{}", startIdx, stopIdx);
-
-            const auto msg = fmt::format(R"({{ "message":"chain","id1":{},"id2":{} }})",startIdx, stopIdx);
-            connection->send(msg);
+            connection->sendRequestFmt("chain", R"x({{ "id1":{},"id2":{} }})x", startIdx, stopIdx);
         }
     }
+}
+
+void MinerApp::handleError(HcConnectionPtr connection, const nl::json& json)
+{
+    _logger->debug("node {} reported an 'error' message: {}", 
+        connection->address(), json["message"].get<std::string>());
 }
 
 } // namespace

@@ -16,7 +16,11 @@
 #pragma warning(pop)
 #endif
 
+#include <nlohmann/json.hpp>
+
 #include "AshLogger.h"
+
+namespace nl = nlohmann;
 
 namespace ash
 {
@@ -128,6 +132,76 @@ public:
 
             assert(_client);
             _client->send(message, callback, fin_rsv_opcode);
+        }
+
+        void sendMessage(std::string_view msg, 
+            std::string_view msgtype, 
+            std::string_view payload, 
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            nl::json json;
+            if (payload.size() > 0)
+            {
+                json = nl::json::parse(payload); // throws!
+            }
+
+            json["message"] = msg;
+            json["message-type"] = msgtype;
+            
+            send(json.dump(), callback, fin_rsv_opcode);
+        }
+
+        void sendRequest(std::string_view msg, 
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            sendMessage(msg, "request", {}, callback, fin_rsv_opcode);
+        }
+
+        void sendRequest(std::string_view msg, std::string_view data)
+        {
+            sendMessage(msg, "request", {});
+        }
+
+        template<typename... Args>
+        void sendRequestFmt(std::string_view msg, std::string_view formatstr, Args&&... args)
+        {
+            sendMessage(msg, "request", fmt::format(formatstr, args...));
+        }
+
+        void sendResponse(std::string_view msg, 
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            sendMessage(msg, "response", {}, callback, fin_rsv_opcode);
+        }
+
+        void sendResponse(std::string_view msg, 
+            std::string_view data,
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            sendMessage(msg, "response", data, callback, fin_rsv_opcode);
+        }
+
+        template<typename... Args>
+        void sendResponseFmt(std::string_view msg, std::string_view formatstr, Args&&... args)
+        {
+            sendMessage(msg, "response", fmt::format(formatstr, args...));
+        }
+
+        void sendError(std::string_view msg, 
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            sendMessage(msg, "error", {}, callback, fin_rsv_opcode);
+        }
+
+        template<typename... Args>
+        void sendErrorFmt(std::string_view formatstr, Args&&... args)
+        {
+            sendMessage(fmt::format(formatstr, args...), "error", {});
         }
 
         std::string address() const

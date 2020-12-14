@@ -96,7 +96,7 @@ void PeerManager::createClient(const std::string& peer)
         [this, client, peer = peer](WsClientConnPtr connection)
         {
             std::lock_guard<std::mutex> lock{this->_peerMutex};
-            _logger->trace("wsc:/chain opened connection {}", peer);
+            _logger->trace("wsc:/chain opened connection to node {}", peer);
             _peers[peer].connection = connection;
             
             if (_connectCallback)
@@ -108,8 +108,6 @@ void PeerManager::createClient(const std::string& peer)
     client->on_error =
         [this, peer = peer](WsClientConnPtr connection, const SimpleWeb::error_code &ec)
         {
-            _logger->debug("could not connect to {} because: {}", peer, ec.message());
-
             // find the connection in our map
             auto entry = std::find_if(_peers.begin(), _peers.end(),
                 [connection](const auto& el)
@@ -143,6 +141,7 @@ void PeerManager::createClient(const std::string& peer)
                 return;
             }
 
+            _logger->trace("wsc:/chain closed connection to node {}", entry->first);
             entry->second.connection.reset();
         };
 

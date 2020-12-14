@@ -76,6 +76,7 @@ private:
     void dispatchRequest(HcConnectionPtr, const nl::json& json);
     void handleResponse(HcConnectionPtr, const nl::json& json);
     void handleChainResponse(HcConnectionPtr, const Blockchain&);
+    void handleError(HcConnectionPtr, const nl::json&);
 
     // TODO: should be moved to an HttpServer class
     void printIndex(HttpResponsePtr response);
