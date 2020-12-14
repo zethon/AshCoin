@@ -248,16 +248,49 @@ void MinerApp::initWebSocket()
     auto port = _settings->value("websocket.port", WebSocketServerPorDefault);
     _peers.initWebSocketServer(port);
 
-    _peers.onChainRequest.connect(
-        [this](WsServerConnPtr connection, const std::string& message)
-        {
-            this->dispatchRequest(connection, message);
-        });
+    // _peers.onChainRequest.connect(
+    //     [this](WsServerConnPtr connection, const std::string& message)
+    //     {
+    //         this->dispatchRequest(connection, message);
+    //     });
 
-    _peers.onChainResponse.connect(
-        [this](WsClientConnPtr connection, const std::string& response)
+    // _peers.onChainResponse.connect(
+    //     [this](WsClientConnPtr connection, const std::string& response)
+    //     {
+    //         this->handleResponse(connection, response);
+    //     });
+
+    _peers.onChainMessage.connect(
+        [this](PeerManager::ConnectionProxyPtr connection, std::string_view rawmsg)
         {
-            this->handleResponse(connection, response);
+            const nl::json json = nl::json::parse(rawmsg, nullptr, false);
+            if (json.is_discarded() 
+                || !json.contains("message")
+                || !json.contains("message-type"))
+            {
+                _logger->warn("malformed ws:/chain message from on connection {}",
+                    connection->address());
+                    
+                return;
+            }
+
+            if (auto msgtype = json["message-type"].get<std::string>(); 
+                msgtype == "request")
+            {
+                this->dispatchRequest(connection, json);
+            }
+            else if (msgtype == "response")
+            {
+                this->handleResponse(connection, json);
+            }
+            else
+            {
+                _logger->warn("malformed ws:/chain message-type '{}' from on connection {}",
+                    msgtype, connection->address());
+
+                connection->send(R"({ "error": "malformed request" })");
+                return;
+            }
         });
 }
 
@@ -461,19 +494,8 @@ bool MinerApp::syncBlockchain()
 }
 
 // handle requests in which WE are the SERVER
-void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawmsg)
+void MinerApp::dispatchRequest(HcConnectionPtr connection, const nl::json& json)
 {
-    nl::json json = nl::json::parse(rawmsg, nullptr, false);
-    if (json.is_discarded() || !json.contains("message"))
-    {
-        _logger->warn("malformed ws:/chain request on connection {}", 
-            static_cast<void*>(connection.get()));
-
-        nl::json response = R"({ "error": "malformed request" })";
-        connection->send(response.dump());
-        return;
-    }
-
     const auto message = json["message"].get<std::string>();
 
     _logger->trace("ws:/chain received request on connection {}: {}", 
@@ -561,17 +583,8 @@ void MinerApp::dispatchRequest(WsServerConnPtr connection, std::string_view rawm
 }
 
 // handle responses form where WE were the CLIENT
-void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawmsg)
+void MinerApp::handleResponse(HcConnectionPtr connection, const nl::json& json)
 {
-    nl::json json = nl::json::parse(rawmsg, nullptr, false);
-    if (json.is_discarded() || !json.contains("message"))
-    {
-        _logger->warn("malformed wc:/chain response on connection {}", 
-            static_cast<void*>(connection.get()));
-
-        return;
-    }
-
     const auto message = json["message"].get<std::string>();
 
     _logger->trace("wsc:/chain received response on connection {}, message='{}'", 
@@ -655,7 +668,7 @@ void MinerApp::handleResponse(WsClientConnPtr connection, std::string_view rawms
     }
 }
 
-void MinerApp::handleChainResponse(WsClientConnPtr connection, const Blockchain& tempchain)
+void MinerApp::handleChainResponse(HcConnectionPtr connection, const Blockchain& tempchain)
 {
     if (tempchain.front().index() == 0)
     {

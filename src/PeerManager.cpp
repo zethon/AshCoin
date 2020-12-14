@@ -149,7 +149,9 @@ void PeerManager::createClient(const std::string& peer)
     client->on_message =
         [this](WsClientConnPtr connection, std::shared_ptr<WsClient::InMessage> message)
         {
-            this->onChainResponse(connection, message->string());
+            // this->onChainResponse(connection, message->string());
+            auto conn = std::make_shared<ConnectionProxy>(connection);
+            this->onChainMessage(conn, message->string());
         };
 
     _peers[peer].client = client;
@@ -224,8 +226,10 @@ void PeerManager::initWebSocketServer(std::uint32_t port)
     _wsServer.endpoint["^/chain$"].on_message = 
         [this](WsServerConnPtr connection, std::shared_ptr<WsServer::InMessage> message)
         {
-            _logger->trace("wss:/chain request from connection {}", static_cast<void*>(connection.get()));
-            this->onChainRequest(connection, message->string());
+            // this->onChainRequest(connection, message->string());
+            auto conn = std::make_shared<ConnectionProxy>(connection);
+            this->onChainMessage(conn, message->string());
+
         };
 
     _wsThread = std::thread(

@@ -70,10 +70,12 @@ private:
     [[maybe_unused]] bool syncBlockchain();
     void broadcastNewBlock(const Block& block);
 
-    void dispatchRequest(WsServerConnPtr, std::string_view);
-    void handleResponse(WsClientConnPtr, std::string_view);
+    using HcConnection = PeerManager::ConnectionProxy;
+    using HcConnectionPtr = std::shared_ptr<HcConnection>;
 
-    void handleChainResponse(WsClientConnPtr, const Blockchain&);
+    void dispatchRequest(HcConnectionPtr, const nl::json& json);
+    void handleResponse(HcConnectionPtr, const nl::json& json);
+    void handleChainResponse(HcConnectionPtr, const Blockchain&);
 
     // TODO: should be moved to an HttpServer class
     void printIndex(HttpResponsePtr response);

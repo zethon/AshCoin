@@ -103,6 +103,46 @@ class PeerManager
 {
 public:
     using ConnectCallback = std::function<void(WsClientConnPtr)>;
+    struct ConnectionProxy
+    {
+        WsServerConnPtr _server;
+        WsClientConnPtr _client;
+
+        ConnectionProxy(WsServerConnPtr server) 
+            : _server { server }
+        {
+        }
+
+        ConnectionProxy(WsClientConnPtr client) 
+            : _client { client }
+        {
+        }
+
+        void send(std::string_view message, std::function<void(const asio::error_code&)> callback = nullptr, unsigned char fin_rsv_opcode = 129)
+        {
+            if (_server)
+            {
+                _server->send(message, callback, fin_rsv_opcode);
+                return;
+            }
+
+            assert(_client);
+            _client->send(message, callback, fin_rsv_opcode);
+        }
+
+        std::string address() const
+        {
+            if (_server)
+            {
+                return _server->remote_endpoint().address().to_string();
+            }
+
+            assert(_client);
+            return _client->remote_endpoint().address().to_string();
+        }
+    };
+
+    using ConnectionProxyPtr = std::shared_ptr<ConnectionProxy>;
 
     PeerManager();
     ~PeerManager();
@@ -115,8 +155,10 @@ public:
 
     void initWebSocketServer(std::uint32_t port);
 
-    boost::signals2::signal<void(WsServerConnPtr, const std::string&)> onChainRequest;
-    boost::signals2::signal<void(WsClientConnPtr, const std::string&)> onChainResponse;
+    // boost::signals2::signal<void(WsServerConnPtr, const std::string&)> onChainRequest;
+    // boost::signals2::signal<void(WsClientConnPtr, const std::string&)> onChainResponse;
+
+    boost::signals2::signal<void(ConnectionProxyPtr, const std::string&)> onChainMessage;
 
 private:
     void createClient(const std::string& endpoint);
