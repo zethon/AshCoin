@@ -16,7 +16,11 @@
 #pragma warning(pop)
 #endif
 
+#include <nlohmann/json.hpp>
+
 #include "AshLogger.h"
+
+namespace nl = nlohmann;
 
 namespace ash
 {
@@ -103,6 +107,116 @@ class PeerManager
 {
 public:
     using ConnectCallback = std::function<void(WsClientConnPtr)>;
+    struct ConnectionProxy
+    {
+        WsServerConnPtr _server;
+        WsClientConnPtr _client;
+
+        ConnectionProxy(WsServerConnPtr server) 
+            : _server { server }
+        {
+        }
+
+        ConnectionProxy(WsClientConnPtr client) 
+            : _client { client }
+        {
+        }
+
+        void send(std::string_view message, std::function<void(const asio::error_code&)> callback = nullptr, unsigned char fin_rsv_opcode = 129)
+        {
+            if (_server)
+            {
+                _server->send(message, callback, fin_rsv_opcode);
+                return;
+            }
+
+            assert(_client);
+            _client->send(message, callback, fin_rsv_opcode);
+        }
+
+        void sendMessage(std::string_view msg, 
+            std::string_view msgtype, 
+            std::string_view payload, 
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            nl::json json;
+            if (payload.size() > 0)
+            {
+                json = nl::json::parse(payload); // throws!
+            }
+
+            json["message"] = msg;
+            json["message-type"] = msgtype;
+            
+            send(json.dump(), callback, fin_rsv_opcode);
+        }
+
+        void sendRequest(std::string_view msg, 
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            sendMessage(msg, "request", {}, callback, fin_rsv_opcode);
+        }
+
+        void sendRequest(std::string_view msg, std::string_view data)
+        {
+            sendMessage(msg, "request", {});
+        }
+
+        template<typename... Args>
+        void sendRequestFmt(std::string_view msg, std::string_view formatstr, Args&&... args)
+        {
+            sendMessage(msg, "request", fmt::format(formatstr, args...));
+        }
+
+        void sendResponse(std::string_view msg, 
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            sendMessage(msg, "response", {}, callback, fin_rsv_opcode);
+        }
+
+        void sendResponse(std::string_view msg, 
+            std::string_view data,
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            sendMessage(msg, "response", data, callback, fin_rsv_opcode);
+        }
+
+        template<typename... Args>
+        void sendResponseFmt(std::string_view msg, std::string_view formatstr, Args&&... args)
+        {
+            sendMessage(msg, "response", fmt::format(formatstr, args...));
+        }
+
+        void sendError(std::string_view msg, 
+            std::function<void(const asio::error_code&)> callback = nullptr, 
+            unsigned char fin_rsv_opcode = 129)
+        {
+            sendMessage(msg, "error", {}, callback, fin_rsv_opcode);
+        }
+
+        template<typename... Args>
+        void sendErrorFmt(std::string_view formatstr, Args&&... args)
+        {
+            sendMessage(fmt::format(formatstr, args...), "error", {});
+        }
+
+        std::string address() const
+        {
+            if (_server)
+            {
+                return _server->remote_endpoint().address().to_string();
+            }
+
+            assert(_client);
+            return _client->remote_endpoint().address().to_string();
+        }
+    };
+
+    using ConnectionProxyPtr = std::shared_ptr<ConnectionProxy>;
 
     PeerManager();
     ~PeerManager();
@@ -115,8 +229,10 @@ public:
 
     void initWebSocketServer(std::uint32_t port);
 
-    boost::signals2::signal<void(WsServerConnPtr, const std::string&)> onChainRequest;
-    boost::signals2::signal<void(WsClientConnPtr, const std::string&)> onChainResponse;
+    // boost::signals2::signal<void(WsServerConnPtr, const std::string&)> onChainRequest;
+    // boost::signals2::signal<void(WsClientConnPtr, const std::string&)> onChainResponse;
+
+    boost::signals2::signal<void(ConnectionProxyPtr, const std::string&)> onChainMessage;
 
 private:
     void createClient(const std::string& endpoint);

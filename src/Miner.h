@@ -33,7 +33,9 @@ public:
     void abort() { _keepTrying = false; }
 
     Result mineBlock(std::uint64_t index, 
-        const std::string& data, const std::string& prev)
+        const std::string& data, 
+        const std::string& prev,
+        std::function<bool(std::uint64_t)> keepGoingFunc = nullptr)
     {
         assert(index > 0);
         assert(prev.size() > 0 || (index - 1 == 0));
@@ -51,6 +53,12 @@ public:
         while (_keepTrying 
             && hash.compare(0, _difficulty, zeros) != 0)
         {
+            if (keepGoingFunc && !keepGoingFunc(index))
+            {
+                // our callback has told us to bail
+                return { ResultType::ABORT, {} };
+            }
+
             // TODO: might only need to return these three things
             // instead of creating a new block?
             nonce++;

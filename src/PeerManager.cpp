@@ -96,7 +96,7 @@ void PeerManager::createClient(const std::string& peer)
         [this, client, peer = peer](WsClientConnPtr connection)
         {
             std::lock_guard<std::mutex> lock{this->_peerMutex};
-            _logger->trace("wsc:/chain opened connection {}", peer);
+            _logger->trace("wsc:/chain opened connection to node {}", peer);
             _peers[peer].connection = connection;
             
             if (_connectCallback)
@@ -108,8 +108,6 @@ void PeerManager::createClient(const std::string& peer)
     client->on_error =
         [this, peer = peer](WsClientConnPtr connection, const SimpleWeb::error_code &ec)
         {
-            _logger->debug("could not connect to {} because: {}", peer, ec.message());
-
             // find the connection in our map
             auto entry = std::find_if(_peers.begin(), _peers.end(),
                 [connection](const auto& el)
@@ -143,13 +141,16 @@ void PeerManager::createClient(const std::string& peer)
                 return;
             }
 
+            _logger->trace("wsc:/chain closed connection to node {}", entry->first);
             entry->second.connection.reset();
         };
 
     client->on_message =
         [this](WsClientConnPtr connection, std::shared_ptr<WsClient::InMessage> message)
         {
-            this->onChainResponse(connection, message->string());
+            // this->onChainResponse(connection, message->string());
+            auto conn = std::make_shared<ConnectionProxy>(connection);
+            this->onChainMessage(conn, message->string());
         };
 
     _peers[peer].client = client;
@@ -224,8 +225,10 @@ void PeerManager::initWebSocketServer(std::uint32_t port)
     _wsServer.endpoint["^/chain$"].on_message = 
         [this](WsServerConnPtr connection, std::shared_ptr<WsServer::InMessage> message)
         {
-            _logger->trace("wss:/chain request from connection {}", static_cast<void*>(connection.get()));
-            this->onChainRequest(connection, message->string());
+            // this->onChainRequest(connection, message->string());
+            auto conn = std::make_shared<ConnectionProxy>(connection);
+            this->onChainMessage(conn, message->string());
+
         };
 
     _wsThread = std::thread(
