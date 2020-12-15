@@ -78,11 +78,12 @@ void ChainDatabase::initialize(Blockchain& blockchain)
         blockchain._blocks.push_back(block);
     }
 
-    _logger->info("loaded {} blocks from saved chain", blockchain.size());
     if (!blockchain.isValidChain())
     {
         throw std::logic_error("invalid chain");
     }
+    
+    _logger->info("loaded {} blocks from saved chain", blockchain.size());
 }
 
 void ChainDatabase::write(const Block& block)

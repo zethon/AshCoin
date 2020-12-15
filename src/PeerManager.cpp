@@ -183,12 +183,16 @@ void PeerManager::connectAll(std::function<void(WsClientConnPtr)> cb)
 
 void PeerManager::broadcast(std::string_view message)
 {
+    std::size_t count = 0;
     for (const auto& [peer, data] : _peers)
     {
         if (!data.connection) continue;
-        _logger->trace("broadcasting to {}: {}", peer, message);
         data.connection->send(message);
+        count++;
     }
+
+    _logger->trace("broadcasting message to {} peers: {}", 
+        count, message);
 }
 
 void PeerManager::initWebSocketServer(std::uint32_t port)

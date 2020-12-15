@@ -39,7 +39,7 @@ Assume that `N1` and `N2` are in sync from `#0`-`#9`, but communication is lost.
 
 This is the scenario of when a `newblock` is sent and the **local chain** has the greater cumulative difficulty.
 
-If `N1` has a greater cumalative difficulty then `N1` will continue on mining with `#17`. 
+If `N1` has a greater cumulative difficulty then `N1` will continue on mining with `#17`. 
 
 `N2` should:
 1. abort mining
@@ -51,7 +51,7 @@ If `N1` has a greater cumalative difficulty then `N1` will continue on mining wi
 
 This is the scenario of when a `newblock` is sent and the **remote chain** has the greater cumulative difficulty.
 
-If `N2` has a greater cumalative difficulty, then `N2` should continue mining. 
+If `N2` has a greater cumulative difficulty, then `N2` should continue mining. 
 
 `N1` should:
 1. abort mining

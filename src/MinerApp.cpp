@@ -634,7 +634,7 @@ void MinerApp::handleResponse(HcConnectionPtr connection, const nl::json& json)
             auto startIdx = lastblock.index() + 1;
             auto stopIdx = remote_last.index();
 
-            _logger->info("remote chain has a greater cumalative difficulty ({}) than local chain ({}), requesting #{}-#{}",
+            _logger->info("remote chain has a greater cumulative difficulty ({}) than local chain ({}), requesting #{}-#{}",
                 remote_cumdiff, local_cumdiff, startIdx, stopIdx);
 
             connection->sendRequestFmt("chain", R"({{ "id1":{},"id2":{} }})", startIdx, stopIdx);
