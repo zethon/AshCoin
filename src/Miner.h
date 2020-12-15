@@ -30,7 +30,10 @@ public:
     std::uint32_t difficulty() const noexcept { return _difficulty; }
     void setDifficulty(std::uint32_t val) { _difficulty = val; }
 
-    void abort() { _keepTrying = false; }
+    void abort() 
+    { 
+        _keepTrying.store(false, std::memory_order_release);
+    }
 
     Result mineBlock(std::uint64_t index, 
         const std::string& data, 
@@ -50,19 +53,22 @@ public:
 
         _keepTrying = true;
 
-        while (_keepTrying 
+        while (_keepTrying.load(std::memory_order_acquire) 
             && hash.compare(0, _difficulty, zeros) != 0)
         {
-            if (keepGoingFunc && !keepGoingFunc(index))
+            // do some extra stuff every few seconds
+            if ((nonce & 0x3ffff) == 0)
             {
-                // our callback has told us to bail
-                return { ResultType::ABORT, {} };
+                if (keepGoingFunc && !keepGoingFunc(index))
+                {
+                    // our callback has told us to bail
+                    return { ResultType::ABORT, {} };
+                }
+
+                time = std::time(nullptr);
             }
 
-            // TODO: might only need to return these three things
-            // instead of creating a new block?
             nonce++;
-            time = std::time(nullptr); // this is probably bad
             hash = CalculateBlockHash(index, nonce, _difficulty, time, data, prev);
         }
 
@@ -71,6 +77,8 @@ public:
             return { ResultType::ABORT, {} };
         }
 
+        // TODO: this function might only need to return 'nonce', 
+        // 'time' and 'hash' instead of a whole new block
         Block retval { index, data };
         retval._hashed._nonce = nonce;
         retval._hashed._difficulty = _difficulty;
