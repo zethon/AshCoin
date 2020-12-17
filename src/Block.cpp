@@ -86,10 +86,10 @@ Block::Block(uint64_t nIndexIn, std::string_view sDataIn)
     : _logger(ash::initializeLogger("Block"))
 {
     _hashed._index = nIndexIn;
-    _hashed._data = sDataIn;
     _hashed._nonce = 0;
-    _hashed._time = std::time(nullptr);
     _hashed._difficulty = 1;
+    _hashed._data = sDataIn;
+    _hashed._time = std::time(nullptr);
     // _hash = CalculateBlockHash(*this);
 }
 
