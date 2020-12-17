@@ -26,9 +26,6 @@ ash::SettingsPtr registerSettings()
 {
     auto retval = std::make_unique<ash::Settings>();
 
-    retval->registerUInt("chain.difficulty", 5,
-        std::make_shared<ash::RangeValidator<std::uint16_t>>(1u, 256u));
-
     retval->registerBool("chain.reset.enable", true);
 
     const std::string dbfolder = utils::getDefaultDatabaseFolder();

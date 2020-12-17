@@ -15,6 +15,31 @@ using BlockChainPtr = std::unique_ptr<Blockchain>;
 void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
+template<typename NumberT>
+class CumulativeMovingAverage
+{
+    NumberT     _total = 0;
+    std::size_t _count = 0;
+public:
+    float value() const
+    {
+        // TODO: pretty sure only one cast is need, but not 100% sure
+        return (static_cast<float>(_total) / static_cast<float>(_count));
+    }
+
+    void addValue(NumberT v)
+    {
+        _total += v;
+        _count++;
+    }
+
+    void reset()
+    {
+        _total = 0;
+        _count = 0;
+    }
+};
+
 class Blockchain 
 {
 
@@ -85,6 +110,48 @@ public:
     }
 
     std::uint64_t cumDifficulty(std::size_t idx) const;
+
+    std::uint64_t getAdjustedDifficulty(std::uint64_t prevCount, std::uint64_t expectedTime)
+    {
+        CumulativeMovingAverage<std::uint64_t> avg;
+        const auto chainsize = size();
+        
+        if (chainsize == 0)
+        {
+            return 1;
+        }
+        else if (chainsize == 1)
+        {
+            return back().difficulty();
+        }
+        else if (chainsize == 2)
+        {
+            avg.addValue(back().time() - front().time());
+        }
+        else 
+        {
+            auto startIdx = (chainsize <= prevCount) ? 1 : chainsize - prevCount;
+            auto prevTime = at(startIdx-1).time();
+            
+            for (auto idx = startIdx; idx < chainsize; idx++)
+            {
+                avg.addValue(at(idx).time() - prevTime);
+                prevTime = at(idx).time();
+            }
+        }
+
+        if (const auto avgTime = avg.value();
+            avgTime < (expectedTime * 0.75f))
+        {
+            return back().difficulty() + 1;
+        }
+        else if (avgTime > (expectedTime * 1.5f))
+        {
+            return back().difficulty() - 1;
+        }
+
+        return back().difficulty();
+    }
 };
 
 }

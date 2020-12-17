@@ -105,29 +105,4 @@ private:
     SpdLogPtr                _logger;
 };
 
-template<typename NumberT>
-class CumulativeMovingAverage
-{
-    NumberT     _total = 0;
-    std::size_t _count = 0;
-public:
-    float value() const
-    {
-        // TODO: pretty sure only one cast is need, but not 100% sure
-        return (static_cast<float>(_total) / static_cast<float>(_count));
-    }
-
-    void addValue(NumberT v)
-    {
-        _total += v;
-        _count++;
-    }
-
-    void reset()
-    {
-        _total = 0;
-        _count = 0;
-    }
-};
-
 } // namespace

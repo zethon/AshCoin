@@ -1,5 +1,6 @@
 #pragma once
 #include "Block.h"
+#include "AshLogger.h"
 
 namespace ash
 {
@@ -10,6 +11,7 @@ class Miner
     std::uint64_t       _maxTries = 0;
     std::atomic_bool    _keepTrying = true;
     std::uint32_t       _timeout; // seconds
+    SpdLogPtr           _logger;
 
 public:
     enum ResultType { SUCCESS, TIMEOUT, ABORT };
@@ -22,7 +24,8 @@ public:
     }
 
     Miner(std::uint32_t difficulty)
-        : _difficulty{difficulty}
+        : _difficulty{difficulty},
+          _logger(ash::initializeLogger("Miner"))
     {
         // nothing to do
     }
@@ -86,6 +89,7 @@ public:
         retval._hashed._prev = prev;
         retval._hash = hash;
 
+        _logger->info("successfully mined bock {}", index);
         return { ResultType::SUCCESS, retval };
     }
 };

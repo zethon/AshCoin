@@ -19,7 +19,7 @@ namespace ash
 constexpr auto BLOCK_GENERATION_INTERVAL = 10u * 60u; // in seconds
 constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 25u; // in blocks
 #else
-constexpr auto BLOCK_GENERATION_INTERVAL = 60u; // in seconds
+constexpr auto BLOCK_GENERATION_INTERVAL = 10u; // in seconds
 constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 10u; // in blocks
 #endif
 
@@ -37,17 +37,12 @@ MinerApp::MinerApp(SettingsPtr settings)
     
     _logger->debug("current miner uuid is {}", _uuid);
 
-    std::uint32_t difficulty = _settings->value("chain.difficulty", 5u);
-
-    _logger->info("current difficulty set to {}", difficulty);
     _logger->debug("target block generation interval is {} seconds", BLOCK_GENERATION_INTERVAL);
     _logger->debug("difficulty adjustment interval is every {} blocks", DIFFICULTY_ADJUSTMENT_INTERVAL);
 
     initRest();
     initWebSocket();
     initPeers();
-
-    _miner.setDifficulty(difficulty);
 
     _blockchain = std::make_unique<Blockchain>();
 
@@ -359,18 +354,25 @@ void MinerApp::runMineThread()
 
     while (!_miningDone && !_done)
     {
+        std::string prevHash;
         {
             std::lock_guard<std::mutex> lock{_chainMutex};
             index = _blockchain->size();
+
+            const auto& lastBlock = _blockchain->back();
+            prevHash = lastBlock.hash();
+
+            auto newDifficulty = _blockchain->getAdjustedDifficulty(
+                BLOCK_GENERATION_INTERVAL, BLOCK_GENERATION_INTERVAL);
+
+            _miner.setDifficulty(newDifficulty);
         }
     
         _logger->debug("mining block {} with difficulty {}", 
             index, _miner.difficulty());
 
-        auto prevTime = static_cast<std::uint64_t>(_blockchain->back().time());
-
         const std::string data = fmt::format(":coinbase{}", index);
-        auto result = _miner.mineBlock(index, data, _blockchain->back().hash(), keepMiningCallback);
+        auto result = _miner.mineBlock(index, data, prevHash, keepMiningCallback);
 
         if (std::get<0>(result) == Miner::ABORT)
         {
@@ -382,6 +384,9 @@ void MinerApp::runMineThread()
         auto& newblock = std::get<1>(result);
         newblock.setMiner(_uuid);
 
+        // TODO: need better locking/syncing on the chain from 
+        //       point on
+
         // append the block to the chain
         if (!_blockchain->addNewBlock(newblock))
         {
@@ -392,37 +397,6 @@ void MinerApp::runMineThread()
 
         // write the block to the database
         _database->write(newblock);
-
-        _logger->info("successfully mined bock {}", index);
-
-        // adjust difficulty if needed
-        if (blockAdjustmentCount > DIFFICULTY_ADJUSTMENT_INTERVAL)
-        {
-            auto difficulty = _miner.difficulty();
-            auto avgTime = avg.value();
-            if (avgTime < (BLOCK_GENERATION_INTERVAL / 2.0f))
-            {
-                _logger->info("increasing difficulty from {} to {}", difficulty++, difficulty);
-                _miner.setDifficulty(difficulty);
-            }
-            else if (avgTime > (BLOCK_GENERATION_INTERVAL * 2))
-            {
-                _logger->info("decreasing difficulty from {} to {}", difficulty--, difficulty);
-                _miner.setDifficulty(difficulty);
-            }
-            else
-            {
-                _logger->debug("no difficulty adjustment required");
-            }
-
-            blockAdjustmentCount = 0;
-            avg.reset();
-        }
-        else
-        {
-            avg.addValue(_blockchain->back().time() - prevTime);
-            blockAdjustmentCount++;
-        }
 
         // see if there's an update waiting for the local
         // copy of the chain
