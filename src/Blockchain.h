@@ -145,7 +145,8 @@ public:
         {
             return back().difficulty() + 1;
         }
-        else if (avgTime > (expectedTime * 1.5f))
+        else if (avgTime > (expectedTime * 1.5f)
+            && back().difficulty() > 1)
         {
             return back().difficulty() - 1;
         }
