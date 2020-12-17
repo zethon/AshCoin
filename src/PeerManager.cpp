@@ -121,6 +121,9 @@ void PeerManager::createClient(const std::string& peer)
             {
                 entry->second.connection.reset();
             }
+
+            _peers[peer].client->stop();
+            _peers[peer].client.reset();
         };
 
     client->on_close = 
@@ -160,6 +163,7 @@ void PeerManager::createClient(const std::string& peer)
         {
             peerdata.client->start();
         });
+
     _peers[peer].worker = std::move(thread);
 }
 

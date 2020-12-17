@@ -141,11 +141,11 @@ public:
         }
 
         if (const auto avgTime = avg.value();
-            avgTime < (expectedTime * 0.75f))
+            avgTime < (expectedTime * 0.5f))
         {
             return back().difficulty() + 1;
         }
-        else if (avgTime > (expectedTime * 1.5f)
+        else if (avgTime > (expectedTime * 2.0f)
             && back().difficulty() > 1)
         {
             return back().difficulty() - 1;
