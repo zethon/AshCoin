@@ -86,17 +86,12 @@ void PeerManager::createClient(const std::string& peer)
     
     if (_peers[peer].client)
     {
-        _peers[peer].client.reset();
-    }
-
-    if (_peers[peer].connection)
-    {
-        _peers[peer].connection.reset();
+        _peers[peer].client->stop();
     }
 
     if (_peers[peer].worker.joinable())
     {
-        _peers[peer].worker.detach();
+        _peers[peer].worker.join();
     }
 
     auto client = std::make_shared<WsClient>(endpoint);
