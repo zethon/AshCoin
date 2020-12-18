@@ -83,13 +83,23 @@ void PeerManager::savePeers(std::string_view filename)
 void PeerManager::createClient(const std::string& peer)
 {
     const auto endpoint = fmt::format("{}/chain", peer);
+    
+    if (_peers[peer].client)
+    {
+        _peers[peer].client.reset();
+    }
+
+    if (_peers[peer].connection)
+    {
+        _peers[peer].connection.reset();
+    }
+
+    if (_peers[peer].worker.joinable())
+    {
+        _peers[peer].worker.detach();
+    }
 
     auto client = std::make_shared<WsClient>(endpoint);
-    
-    if (_peers[peer].client) _peers[peer].client.reset();
-    if (_peers[peer].connection) _peers[peer].connection.reset();
-    if (_peers[peer].worker.joinable()) _peers[peer].worker.detach();
-
     _peers[peer].client = client;
 
     client->on_open =
