@@ -28,6 +28,7 @@ class CumulativeMovingAverage
 {
     NumberT     _total = 0;
     std::size_t _count = 0;
+
 public:
     float value() const
     {
@@ -132,16 +133,14 @@ public:
         const auto& firstBlock = at(size() - BLOCK_INTERVAL);
         const auto& lastBlock = back();
         const auto timespan = 
-            static_cast<std::uint64_t>(lastBlock.time() - firstBlock.time());
+            std::chrono::duration_cast<std::chrono::seconds>
+                (lastBlock.time() - firstBlock.time());
 
-        std::cout << "first: " << firstBlock.time() << '\n';
-        std::cout << "last : " << lastBlock.time() << '\n';
-
-        if (timespan < (TARGET_TIMESPAN / 2))
+        if (timespan.count() < (TARGET_TIMESPAN / 2))
         {
             return lastBlock.difficulty() + 1;
         }
-        else if (timespan > (TARGET_TIMESPAN * 2))
+        else if (timespan.count() > (TARGET_TIMESPAN * 2))
         {
             return lastBlock.difficulty() - 1;
         }

@@ -19,10 +19,12 @@ void to_json(nl::json& j, const Block& b)
     j["nonce"] = b.nonce();
     j["difficulty"] = b.difficulty();
     j["data"] = b.data();
-    j["time"] = b.time();
     j["hash"] = b.hash();
     j["prev"] = b.previousHash();
     j["miner"] = b.miner();
+
+    j["time"] = 
+        static_cast<std::uint64_t>(b.time().time_since_epoch().count());
 }
 
 void from_json(const nl::json& j, Block& b)
@@ -31,10 +33,12 @@ void from_json(const nl::json& j, Block& b)
     j["nonce"].get_to(b._hashed._nonce);
     j["difficulty"].get_to(b._hashed._difficulty);
     j["data"].get_to(b._hashed._data);
-    j["time"].get_to(b._hashed._time);
     j["prev"].get_to(b._hashed._prev);
     j["hash"].get_to(b._hash);
     j["miner"].get_to(b._miner);
+
+    b._hashed._time = 
+        BlockTime{std::chrono::milliseconds{j["time"].get<std::uint64_t>()}};
 }
 
 std::string SHA256(std::string data)
@@ -54,7 +58,7 @@ std::string CalculateBlockHash(
     std::uint64_t index, 
     std::uint32_t nonce, 
     std::uint32_t difficulty,
-    time_t time, 
+    BlockTime time,
     const std::string& data, 
     const std::string& previous)
 {
@@ -63,7 +67,7 @@ std::string CalculateBlockHash(
         << nonce
         << difficulty
         << data
-        << time
+        << time.time_since_epoch().count()
         << previous;
 
     return SHA256(ss.str());
@@ -76,7 +80,7 @@ std::string CalculateBlockHash(const Block& block)
         << block.nonce()
         << block.difficulty()
         << block.data()
-        << block.time()
+        << block.time().time_since_epoch().count()
         << block.previousHash();
 
     return SHA256(ss.str());
@@ -89,8 +93,10 @@ Block::Block(uint64_t nIndexIn, std::string_view sDataIn)
     _hashed._nonce = 0;
     _hashed._difficulty = 1;
     _hashed._data = sDataIn;
-    _hashed._time = std::time(nullptr);
-    // _hash = CalculateBlockHash(*this);
+    _hashed._time = 
+        std::chrono::time_point_cast<std::chrono::milliseconds>
+            (std::chrono::system_clock::now());
+    _hash = CalculateBlockHash(*this);
 }
 
 bool Block::operator==(const Block & other) const

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <chrono>
 
 #include <nlohmann/json.hpp>
 
@@ -11,6 +12,10 @@ namespace nl = nlohmann;
 
 namespace ash
 {
+
+using BlockTime = std::chrono::time_point<
+    std::chrono::system_clock, std::chrono::milliseconds>;
+
 class Block;
 
 void to_json(nl::json& j, const Block& b);
@@ -21,7 +26,7 @@ std::string CalculateBlockHash(
     std::uint64_t index, 
     std::uint32_t nonce, 
     std::uint32_t difficulty,
-    time_t time, 
+    BlockTime time,
     const std::string& data, 
     const std::string& previous);
 
@@ -46,7 +51,7 @@ public:
     std::uint32_t nonce() const { return _hashed._nonce; }
     std::uint32_t difficulty() const { return _hashed._difficulty; }
     std::string data() const { return _hashed._data;  }
-    time_t time() const { return _hashed._time; }
+    BlockTime time() const { return _hashed._time; }
     std::string previousHash() const { return _hashed._prev; }  
 
     std::string hash() const { return _hash; }
@@ -61,7 +66,7 @@ private:
         std::uint32_t       _nonce;
         std::uint32_t       _difficulty;
         std::string         _data;
-        time_t              _time;  // std::uint64_t
+        BlockTime           _time;
         std::string         _prev;
     };
 

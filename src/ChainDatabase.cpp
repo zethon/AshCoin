@@ -15,12 +15,12 @@ void write_block(std::ostream& stream, const Block& block)
     ash::db::write_data<std::uint32_t>(stream, block.difficulty());
     ash::db::write_data(stream, block.data());
 
-    std::uint64_t dtime = static_cast<std::uint64_t>(block.time());
+    std::uint64_t dtime = 
+        static_cast<std::uint64_t>(block.time().time_since_epoch().count());
     ash::db::write_data<std::uint64_t>(stream, dtime);
 
     ash::db::write_data(stream, block.hash());
     ash::db::write_data(stream, block.previousHash());
-
     ash::db::write_data(stream, block.miner());
 }
 
@@ -33,7 +33,8 @@ void read_block(std::istream& stream, Block& block)
 
     std::uint64_t dtime;
     ash::db::read_data(stream, dtime);
-    block._hashed._time = static_cast<time_t>(dtime);
+    block._hashed._time = 
+        BlockTime{std::chrono::milliseconds{dtime}};
 
     ash::db::read_data(stream, block._hash);
     ash::db::read_data(stream, block._hashed._prev);

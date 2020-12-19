@@ -50,7 +50,10 @@ public:
         zeros.assign(_difficulty, '0');
 
         std::uint32_t nonce = 0;
-        time_t time = std::time(nullptr);
+        auto time = 
+            std::chrono::time_point_cast<std::chrono::milliseconds>
+                (std::chrono::system_clock::now());
+
         std::string hash = 
             CalculateBlockHash(index, nonce, _difficulty, time, data, prev);
 
@@ -68,7 +71,9 @@ public:
                     return { ResultType::ABORT, {} };
                 }
 
-                time = std::time(nullptr);
+                time = 
+                    std::chrono::time_point_cast<std::chrono::milliseconds>
+                        (std::chrono::system_clock::now());
             }
 
             nonce++;
@@ -89,6 +94,8 @@ public:
         retval._hashed._prev = prev;
         retval._hash = hash;
 
+        nl::json j = retval;
+        std::cout << "RETVAL: " << j.dump() << '\n';
         _logger->info("successfully mined bock {}", index);
         return { ResultType::SUCCESS, retval };
     }
