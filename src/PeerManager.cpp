@@ -39,7 +39,11 @@ PeerManager::~PeerManager()
     {
         if (data.worker.joinable())
         {
-            _peers.at(peer).client->stop();
+            if (_peers.at(peer).client)
+            {
+                _peers.at(peer).client->stop();
+            }
+            
             data.worker.join();
         }
     }
