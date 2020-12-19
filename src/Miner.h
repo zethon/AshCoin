@@ -94,8 +94,6 @@ public:
         retval._hashed._prev = prev;
         retval._hash = hash;
 
-        nl::json j = retval;
-        std::cout << "RETVAL: " << j.dump() << '\n';
         _logger->info("successfully mined bock {}", index);
         return { ResultType::SUCCESS, retval };
     }
