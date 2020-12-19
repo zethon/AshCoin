@@ -7,11 +7,13 @@
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/process/environment.hpp>
 
 #include <nlohmann/json.hpp>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/common.h>
+#include <spdlog/cfg/helpers.h>
 
 #include "AshLogger.h"
 #include "core.h"
@@ -56,8 +58,7 @@ ash::SettingsPtr registerSettings()
         std::make_shared<ash::NotEmptyValidator>());
 
     // log settings
-    retval->registerEnum("logs.level", "debug", 
-        { "off", "critical", "err", "warn", "info", "debug", "trace" });
+    retval->registerString("logs.level", "info");
 
     retval->registerBool("logs.file.enabled", true);
     retval->registerString("logs.file.folder", dbfolder,
@@ -85,10 +86,11 @@ ash::SettingsPtr initSettings(std::string_view filename)
 void initializeLogs(ash::SettingsPtr settings)
 {
     const std::string levelstr = settings->value("logs.level", "info");
-    const auto configLevel = spdlog::level::from_str(levelstr);
 
+    boost::this_process::environment()["SPDLOG_LEVEL"] = levelstr;
+    spdlog::cfg::helpers::load_levels(levelstr);
+    
     auto logger = ash::rootLogger();
-    logger->set_level(configLevel);
 
     std::string loggerfilename;
 
@@ -117,7 +119,8 @@ void initializeLogs(ash::SettingsPtr settings)
     {
         logger->info("logfile written to {}" , loggerfilename);
     }
-    logger->info("log level set to: {}", spdlog::level::to_string_view(configLevel));
+
+    logger->info("log levels set to: {}", levelstr);
 }
 
 int main(int argc, char* argv[])

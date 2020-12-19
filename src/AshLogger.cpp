@@ -1,4 +1,6 @@
+#include <boost/process/environment.hpp>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/cfg/env.h>
 #include "AshLogger.h"
 
 namespace ash
@@ -35,6 +37,8 @@ SpdLogPtr initializeLogger(const std::string& name)
         spdlog::register_logger(logger);
     }
 
+    // reload the logger levels
+    spdlog::cfg::load_env_levels();
     return logger;
 }
 
