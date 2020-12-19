@@ -329,10 +329,6 @@ void MinerApp::runMineThread()
 {
     std::uint64_t index = 0;
 
-    // TODO: locking and unlocking this mutex inside the
-    // mining loop is likely a bad idea. should probably
-    // store the index in an atomic number when the _tempchain
-    // is updated
     auto keepMiningCallback = 
         [this](std::uint64_t index) -> bool
         {
