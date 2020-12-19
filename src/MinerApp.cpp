@@ -15,14 +15,6 @@ namespace nl = nlohmann;
 namespace ash
 {
 
-#ifdef _RELEASE
-constexpr auto BLOCK_GENERATION_INTERVAL = 10u * 60u; // in seconds
-constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 25u; // in blocks
-#else
-constexpr auto BLOCK_GENERATION_INTERVAL = 10u; // in seconds
-constexpr auto DIFFICULTY_ADJUSTMENT_INTERVAL = 10u; // in blocks
-#endif
-
 MinerApp::MinerApp(SettingsPtr settings)
     : _settings{ std::move(settings) },
       _httpThread{},
@@ -37,8 +29,8 @@ MinerApp::MinerApp(SettingsPtr settings)
     
     _logger->debug("current miner uuid is {}", _uuid);
 
-    _logger->debug("target block generation interval is {} seconds", BLOCK_GENERATION_INTERVAL);
-    _logger->debug("difficulty adjustment interval is every {} blocks", DIFFICULTY_ADJUSTMENT_INTERVAL);
+    _logger->debug("target block generation interval is {} seconds", TARGET_TIMESPAN);
+    _logger->debug("difficulty adjustment interval is every {} blocks", BLOCK_INTERVAL);
 
     initRest();
     initWebSocket();
@@ -362,9 +354,7 @@ void MinerApp::runMineThread()
             const auto& lastBlock = _blockchain->back();
             prevHash = lastBlock.hash();
 
-            auto newDifficulty = _blockchain->getAdjustedDifficulty(
-                BLOCK_GENERATION_INTERVAL, BLOCK_GENERATION_INTERVAL);
-
+            auto newDifficulty = _blockchain->getAdjustedDifficulty();
             _miner.setDifficulty(newDifficulty);
         }
     

@@ -9,6 +9,14 @@
 namespace ash
 {
 
+#ifdef _RELEASE
+constexpr auto TARGET_TIMESPAN = 10u * 60u; // in seconds
+constexpr auto TARGET_SPACING = 25u; // in blocks
+#else
+constexpr auto TARGET_TIMESPAN  = 60u; // in seconds
+constexpr auto BLOCK_INTERVAL   = 10u; // in blocks
+#endif
+
 class Blockchain;
 using BlockChainPtr = std::unique_ptr<Blockchain>;
 
@@ -111,47 +119,34 @@ public:
 
     std::uint64_t cumDifficulty(std::size_t idx) const;
 
-    std::uint64_t getAdjustedDifficulty(std::uint64_t prevCount, std::uint64_t expectedTime)
+    std::uint64_t getAdjustedDifficulty()
     {
-        CumulativeMovingAverage<std::uint64_t> avg;
         const auto chainsize = size();
-        
-        if (chainsize == 0)
-        {
-            return 1;
-        }
-        else if (chainsize == 1)
+        assert(chainsize > 0);
+
+        if (((back().index() + 1) % BLOCK_INTERVAL) != 0)
         {
             return back().difficulty();
         }
-        else if (chainsize == 2)
+
+        const auto& firstBlock = at(size() - BLOCK_INTERVAL);
+        const auto& lastBlock = back();
+        const auto timespan = 
+            static_cast<std::uint64_t>(lastBlock.time() - firstBlock.time());
+
+        std::cout << "first: " << firstBlock.time() << '\n';
+        std::cout << "last : " << lastBlock.time() << '\n';
+
+        if (timespan < (TARGET_TIMESPAN / 2))
         {
-            avg.addValue(back().time() - front().time());
+            return lastBlock.difficulty() + 1;
         }
-        else 
+        else if (timespan > (TARGET_TIMESPAN * 2))
         {
-            auto startIdx = (chainsize <= prevCount) ? 1 : chainsize - prevCount;
-            auto prevTime = at(startIdx-1).time();
-            
-            for (auto idx = startIdx; idx < chainsize; idx++)
-            {
-                avg.addValue(at(idx).time() - prevTime);
-                prevTime = at(idx).time();
-            }
+            return lastBlock.difficulty() - 1;
         }
 
-        if (const auto avgTime = avg.value();
-            avgTime < (expectedTime * 0.5f))
-        {
-            return back().difficulty() + 1;
-        }
-        else if (avgTime > (expectedTime * 2.0f)
-            && back().difficulty() > 1)
-        {
-            return back().difficulty() - 1;
-        }
-
-        return back().difficulty();
+        return lastBlock.difficulty();
     }
 };
 
