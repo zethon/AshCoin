@@ -23,32 +23,6 @@ using BlockChainPtr = std::unique_ptr<Blockchain>;
 void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
-template<typename NumberT>
-class CumulativeMovingAverage
-{
-    NumberT     _total = 0;
-    std::size_t _count = 0;
-
-public:
-    float value() const
-    {
-        // TODO: pretty sure only one cast is need, but not 100% sure
-        return (static_cast<float>(_total) / static_cast<float>(_count));
-    }
-
-    void addValue(NumberT v)
-    {
-        _total += v;
-        _count++;
-    }
-
-    void reset()
-    {
-        _total = 0;
-        _count = 0;
-    }
-};
-
 class Blockchain 
 {
 

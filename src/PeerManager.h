@@ -222,7 +222,6 @@ public:
     ~PeerManager();
 
     void loadPeers(std::string_view filename);
-    void savePeers(std::string_view filename);
 
     void connectAll(std::function<void(WsClientConnPtr)> cb);
     void broadcast(std::string_view message);

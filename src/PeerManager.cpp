@@ -79,11 +79,7 @@ void PeerManager::loadPeers(std::string_view filename)
         }
     }
 }
-    
-void PeerManager::savePeers(std::string_view filename)
-{
-}
-    
+
 void PeerManager::createClient(const std::string& peer)
 {
     const auto endpoint = fmt::format("{}/chain", peer);

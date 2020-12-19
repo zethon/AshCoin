@@ -327,8 +327,6 @@ void MinerApp::run()
 
 void MinerApp::runMineThread()
 {
-    auto blockAdjustmentCount = 0u;
-    ash::CumulativeMovingAverage<std::uint64_t> avg;
     std::uint64_t index = 0;
 
     // TODO: locking and unlocking this mutex inside the
@@ -358,7 +356,7 @@ void MinerApp::runMineThread()
             _miner.setDifficulty(newDifficulty);
         }
     
-        _logger->debug("mining block {} with difficulty {}", 
+        _logger->debug("mining block #{} with difficulty {}", 
             index, _miner.difficulty());
 
         const std::string data = fmt::format(":coinbase{}", index);
@@ -366,7 +364,7 @@ void MinerApp::runMineThread()
 
         if (std::get<0>(result) == Miner::ABORT)
         {
-            _logger->debug("mining block {} was aborted", index);
+            _logger->debug("mining block #{} was aborted", index);
             syncBlockchain();
             continue;
         }
