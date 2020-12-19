@@ -20,6 +20,8 @@ option(BUILD_ASH_TESTS "Build unit tests (default OFF)" OFF)
 # of platform
 string(APPEND CMAKE_CXX_FLAGS_RELEASE " -D_RELEASE")
 string(APPEND CMAKE_CXX_FLAGS_MINSIZEREL " -D_RELEASE")
+string(APPEND CMAKE_CXX_FLAGS_DEBUG " -D_DEBUG")
+string(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO " -D_DEBUG")
 
 if (MSVC)
     add_definitions(

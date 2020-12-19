@@ -93,6 +93,11 @@ void PeerManager::createClient(const std::string& peer)
     }
 
     auto client = std::make_shared<WsClient>(endpoint);
+#ifdef _RELEASE
+    client->config.timeout_request = 30; // seconds
+#else
+    client->config.timeout_request = 5; // seconds
+#endif
 
     _peers[peer].client = client;
     _peers[peer].state = PeerData::State::CONNECTING;
