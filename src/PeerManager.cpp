@@ -24,7 +24,6 @@ PeerManager::PeerManager()
             {
                 if (peer.second.state == PeerData::State::OFFLINE)
                 {
-                    _logger->trace("attempting reconnect to {}", peer.first);
                     createClient(peer.first);
                 }
             }
@@ -84,15 +83,17 @@ void PeerManager::loadPeers(std::string_view filename)
 void PeerManager::createClient(const std::string& peer)
 {
     using namespace std::chrono_literals;
-
-    const auto endpoint = fmt::format("{}/chain", peer);
+    
+    _logger->trace("attempting to connect to {}", peer);
     
     if (_peers[peer].worker.joinable())
     {
         _peers[peer].worker.join();
     }
-
+    
+    const auto endpoint = fmt::format("{}/chain", peer);
     auto client = std::make_shared<WsClient>(endpoint);
+    
 #ifdef _RELEASE
     client->config.timeout_request = 30; // seconds
 #else
@@ -170,7 +171,6 @@ void PeerManager::connectAll(std::function<void(WsClientConnPtr)> cb)
     std::lock_guard<std::mutex> lock{_peerMutex};
     for (const auto& [peer, data] : _peers)
     {
-        _logger->debug("connecting to {}", peer);
         createClient(peer);
     }
 
@@ -233,7 +233,7 @@ void PeerManager::initWebSocketServer(std::uint32_t port)
     _wsThread = std::thread(
         [this]()
         {
-            _logger->debug("websocket server listening on port {}", _wsServer.config.port);
+            _logger->info("websocket server listening on port {}", _wsServer.config.port);
             _wsServer.start();
         });
 }
