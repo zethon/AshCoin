@@ -44,7 +44,8 @@ std::size_t Settings::load(std::string_view filename)
             }
             else
             {
-                if (_validators[key]->isValid(json_to_string(item.value())))
+                if (!_validators[key]
+                    || _validators[key]->isValid(json_to_string(item.value())))
                 {
                     _settings[key] = item.value();
                     count++;
