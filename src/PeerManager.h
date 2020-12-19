@@ -36,9 +36,15 @@ using WsClientConnPtr = std::shared_ptr<WsClient::Connection>;
 
 struct PeerData
 {
+    enum class State
+    {
+        OFFLINE, CONNECTING, CONNECTED
+    };
+
     WsClientPtr     client;
     WsClientConnPtr connection;
     std::thread     worker;
+    State           state = State::OFFLINE;
 };
 
 using PeerMap = std::map<std::string, PeerData>;

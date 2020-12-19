@@ -22,8 +22,9 @@ PeerManager::PeerManager()
             std::lock_guard<std::mutex> lock{ _peerMutex };
             for (const auto& peer : this->_peers)
             {
-                if (!peer.second.connection)
+                if (peer.second.state == PeerData::State::OFFLINE)
                 {
+                    _logger->trace("attempting reconnect to {}", peer.first);
                     createClient(peer.first);
                 }
             }
@@ -82,27 +83,29 @@ void PeerManager::loadPeers(std::string_view filename)
 
 void PeerManager::createClient(const std::string& peer)
 {
+    using namespace std::chrono_literals;
+
     const auto endpoint = fmt::format("{}/chain", peer);
     
-    if (_peers[peer].client)
-    {
-        _peers[peer].client->stop();
-    }
-
     if (_peers[peer].worker.joinable())
     {
         _peers[peer].worker.join();
     }
 
     auto client = std::make_shared<WsClient>(endpoint);
+
     _peers[peer].client = client;
+    _peers[peer].state = PeerData::State::CONNECTING;
 
     client->on_open =
         [this, client, peer = peer](WsClientConnPtr connection)
         {
             std::lock_guard<std::mutex> lock{this->_peerMutex};
             _logger->trace("wsc:/chain opened connection to node {}", peer);
+            assert(this->_peers.find(peer) != this->_peers.end());
+
             _peers[peer].connection = connection;
+            _peers[peer].state = PeerData::State::CONNECTED;
             
             if (_connectCallback)
             {
@@ -111,52 +114,35 @@ void PeerManager::createClient(const std::string& peer)
         };
 
     client->on_error =
-        [this, peer = peer](WsClientConnPtr connection, const SimpleWeb::error_code &ec)
+        [client, this, peer = peer](WsClientConnPtr connection, const SimpleWeb::error_code &ec)
         {
-            // find the connection in our map
-            auto entry = std::find_if(_peers.begin(), _peers.end(),
-                [connection](const auto& el)
-                {
-                    return el.second.connection == connection;
-                });
+            std::lock_guard<std::mutex> lock{ this->_peerMutex };
+            _logger->trace("wsc:/chain error on peer {}: {}", peer, ec.message());
 
-            // if the machine did not connect at startup then it will
-            // not have a connection entry in the map
-            if (entry != _peers.end())
-            {
-                entry->second.connection.reset();
-            }
+            assert(this->_peers.find(peer) != this->_peers.end());
+            assert(this->_peers[peer].client == client);
 
             _peers[peer].client->stop();
-            _peers[peer].client.reset();
+            _peers[peer].state = PeerData::State::OFFLINE;
         };
 
     client->on_close = 
-        [this](WsClientConnPtr connection, int, const std::string&)
+        [this, client, peer=peer](WsClientConnPtr connection, int status, const std::string& reason)
         {
             std::lock_guard<std::mutex> lock{this->_peerMutex};
+            _logger->trace("wsc:/chain closing peer {}: ({}) {}", 
+                peer, status, reason);
 
-            // find the connection in our map
-            auto entry = std::find_if(_peers.begin(), _peers.end(),
-                [connection](const auto& el)
-                {
-                    return el.second.connection == connection;
-                });
+            assert(this->_peers.find(peer) != this->_peers.end());
+            assert(this->_peers[peer].client == client);
 
-            if (entry == _peers.end())
-            {
-                _logger->error("closing connection that is not in peer map!");
-                return;
-            }
-
-            _logger->trace("wsc:/chain closed connection to node {}", entry->first);
-            entry->second.connection.reset();
+            _peers[peer].client->stop();
+            _peers[peer].state = PeerData::State::OFFLINE;
         };
 
     client->on_message =
         [this](WsClientConnPtr connection, std::shared_ptr<WsClient::InMessage> message)
         {
-            // this->onChainResponse(connection, message->string());
             auto conn = std::make_shared<ConnectionProxy>(connection);
             this->onChainMessage(conn, message->string());
         };
