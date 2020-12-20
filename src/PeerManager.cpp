@@ -182,8 +182,11 @@ void PeerManager::broadcast(std::string_view message)
 {
     for (const auto& [peer, data] : _peers)
     {
-        if (!data.connection) continue;
-        data.connection->send(message);
+        if (data.state == PeerData::State::CONNECTED)
+        {
+            assert(data.connection);
+            data.connection->send(message);
+        }
     }
 }
 
