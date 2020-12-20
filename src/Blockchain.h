@@ -94,7 +94,7 @@ public:
 
     std::uint64_t cumDifficulty(std::size_t idx) const;
 
-    std::uint64_t getAdjustedDifficulty()
+    std::uint32_t getAdjustedDifficulty()
     {
         const auto chainsize = size();
         assert(chainsize > 0);

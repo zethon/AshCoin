@@ -207,7 +207,7 @@ void MinerApp::initRest()
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
             const auto indexStr = request->path_match[1].str();
-            int startingIdx = 0;
+            std::uint64_t startingIdx = 0;
             auto result = 
                 std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), startingIdx);
 
@@ -217,7 +217,7 @@ void MinerApp::initRest()
             }
 
             nl::json json;
-            startingIdx = std::max(0ul, _blockchain->size() - startingIdx);
+            startingIdx = std::max(0ull, _blockchain->size() - startingIdx);
             for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
             {
                 json["blocks"].push_back(_blockchain->at(idx));

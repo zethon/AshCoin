@@ -28,7 +28,7 @@ set(HEADER_FILES
 if(WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "/NODEFAULTLIB:library")
     list(APPEND SOURCE_FILES
-        ComputerUUIDWindows.h
+        ComputerUUIDWindows.cpp
     )
 endif()
 

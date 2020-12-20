@@ -82,7 +82,8 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
 
     for (auto current = _blocks.begin(); current < lastBlockIt; current++)
     {
-        total += std::pow(2, current->difficulty());
+        total += static_cast<std::uint64_t>
+            (std::pow(2u, current->difficulty()));
     }
 
     return total;
