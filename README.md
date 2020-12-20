@@ -1,6 +1,6 @@
-# HenryCoin
+# Ash
 
-HenryCoin is a crypto-currency built from scratch.
+Ash is a crypto-currency built from scratch.
 
 The goals with this project are:
 
@@ -18,7 +18,7 @@ A lot of this project is based on [this Javascript tutorial](https://lhartikk.gi
 ## Settings
 
 #### `chain.reset.enable`
-If you join a mining network and the remote network has a different Genesis Block then your current chain, setting this to true will erase your block database and download the remote blockhain.
+If you join a mining network and the remote network has a different Genesis Block, setting this to true will erase your block database and download the remote blockhain (i.e. *passive mode*). 
 
 #### `database.folder`
 The folder in which to persist the local copy of the blockchain.
