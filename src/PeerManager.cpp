@@ -1,4 +1,5 @@
 #include <fstream>
+#include <thread>
 
 #include <boost/algorithm/string.hpp>
 
@@ -37,14 +38,15 @@ PeerManager::~PeerManager()
 
     for (auto&[peer, data] : _peers)
     {
-        if (data.worker.joinable())
+        if (data.worker
+            && data.worker->joinable())
         {
             if (_peers.at(peer).client)
             {
                 _peers.at(peer).client->stop();
             }
             
-            data.worker.join();
+            data.worker->join();
         }
     }
 
@@ -86,25 +88,25 @@ void PeerManager::createClient(const std::string& peer)
     
     _logger->trace("attempting to connect to {}", peer);
     
-    if (_peers[peer].worker.joinable())
+    if (_peers[peer].worker
+        && _peers[peer].worker->joinable())
     {
-        _peers[peer].worker.join();
+        _peers[peer].worker->join();
     }
     
     const auto endpoint = fmt::format("{}/chain", peer);
-    auto client = std::make_shared<WsClient>(endpoint);
-    
+    _peers[peer].client = std::make_shared<WsClient>(endpoint);
+
 #ifdef _RELEASE
-    client->config.timeout_request = 30; // seconds
+    _peers[peer].client->config.timeout_request = 60; // seconds
 #else
-    client->config.timeout_request = 5; // seconds
+    _peers[peer].client->config.timeout_request = 10; // seconds
 #endif
 
-    _peers[peer].client = client;
     _peers[peer].state = PeerData::State::CONNECTING;
 
-    client->on_open =
-        [this, client, peer = peer](WsClientConnPtr connection)
+    _peers[peer].client->on_open =
+        [this, peer = peer](WsClientConnPtr connection)
         {
             std::lock_guard<std::mutex> lock{this->_peerMutex};
             _logger->trace("wsc:/chain opened connection to node {}", peer);
@@ -119,49 +121,43 @@ void PeerManager::createClient(const std::string& peer)
             }
         };
 
-    client->on_error =
-        [client, this, peer = peer](WsClientConnPtr connection, const SimpleWeb::error_code &ec)
+    _peers[peer].client->on_error =
+        [this, peer = peer](WsClientConnPtr connection, const SimpleWeb::error_code &ec)
         {
             std::lock_guard<std::mutex> lock{ this->_peerMutex };
             _logger->trace("wsc:/chain error on peer {}: {}", peer, ec.message());
 
             assert(this->_peers.find(peer) != this->_peers.end());
-            assert(this->_peers[peer].client == client);
 
             _peers[peer].client->stop();
             _peers[peer].state = PeerData::State::OFFLINE;
         };
 
-    client->on_close = 
-        [this, client, peer=peer](WsClientConnPtr connection, int status, const std::string& reason)
+    _peers[peer].client->on_close = 
+        [this, peer=peer](WsClientConnPtr connection, int status, const std::string& reason)
         {
             std::lock_guard<std::mutex> lock{this->_peerMutex};
             _logger->trace("wsc:/chain closing peer {}: ({}) {}", 
                 peer, status, reason);
 
             assert(this->_peers.find(peer) != this->_peers.end());
-            assert(this->_peers[peer].client == client);
 
             _peers[peer].client->stop();
             _peers[peer].state = PeerData::State::OFFLINE;
         };
 
-    client->on_message =
+    _peers[peer].client->on_message =
         [this](WsClientConnPtr connection, std::shared_ptr<WsClient::InMessage> message)
         {
             auto conn = std::make_shared<ConnectionProxy>(connection);
             this->onChainMessage(conn, message->string());
         };
 
-    _peers[peer].client = client;
-
-    auto thread = std::thread(
-        [&peerdata = _peers[peer]]() 
+    _peers[peer].worker = std::make_unique<std::thread>(
+        [this, peer = peer]() 
         {
-            peerdata.client->start();
+            _peers[peer].client->start();
         });
-
-    _peers[peer].worker = std::move(thread);
 }
 
 void PeerManager::connectAll(std::function<void(WsClientConnPtr)> cb)

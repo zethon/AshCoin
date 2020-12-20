@@ -43,7 +43,7 @@ struct PeerData
 
     WsClientPtr     client;
     WsClientConnPtr connection;
-    std::thread     worker;
+    std::unique_ptr<std::thread>     worker;
     State           state = State::OFFLINE;
 };
 
@@ -75,7 +75,9 @@ public:
     {
         _statIoService.reset();
 
-        _statTimer.expires_from_now(boost::posix_time::milliseconds(_timeout.count()));
+        _statTimer.expires_from_now(
+            boost::posix_time::milliseconds(_timeout.count()));
+
         _statTimer.async_wait(
             [this](const boost::system::error_code& ec)
             {
@@ -98,7 +100,9 @@ private:
             std::chrono::milliseconds timeToWait 
                 = std::chrono::duration_cast<std::chrono::milliseconds>(_timeout - elapsed);
 
-            _statTimer.expires_from_now(boost::posix_time::milliseconds(timeToWait.count()));
+            _statTimer.expires_from_now(
+                boost::posix_time::milliseconds(timeToWait.count()));
+
             _statTimer.async_wait(
                 [this](const boost::system::error_code& ec)
                 {
