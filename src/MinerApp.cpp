@@ -46,11 +46,13 @@ MinerApp::~MinerApp()
 {
     if (_mineThread.joinable())
     {
+        _logger->trace("shutting down mining thread");
         _mineThread.join();
     }
 
     if (_httpThread.joinable())
     {
+        _logger->trace("shutting down http server thread");
         _httpServer.stop();
         _httpThread.join();
     }

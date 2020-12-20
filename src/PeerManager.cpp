@@ -112,6 +112,7 @@ void PeerManager::createClient(const std::string& peer)
             _logger->trace("wsc:/chain opened connection to node {}", peer);
             assert(this->_peers.find(peer) != this->_peers.end());
 
+            _peers[peer].connection.reset();
             _peers[peer].connection = connection;
             _peers[peer].state = PeerData::State::CONNECTED;
             
@@ -189,22 +190,6 @@ void PeerManager::broadcast(std::string_view message)
 void PeerManager::initWebSocketServer(std::uint32_t port)
 {
     _wsServer.config.port = port;
-    _wsServer.endpoint["^/echo/?$"].on_open = 
-        [this](WsServerConnPtr connection) 
-        {
-            _logger->trace("ws:/echo opened connection {}", static_cast<void*>(connection.get()));
-        };
-
-    _wsServer.endpoint["^/echo/?$"].on_message =
-        [this](WsServerConnPtr connection, std::shared_ptr<WsServer::InMessage> in_message)
-        {
-            _logger->trace("ws:/echo received message on connection {}", static_cast<void*>(connection.get()));
-
-            // connection->send is an asynchronous function (you can pass a lambda)
-            auto out_message = in_message->string();
-            connection->send(out_message);
-        };
-
     _wsServer.endpoint["^/chain$"].on_open = 
         [this](WsServerConnPtr connection) 
         {
@@ -220,10 +205,8 @@ void PeerManager::initWebSocketServer(std::uint32_t port)
     _wsServer.endpoint["^/chain$"].on_message = 
         [this](WsServerConnPtr connection, std::shared_ptr<WsServer::InMessage> message)
         {
-            // this->onChainRequest(connection, message->string());
             auto conn = std::make_shared<ConnectionProxy>(connection);
             this->onChainMessage(conn, message->string());
-
         };
 
     _wsThread = std::thread(
