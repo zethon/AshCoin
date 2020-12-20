@@ -17,4 +17,11 @@ A lot of this project is based on [this Javascript tutorial](https://lhartikk.gi
 
 ## Documentation
 
-1. [Settings File](docs/settings.md)
+### [Settings File](docs/settings.md)
+Documentation about configuring Ash.
+
+### [Bookmarks](docs/bookmarks.md)
+A list of relevant links used while developing Ash.
+
+### [Testing Doc](docs/testing.md)
+Testing plans for Ash
