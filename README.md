@@ -9,7 +9,7 @@ The goals with this project are:
 * **Wallets**: Users can send coins from one wallet to another.
 * **Security**: The network should be smart enough to reject basic attempts at forging chains and transactions.
 
-![](doc/images/screenshot.png)
+![](docs/images/screenshot.png)
 
 A lot of this project is based on [this Javascript tutorial](https://lhartikk.github.io/jekyll/update/2017/07/15/chapter0.html). However this project uses C++ (as of this writing I am using C++17, but hope to switch to C++20 soon). 
 
