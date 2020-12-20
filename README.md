@@ -17,4 +17,4 @@ A lot of this project is based on [this Javascript tutorial](https://lhartikk.gi
 
 ## Documentation
 
-1. [Settings File](settings.md)
+1. [Settings File](docs/settings.md)
