@@ -87,10 +87,10 @@ void initializeLogs(ash::SettingsPtr settings)
 {
     const std::string levelstr = settings->value("logs.level", "info");
 
+    auto logger = ash::rootLogger();
+
     boost::this_process::environment()["SPDLOG_LEVEL"] = levelstr;
     spdlog::cfg::helpers::load_levels(levelstr);
-    
-    auto logger = ash::rootLogger();
 
     std::string loggerfilename;
 
