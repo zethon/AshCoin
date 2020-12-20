@@ -24,6 +24,7 @@ table
 .floatLeft { width: 49%; float: left; }
 .floatRight {width: 49%; float: right; }
 .container { overflow: hidden; }
+
 .mineruuid, .minercol
 {
     white-space: nowrap;
@@ -31,8 +32,10 @@ table
     text-overflow: ellipsis;
     max-width: 100px;
 }
+
 </style>
 
+<script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript">
 
@@ -82,14 +85,15 @@ var updateStatsWorker =
 
 function getBlockTableRow(block)
 {
-    var d = EpochToDate(block.time);
+    var dt = moment.unix(block.time/1000).utc();
+
     var row = "<td>" + block.index.toLocaleString() + "</td>";
-    row += "<td class='minercol'>" + block.hash + "</td>";
-    row += "<td>" + block.nonce.toLocaleString() + "</td>";
-    row += "<td>" + d.toISOString() + "</td>";
+    row += "<td>" + dt.fromNow() + "</td>";
+    row += "<td>" + "0" + "</td>";
     row += "<td class='minercol'>" + block.miner + "</td>";
     row += "<td>" + block.difficulty + "</td>";
-
+    row += "<td class='minercol'>" + block.hash + "</td>";
+    row += "<td>" + block.nonce.toLocaleString() + "</td>";
     row = "<tr id='block" + block.index + "'>" + row + "</tr>"
     return row;
 }
@@ -101,18 +105,22 @@ function getBlockRowElement(block)
     let tr = document.createElement('tr');
     tr.setAttribute('id', 'block' + block.index);
     tr.appendChild(d.createElement('td')).innerHTML = block.index.toLocaleString();
+
+    var dt = moment.unix(block.time/1000).utc();
+    tr.appendChild(d.createElement('td')).innerHTML = dt.fromNow();
+
+    tr.appendChild(d.createElement('td')).innerHTML = '0';
+
+    tr.appendChild(d.createElement('td')).innerHTML = block.miner;
+    tr.lastElementChild.setAttribute('class', 'minercol');
+
+    tr.appendChild(d.createElement('td')).innerHTML = block.difficulty;
+
     tr.appendChild(d.createElement('td')).innerHTML = block.hash;
     tr.lastElementChild.setAttribute('class', 'minercol');
 
     tr.appendChild(d.createElement('td')).innerHTML = block.nonce.toLocaleString();
 
-    var dt = EpochToDate(block.time);
-    tr.appendChild(d.createElement('td')).innerHTML = dt.toISOString();
-    
-    tr.appendChild(d.createElement('td')).innerHTML = block.miner;
-    tr.lastElementChild.setAttribute('class', 'minercol');
-
-    tr.appendChild(d.createElement('td')).innerHTML = block.difficulty;
     return tr;
 }
 
@@ -301,11 +309,12 @@ function clickShutdown()
 
     <tr>
         <td><b>Block</b></td>
-        <td><b>Hash</b></td>
-        <td><b>Nonce</b></td>
         <td><b>Time</b></td>
+        <td><b>Transactions</b></td>
         <td><b>Miner</b></td>
         <td><b>Difficulty</b></td>
+        <td><b>Hash</b></td>
+        <td><b>Nonce</b></td>
     </tr>
     <tbody id="blocklist">
     </tbody>

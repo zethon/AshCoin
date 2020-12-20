@@ -238,9 +238,6 @@ public:
 
     void initWebSocketServer(std::uint32_t port);
 
-    // boost::signals2::signal<void(WsServerConnPtr, const std::string&)> onChainRequest;
-    // boost::signals2::signal<void(WsClientConnPtr, const std::string&)> onChainResponse;
-
     boost::signals2::signal<void(ConnectionProxyPtr, const std::string&)> onChainMessage;
 
 private:

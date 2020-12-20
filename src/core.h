@@ -17,8 +17,8 @@
 #define VERSION					__EXPAND__(VERSION_MAJOR) "." __EXPAND__(VERSION_MINOR) "." __EXPAND__(VERSION_PATCH)
 #define BUILDTIMESTAMP	        __DATE__ " " __TIME__
 
-#define APP_NAME_LONG           "HenryCoin"
-#define APP_DOMAIN              "HC"
+#define APP_NAME_LONG           "Ash"
+#define APP_DOMAIN              "AC"
 #define APP_TITLE               APP_NAME_LONG " " VERSION
 #define COPYRIGHT               "Copyright (c) 2019-2020, github.com/zethon"
 
