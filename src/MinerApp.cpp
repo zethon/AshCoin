@@ -427,7 +427,7 @@ bool MinerApp::syncBlockchain()
             _database->writeChain(*_blockchain);
             retval = true;
         }
-        else if (_tempchain->front().index() < _blockchain->back().index())
+        else if (_tempchain->front().index() <= _blockchain->back().index())
         {
             auto startIdx = _tempchain->front().index();
             _blockchain->resize(startIdx);
