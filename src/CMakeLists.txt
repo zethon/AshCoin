@@ -27,6 +27,7 @@ set(HEADER_FILES
 
 if(WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "/NODEFAULTLIB:library")
+
     list(APPEND SOURCE_FILES
         ComputerUUIDWindows.cpp
     )
@@ -37,6 +38,10 @@ if(APPLE)
     # is not included
     find_library(COREFOUNDATION_LIBRARY CoreFoundation)
     find_library(CARBON_LIBRARY Carbon)
+
+    list(APPEND SOURCE_FILES
+        ComputerUUIDMac.cpp
+    )
 endif()
 
 if (APPLE OR UNIX)
@@ -55,6 +60,17 @@ add_executable(ash
 )
 
 target_link_libraries(ash
+    PUBLIC
+        ${CONAN_LIBS}
+        ${COREFOUNDATION_LIBRARY}
+        ${CARBON_LIBRARY}
+)
+
+add_executable(testapp
+    testapp.cpp
+)
+
+target_link_libraries(testapp
     PUBLIC
         ${CONAN_LIBS}
         ${COREFOUNDATION_LIBRARY}
