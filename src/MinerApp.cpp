@@ -27,7 +27,7 @@ MinerApp::MinerApp(SettingsPtr settings)
     uuid.setCustomData(dbfolder);
     _uuid = uuid.getUUID();
     
-    _logger->debug("current miner uuid is {}", _uuid);
+    _logger->info("current miner uuid is {}", _uuid);
 
     _logger->debug("target block generation interval is {} seconds", TARGET_TIMESPAN);
     _logger->debug("difficulty adjustment interval is every {} blocks", BLOCK_INTERVAL);
