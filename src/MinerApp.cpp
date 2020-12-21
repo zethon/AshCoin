@@ -217,7 +217,10 @@ void MinerApp::initRest()
             }
 
             nl::json json;
-            startingIdx = std::max(0ull, _blockchain->size() - startingIdx);
+
+            startingIdx = std::max(
+		static_cast<std::uint64_t>(0), static_cast<std::uint64_t>(_blockchain->size() - startingIdx));
+
             for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
             {
                 json["blocks"].push_back(_blockchain->at(idx));
