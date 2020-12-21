@@ -9,11 +9,11 @@ constexpr double COINBASE_REWARD = 57.0;
 
 class TxIn;
 class TxOut;
-class Transacitons;
+class Transaction;
 
 using TxIns = std::vector<TxIn>;
 using TxOuts = std::vector<TxOut>;
-using Transactions = std::vector<Transactions>;
+using Transactions = std::vector<Transaction>;
 
 class TxIn
 {

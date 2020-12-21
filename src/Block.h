@@ -53,7 +53,8 @@ public:
     std::uint32_t difficulty() const { return _hashed._difficulty; }
     std::string data() const { return _hashed._data;  }
     BlockTime time() const { return _hashed._time; }
-    std::string previousHash() const { return _hashed._prev; }  
+    std::string previousHash() const { return _hashed._prev; }
+    const Transactions transactions() const { return _hashed._txs; }
 
     std::string hash() const { return _hash; }
 

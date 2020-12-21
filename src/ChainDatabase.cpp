@@ -1,5 +1,6 @@
 #include <fmt/chrono.h>
 
+#include "Transactions.h"
 #include "Blockchain.h"
 #include "ChainDatabase.h"
 
@@ -7,6 +8,23 @@ namespace ash
 {
 
 constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
+
+void write_block(std::ostream& stream, const TxIn& tx)
+{
+
+}
+
+void write_block(std::ostream& stream, const TxOut& tx)
+{
+    
+}
+
+
+void write_block(std::ostream& stream, const Transaction& tx)
+{
+
+}
+
 
 void write_block(std::ostream& stream, const Block& block)
 {
@@ -22,6 +40,15 @@ void write_block(std::ostream& stream, const Block& block)
     ash::db::write_data(stream, block.hash());
     ash::db::write_data(stream, block.previousHash());
     ash::db::write_data(stream, block.miner());
+
+    const auto& txs = block.transactions();
+    auto txsize = static_cast<ash::db::StrLenType>(txs.size());
+    ash::db::write_data<ash::db::StrLenType>(stream, txsize);
+    
+    for (const auto& tx : txs)
+    {
+        write_block(stream, tx);
+    }
 }
 
 void read_block(std::istream& stream, Block& block)
