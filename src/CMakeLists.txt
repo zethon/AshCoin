@@ -8,6 +8,7 @@ set(SOURCE_FILES
     MinerApp.cpp
     PeerManager.cpp
     Settings.cpp
+    Transactions.cpp
     utils.cpp
 )
 
@@ -22,6 +23,7 @@ set(HEADER_FILES
     MinerApp.h
     PeerManager.h
     Settings.h
+    Transactions.h
     utils.h
 )
 

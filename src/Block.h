@@ -6,6 +6,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "Transactions.h"
 #include "AshLogger.h"
 
 namespace nl = nlohmann;
@@ -68,6 +69,7 @@ private:
         std::string         _data;
         BlockTime           _time;
         std::string         _prev;
+        Transactions        _txs;
     };
 
     HashedData      _hashed;
