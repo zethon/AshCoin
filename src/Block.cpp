@@ -22,6 +22,7 @@ void to_json(nl::json& j, const Block& b)
     j["hash"] = b.hash();
     j["prev"] = b.previousHash();
     j["miner"] = b.miner();
+    j["transactions"] = b.transactions();
 
     j["time"] = 
         static_cast<std::uint64_t>(b.time().time_since_epoch().count());

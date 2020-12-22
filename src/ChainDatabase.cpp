@@ -9,22 +9,39 @@ namespace ash
 
 constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
 
-void write_block(std::ostream& stream, const TxIn& tx)
+void write_data(std::ostream& stream, const TxIn& tx)
 {
-
+    ash::db::write_data(stream, tx.txtOutId());
+    ash::db::write_data(stream, tx.txtOutIndex());
+    ash::db::write_data(stream, tx.signature());
 }
 
-void write_block(std::ostream& stream, const TxOut& tx)
+void write_data(std::ostream& stream, const TxOut& tx)
 {
+    ash::db::write_data(stream, tx.address());
+    ash::db::write_data(stream, tx.amount());
+}
+
+void write_data(std::ostream& stream, const Transaction& tx)
+{
+    ash::db::write_data(stream, tx.id());
     
+    const auto txins = tx.txIns();
+    auto txinsize = static_cast<ash::db::StrLenType>(txins.size());
+    ash::db::write_data<ash::db::StrLenType>(stream, txinsize);
+    for (const auto& txin : txins)
+    {
+        write_data(stream, txin);
+    }
+
+    const auto txouts = tx.txOuts();
+    auto txoutsize = static_cast<ash::db::StrLenType>(txouts.size());
+    ash::db::write_data<ash::db::StrLenType>(stream, txoutsize);
+    for (const auto& txout : txouts)
+    {
+        write_data(stream, txout);
+    }
 }
-
-
-void write_block(std::ostream& stream, const Transaction& tx)
-{
-
-}
-
 
 void write_block(std::ostream& stream, const Block& block)
 {
@@ -44,10 +61,46 @@ void write_block(std::ostream& stream, const Block& block)
     const auto& txs = block.transactions();
     auto txsize = static_cast<ash::db::StrLenType>(txs.size());
     ash::db::write_data<ash::db::StrLenType>(stream, txsize);
-    
+
     for (const auto& tx : txs)
     {
-        write_block(stream, tx);
+        write_data(stream, tx);
+    }
+}
+
+void read_data(std::istream& stream, TxIn& txin)
+{
+    ash::db::read_data(stream, txin._txtOutId);
+    ash::db::read_data(stream, txin._txOutIndex);
+    ash::db::read_data(stream, txin._signature);
+}
+
+void read_data(std::istream& stream, TxOut& txout)
+{
+    ash::db::read_data(stream, txout._address);
+    ash::db::read_data(stream, txout._amount);
+}
+
+void read_data(std::istream& stream, Transaction& tx)
+{
+    ash::db::StrLenType txincount;
+    ash::db::read_data(stream, txincount);
+    auto& txins = tx.txIns();
+    for (ash::db::StrLenType x = 0; x < txincount; x++)
+    {
+        TxIn txin;
+        read_data(stream, txin);
+        txins.push_back(txin);
+    }
+
+    ash::db::StrLenType txoutcount;
+    ash::db::read_data(stream, txoutcount);
+    auto& txouts = tx.txOuts();
+    for (ash::db::StrLenType x = 0; x < txoutcount; x++)
+    {
+        TxOut txout;
+        read_data(stream, txout);
+        txouts.push_back(txout);
     }
 }
 
@@ -66,6 +119,17 @@ void read_block(std::istream& stream, Block& block)
     ash::db::read_data(stream, block._hash);
     ash::db::read_data(stream, block._hashed._prev);
     ash::db::read_data(stream, block._miner);
+
+    ash::db::StrLenType txcount;
+    ash::db::read_data(stream, txcount);
+
+    auto& txs = block.transactions();
+    for (ash::db::StrLenType x = 0; x < txcount; x++)
+    {
+        Transaction tx;
+        read_data(stream, tx);
+        txs.push_back(tx);
+    }
 }
 
 constexpr std::string_view DatabaseFile = "chain.ashdb";

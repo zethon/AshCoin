@@ -54,7 +54,13 @@ public:
     std::string data() const { return _hashed._data;  }
     BlockTime time() const { return _hashed._time; }
     std::string previousHash() const { return _hashed._prev; }
-    const Transactions transactions() const { return _hashed._txs; }
+
+    const Transactions& transactions() const { return _hashed._txs; }
+    Transactions& transactions()
+    {
+        return const_cast<Transactions&>(
+            (static_cast<const Block*>(this))->transactions());
+    }
 
     std::string hash() const { return _hash; }
 

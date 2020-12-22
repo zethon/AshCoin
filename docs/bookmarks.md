@@ -35,3 +35,8 @@ https://github.com/bumptop/BumpTop/blob/466d23597a07ae738f4265262fa01087fc6e257c
 https://stackoverflow.com/questions/22291506/persisting-stdchrono-time-point-instances
 https://stackoverflow.com/questions/31255486/c-how-do-i-convert-a-stdchronotime-point-to-long-and-back
 https://stackoverflow.com/questions/39763161/portable-way-to-store-milliseconds-with-chrono
+
+## Memory Mapped Files
+
+https://stackoverflow.com/questions/29602311/storing-vector-in-memory-mapped-file
+http://coliru.stacked-crooked.com/a/84f306bd98f6815e
