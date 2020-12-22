@@ -1,5 +1,9 @@
 This is a list of useful links that I encountered while developing Ash.
 
+## Naivecoin
+
+https://github.com/lhartikk/naivecoin
+
 ## Boost Serialization
 
 * https://www.boost.org/doc/libs/1_73_0/libs/serialization/doc/tutorial.html
@@ -40,3 +44,7 @@ https://stackoverflow.com/questions/39763161/portable-way-to-store-milliseconds-
 
 https://stackoverflow.com/questions/29602311/storing-vector-in-memory-mapped-file
 http://coliru.stacked-crooked.com/a/84f306bd98f6815e
+
+## Proof of Stake
+
+https://naivecoinstake.learn.uno/

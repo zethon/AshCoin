@@ -67,12 +67,14 @@ class ChainDatabase
 {
 
 public:
+    using GenesisCallback = std::function<Block(void)>;
+
     ChainDatabase(std::string_view folder);
 
     void write(const Block& block);
     void writeChain(const Blockchain& chain);
 
-    void initialize(Blockchain& chain);
+    void initialize(Blockchain& chain, GenesisCallback gcb);
     void reset();
 
 private:

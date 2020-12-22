@@ -4,6 +4,7 @@ set(SOURCE_FILES
     Block.cpp
     Blockchain.cpp
     ChainDatabase.cpp
+    CryptoUtils.cpp
     main.cpp
     MinerApp.cpp
     PeerManager.cpp
@@ -18,6 +19,7 @@ set(HEADER_FILES
     Blockchain.h
     ChainDatabase.h
     ComputerUUID.h
+    CryptoUtils.h
     core.h
     Miner.h
     MinerApp.h

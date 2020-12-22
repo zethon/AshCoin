@@ -40,7 +40,8 @@ class Block
 
 public:
     Block() = default;
-    Block(uint64_t nIndexIn, std::string_view sDataIn);
+    // Block(uint64_t nIndexIn, std::string_view sDataIn);
+    Block(std::uint64_t index, std::string_view prevHash, Transactions&& tx);
 
     bool operator==(const Block& other) const;
     bool operator!=(const Block& other) const
@@ -66,6 +67,14 @@ public:
 
     std::string miner() const { return _miner; }
     void setMiner(std::string_view val) { _miner = val; }
+
+    void setMinedData(std::uint64_t nonce, std::uint64_t diff, BlockTime time, std::string_view hash)
+    {
+        _hashed._nonce = nonce;
+        _hashed._difficulty = diff;
+        _hashed._time = time;
+        _hash = hash;
+    }
 
 private:
     struct HashedData

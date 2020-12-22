@@ -33,20 +33,29 @@ PeerManager::PeerManager()
 
 PeerManager::~PeerManager()
 {
-    _reconnectWorker->shutdown();
-    _reconnectThread.join();
+    if (_reconnectWorker)
+    {
+        _reconnectWorker->shutdown();
+    }
+
+    if (_reconnectThread.joinable())
+    {
+        _reconnectThread.join();
+    }
 
     for (auto&[peer, data] : _peers)
     {
-        if (data.worker
-            && data.worker->joinable())
+        if (data.worker)
         {
             if (_peers.at(peer).client)
             {
                 _peers.at(peer).client->stop();
             }
             
-            data.worker->join();
+            if (data.worker->joinable())
+            {
+                data.worker->join();
+            }
         }
     }
 

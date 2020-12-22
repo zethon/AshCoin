@@ -41,6 +41,8 @@ ash::SettingsPtr registerSettings()
         std::make_shared<ash::RangeValidator<std::uint64_t>>(filesizeMin, filesizeMax));
 
     retval->registerBool("mining.autostart", false);
+    retval->registerString("mining.miner.public_key", "<CHANGE ME>", 
+        std::make_shared<ash::NotEmptyValidator>());
 
     constexpr auto portMin = 1024u;
     constexpr auto portMax = 65535u;

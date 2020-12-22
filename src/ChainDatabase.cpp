@@ -11,8 +11,8 @@ constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
 
 void write_data(std::ostream& stream, const TxIn& tx)
 {
-    ash::db::write_data(stream, tx.txtOutId());
-    ash::db::write_data(stream, tx.txtOutIndex());
+    ash::db::write_data(stream, tx.txOutId());
+    ash::db::write_data(stream, tx.txOutIndex());
     ash::db::write_data(stream, tx.signature());
 }
 
@@ -26,20 +26,24 @@ void write_data(std::ostream& stream, const Transaction& tx)
 {
     ash::db::write_data(stream, tx.id());
     
-    const auto txins = tx.txIns();
-    auto txinsize = static_cast<ash::db::StrLenType>(txins.size());
-    ash::db::write_data<ash::db::StrLenType>(stream, txinsize);
-    for (const auto& txin : txins)
     {
-        write_data(stream, txin);
+        const auto txins = tx.txIns();
+        auto txinsize = static_cast<ash::db::StrLenType>(txins.size());
+        ash::db::write_data<ash::db::StrLenType>(stream, txinsize);
+        for (const auto& txin : txins)
+        {
+            write_data(stream, txin);
+        }
     }
 
-    const auto txouts = tx.txOuts();
-    auto txoutsize = static_cast<ash::db::StrLenType>(txouts.size());
-    ash::db::write_data<ash::db::StrLenType>(stream, txoutsize);
-    for (const auto& txout : txouts)
     {
-        write_data(stream, txout);
+        const auto txouts = tx.txOuts();
+        auto txoutsize = static_cast<ash::db::StrLenType>(txouts.size());
+        ash::db::write_data<ash::db::StrLenType>(stream, txoutsize);
+        for (const auto& txout : txouts)
+        {
+            write_data(stream, txout);
+        }
     }
 }
 
@@ -70,7 +74,7 @@ void write_block(std::ostream& stream, const Block& block)
 
 void read_data(std::istream& stream, TxIn& txin)
 {
-    ash::db::read_data(stream, txin._txtOutId);
+    ash::db::read_data(stream, txin._txOutId);
     ash::db::read_data(stream, txin._txOutIndex);
     ash::db::read_data(stream, txin._signature);
 }
@@ -83,24 +87,30 @@ void read_data(std::istream& stream, TxOut& txout)
 
 void read_data(std::istream& stream, Transaction& tx)
 {
-    ash::db::StrLenType txincount;
-    ash::db::read_data(stream, txincount);
-    auto& txins = tx.txIns();
-    for (ash::db::StrLenType x = 0; x < txincount; x++)
+    ash::db::read_data(stream, tx._id);
+
     {
-        TxIn txin;
-        read_data(stream, txin);
-        txins.push_back(txin);
+        ash::db::StrLenType txincount;
+        ash::db::read_data(stream, txincount);
+        auto& txins = tx.txIns();
+        for (ash::db::StrLenType x = 0; x < txincount; x++)
+        {
+            TxIn txin;
+            read_data(stream, txin);
+            txins.push_back(txin);
+        }
     }
 
-    ash::db::StrLenType txoutcount;
-    ash::db::read_data(stream, txoutcount);
-    auto& txouts = tx.txOuts();
-    for (ash::db::StrLenType x = 0; x < txoutcount; x++)
     {
-        TxOut txout;
-        read_data(stream, txout);
-        txouts.push_back(txout);
+        ash::db::StrLenType txoutcount;
+        ash::db::read_data(stream, txoutcount);
+        auto& txouts = tx.txOuts();
+        for (ash::db::StrLenType x = 0; x < txoutcount; x++)
+        {
+            TxOut txout;
+            read_data(stream, txout);
+            txouts.push_back(txout);
+        }
     }
 }
 
@@ -120,10 +130,10 @@ void read_block(std::istream& stream, Block& block)
     ash::db::read_data(stream, block._hashed._prev);
     ash::db::read_data(stream, block._miner);
 
-    ash::db::StrLenType txcount;
+    auto& txs = block.transactions();
+    auto txcount = static_cast<ash::db::StrLenType>(txs.size());
     ash::db::read_data(stream, txcount);
 
-    auto& txs = block.transactions();
     for (ash::db::StrLenType x = 0; x < txcount; x++)
     {
         Transaction tx;
@@ -142,7 +152,7 @@ ChainDatabase::ChainDatabase(std::string_view folder)
 {
 }
 
-void ChainDatabase::initialize(Blockchain& blockchain)
+void ChainDatabase::initialize(Blockchain& blockchain, GenesisCallback gcb)
 {
     if (!boost::filesystem::exists(_path))
     {
@@ -153,11 +163,12 @@ void ChainDatabase::initialize(Blockchain& blockchain)
     if (!boost::filesystem::exists(_dbfile))
     {
         _logger->warn("creating genesis block, starting new chain");
+        assert(gcb);
 
         std::time_t t = std::time(nullptr);
         const auto gendata = fmt::format("{} {:%Y-%m-%d %H:%M:%S %Z}.",GENESIS_BLOCK, *std::localtime(&t));
         _logger->trace("generating genesis block with data '{}'", gendata);
-        write(Block{ 0, gendata });
+        write(gcb());
     }
 
     _logger->info("loading blockchain from {}", _dbfile.string());

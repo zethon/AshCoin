@@ -2,10 +2,7 @@
 #include <ostream>
 #include <ctime>
 
-#include <cryptopp/sha.h>
-#include <cryptopp/filters.h>
-#include <cryptopp/hex.h>
-
+#include "CryptoUtils.h"
 #include "Block.h"
 
 namespace nl = nlohmann;
@@ -18,11 +15,10 @@ void to_json(nl::json& j, const Block& b)
     j["index"] = b.index();
     j["nonce"] = b.nonce();
     j["difficulty"] = b.difficulty();
-    j["data"] = b.data();
     j["hash"] = b.hash();
     j["prev"] = b.previousHash();
     j["miner"] = b.miner();
-    j["transactions"] = b.transactions();
+    j["data"] = b.transactions();
 
     j["time"] = 
         static_cast<std::uint64_t>(b.time().time_since_epoch().count());
@@ -37,22 +33,10 @@ void from_json(const nl::json& j, Block& b)
     j["prev"].get_to(b._hashed._prev);
     j["hash"].get_to(b._hash);
     j["miner"].get_to(b._miner);
+    j["data"].get_to(b._hashed._txs);
 
     b._hashed._time = 
         BlockTime{std::chrono::milliseconds{j["time"].get<std::uint64_t>()}};
-}
-
-std::string SHA256(std::string data)
-{
-    std::string digest;
-    CryptoPP::SHA256 hash;
-
-    CryptoPP::StringSource foo(data, true,
-        new CryptoPP::HashFilter(hash,
-            new CryptoPP::HexEncoder(
-                new CryptoPP::StringSink(digest), false)));
-
-    return digest;
 }
 
 std::string CalculateBlockHash(
@@ -71,7 +55,7 @@ std::string CalculateBlockHash(
         << time.time_since_epoch().count()
         << previous;
 
-    return SHA256(ss.str());
+    return ash::crypto::SHA256(ss.str());
 }
 
 std::string CalculateBlockHash(const Block& block)
@@ -84,19 +68,35 @@ std::string CalculateBlockHash(const Block& block)
         << block.time().time_since_epoch().count()
         << block.previousHash();
 
-    return SHA256(ss.str());
+    return ash::crypto::SHA256(ss.str());
 }
 
-Block::Block(uint64_t nIndexIn, std::string_view sDataIn)
+// Block::Block(uint64_t nIndexIn, std::string_view sDataIn)
+//     : _logger(ash::initializeLogger("Block"))
+// {
+//     _hashed._index = nIndexIn;
+//     _hashed._nonce = 0;
+//     _hashed._difficulty = 1;
+//     _hashed._data = sDataIn;
+//     _hashed._time = 
+//         std::chrono::time_point_cast<std::chrono::milliseconds>
+//             (std::chrono::system_clock::now());
+//     _hash = CalculateBlockHash(*this);
+// }
+
+Block::Block(std::uint64_t index, std::string_view prevHash, Transactions&& txs)
     : _logger(ash::initializeLogger("Block"))
 {
-    _hashed._index = nIndexIn;
+    _hashed._index = index;
     _hashed._nonce = 0;
     _hashed._difficulty = 1;
-    _hashed._data = sDataIn;
     _hashed._time = 
         std::chrono::time_point_cast<std::chrono::milliseconds>
             (std::chrono::system_clock::now());
+
+    _hashed._data = ash::crypto::SHA256(nl::json(txs).dump());
+    _hashed._txs = std::move(txs);
+
     _hash = CalculateBlockHash(*this);
 }
 
