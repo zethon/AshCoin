@@ -89,7 +89,7 @@ function getBlockTableRow(block)
 
     var row = "<td>" + block.index.toLocaleString() + "</td>";
     row += "<td>" + dt.fromNow() + "</td>";
-    row += "<td>" + "0" + "</td>";
+    row += "<td>" + block.transactions.length + "</td>";
     row += "<td class='minercol'>" + block.miner + "</td>";
     row += "<td>" + block.difficulty + "</td>";
     row += "<td class='minercol'>" + block.hash + "</td>";
@@ -109,7 +109,7 @@ function getBlockRowElement(block)
     var dt = moment.unix(block.time/1000).utc();
     tr.appendChild(d.createElement('td')).innerHTML = dt.fromNow();
 
-    tr.appendChild(d.createElement('td')).innerHTML = '0';
+    tr.appendChild(d.createElement('td')).innerHTML = block.transactions.length;
 
     tr.appendChild(d.createElement('td')).innerHTML = block.miner;
     tr.lastElementChild.setAttribute('class', 'minercol');

@@ -48,3 +48,7 @@ http://coliru.stacked-crooked.com/a/84f306bd98f6815e
 ## Proof of Stake
 
 https://naivecoinstake.learn.uno/
+
+## CryptoPP
+
+http://marko-editor.com/articles/cryptopp_sign_string/
