@@ -3,6 +3,7 @@
 
 #include <nlohmann/json.hpp>
 #include <fmt/chrono.h>
+#include <range/v3/all.hpp>
 
 #include "index_html.h"
 
@@ -233,6 +234,21 @@ void MinerApp::initRest()
         {
             response->write("<h1>peer added</h1>");
         };
+
+    _httpServer.resource["^/address/(.*?)$"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            std::lock_guard<std::mutex> lock{_chainMutex};
+            const auto& unspent = this->_blockchain->unspentTransactionOuts();
+            _chainMutex.unlock();
+
+            double total { 0.0 };
+
+            auto rng = unspent | ranges::views::all;
+            
+            double x = ranges::accumulate()
+
+        };
 }
 
 void MinerApp::initWebSocket()
@@ -310,7 +326,7 @@ void MinerApp::run()
     initWebSocket();
     initPeers();
 
-    _database->initialize(*_blockchain,
+    auto genesisBlockCallback = 
         [this]() -> Block
         {
             Transactions txs;
@@ -323,7 +339,10 @@ void MinerApp::run()
             _logger->debug("creating gensis block with data '{}'", gendata);
 
             return gen;
-        });
+        };
+
+    _database->initialize(*_blockchain, genesisBlockCallback);
+    _blockchain->updateUnspentTxOuts();
 
     _httpThread = std::thread(
         [this]()

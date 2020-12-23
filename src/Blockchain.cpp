@@ -1,3 +1,5 @@
+#include <range/v3/all.hpp>
+
 #include "Blockchain.h"
 
 namespace ash
@@ -21,6 +23,12 @@ void from_json(const nl::json& j, Blockchain& b)
     }
 }
 
+Blockchain::Blockchain()
+    : _logger(ash::initializeLogger("Blockchain"))
+{
+    // nothing to do
+}
+
 bool Blockchain::addNewBlock(const Block& block)
 {
     return addNewBlock(block, true);
@@ -39,6 +47,8 @@ bool Blockchain::addNewBlock(const Block& block, bool checkPreviousBlock)
     }
 
     _blocks.push_back(block);
+    updateUnspentTxOuts();
+
     return true;
 }
 
@@ -87,6 +97,37 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
     }
 
     return total;
+}
+
+UnspentTxOuts Blockchain::getUnspentTxOuts(const Block& block)
+{
+    UnspentTxOuts retval;
+
+    for (const auto& tx : block.transactions())
+    {
+        for (const auto& txout : tx.txOuts())
+        {
+            retval.emplace_back(
+                UnspentTxOut{tx.id(), block.index(), txout.address(), txout.amount()});
+        }
+    }
+
+    return retval;
+}
+
+void Blockchain::updateUnspentTxOuts()
+{
+    _logger->debug("updated unspent transactions");
+    
+    _unspentTxOuts.clear();
+    
+    for (const auto& block : _blocks)
+    {
+        const auto temp = getUnspentTxOuts(block);
+        std::move(temp.begin(), temp.end(), std::back_inserter(_unspentTxOuts));
+    }
+
+    _logger->trace("blockchain contains {} unspent transactions", _unspentTxOuts.size());
 }
 
 } // namespace

@@ -19,6 +19,7 @@ class AshConan(ConanFile):
         "asio/1.18.0",
         "nlohmann_json/3.7.0",
         "cryptopp/8.2.0",
+        "range-v3/0.10.0",
         "Simple-Web-Server/v3.1.1@owl/stable"
     )
 

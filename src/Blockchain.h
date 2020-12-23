@@ -3,8 +3,10 @@
 #include <cstdint>
 #include <vector>
 
+#include "Transactions.h"
 #include "Settings.h"
 #include "Block.h"
+#include "AshLogger.h"
 
 namespace ash
 {
@@ -23,18 +25,22 @@ using BlockChainPtr = std::unique_ptr<Blockchain>;
 void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
-class Blockchain 
+//! This class is not thread safe and assumes that the
+//  client handles synchronization
+class Blockchain final
 {
-
-friend class ChainDatabase;
-    
     std::vector<Block>  _blocks;
+    UnspentTxOuts       _unspentTxOuts;
+    SpdLogPtr           _logger;
 
+    UnspentTxOuts getUnspentTxOuts(const Block& block);
+
+    friend class ChainDatabase;
     friend void to_json(nl::json& j, const Blockchain& b);
     friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
-    Blockchain() = default;
+    Blockchain();
 
     auto begin() const -> decltype(_blocks.begin())
     {
@@ -116,6 +122,12 @@ public:
 
         return lastBlock.difficulty();
     }
+
+    // TODO: this is called in at least one place in MinerApp, 
+    // but ideally this should be a private function that is 
+    // called internally when needed
+    void updateUnspentTxOuts();
+    const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
 };
 
 }

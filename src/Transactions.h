@@ -96,4 +96,14 @@ public:
 
 };
 
+struct UnspentTxOut
+{
+    std::string     id;         // txid
+    std::uint64_t   txOutIndex; // block index
+    std::string     address;
+    double          amount;
+};
+
+using UnspentTxOuts = std::vector<UnspentTxOut>;
+
 } // namespace ash
