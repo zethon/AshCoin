@@ -83,10 +83,14 @@ private:
 
 private:
     std::string             _uuid;
+    std::string             _rewardAddress;
 
     ChainDatabasePtr        _database;
     
-    std::mutex              _chainMutex;
+    // MUST ALWAYS BE LOCKED IN THIS ORDER
+    std::mutex              _chainMutex;    // chain mutex
+    std::mutex              _txMutex;       // transaction mutex
+    
     BlockChainPtr           _blockchain;
     BlockChainPtr           _tempchain;
 

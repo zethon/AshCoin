@@ -2,18 +2,24 @@
 #include <cassert>
 
 #include <nlohmann/json.hpp>
+#include <fmt/chrono.h>
 
 #include "index_html.h"
 
+#include "CryptoUtils.h"
 #include "utils.h"
 #include "core.h"
 #include "ComputerUUID.h"
+#include "Transactions.h"
+
 #include "MinerApp.h"
 
 namespace nl = nlohmann;
 
 namespace ash
 {
+
+constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
 
 MinerApp::MinerApp(SettingsPtr settings)
     : _settings{ std::move(settings) },
@@ -32,14 +38,8 @@ MinerApp::MinerApp(SettingsPtr settings)
     _logger->debug("target block generation interval is {} seconds", TARGET_TIMESPAN);
     _logger->debug("difficulty adjustment interval is every {} blocks", BLOCK_INTERVAL);
 
-    initRest();
-    initWebSocket();
-    initPeers();
-
     _blockchain = std::make_unique<Blockchain>();
-
     _database = std::make_unique<ChainDatabase>(dbfolder);
-    _database->initialize(*_blockchain);
 }
 
 MinerApp::~MinerApp()
@@ -104,7 +104,7 @@ void MinerApp::initRest()
             }
             else
             {
-                nl::json json = _blockchain->getBlockByIndex(index);
+                nl::json json = _blockchain->at(index);
                 ss << "<pre>" << json.dump(4) << "</pre>";
                 ss << "<br/>";
                 if (index > 0) ss << "<a href='/block-idx/" << (index - 1) << "'>prev</a>&nbsp;";
@@ -299,6 +299,32 @@ void MinerApp::initPeers()
 
 void MinerApp::run()
 {
+    _rewardAddress= _settings->value("mining.miner.public_key", "");
+    if (_rewardAddress.empty() || _rewardAddress == "<CHANGE ME>")
+    {
+        _logger->critical("the setting 'mining.miner.public_key' in the config file must be updated");
+        return;
+    }
+
+    initRest();
+    initWebSocket();
+    initPeers();
+
+    _database->initialize(*_blockchain,
+        [this]() -> Block
+        {
+            Transactions txs;
+            txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
+            Block gen{ 0, "", std::move(txs) };
+
+            std::time_t t = std::time(nullptr);
+            const auto gendata = fmt::format("{} {:%Y-%m-%d %H:%M:%S %Z}.", GENESIS_BLOCK, *std::localtime(&t));
+            gen.setData(gendata);
+            _logger->debug("creating gensis block with data '{}'", gendata);
+
+            return gen;
+        });
+
     _httpThread = std::thread(
         [this]()
         {
@@ -345,54 +371,61 @@ void MinerApp::runMineThread()
 
     while (!_miningDone && !_done)
     {
+        std::unique_ptr<Block> newblock;
+
         std::string prevHash;
+        std::string data;
+
         {
             std::lock_guard<std::mutex> lock{_chainMutex};
+
+            auto newDifficulty = _blockchain->getAdjustedDifficulty();
+            _miner.setDifficulty(newDifficulty);
+
             index = _blockchain->size();
 
             const auto& lastBlock = _blockchain->back();
             prevHash = lastBlock.hash();
 
-            auto newDifficulty = _blockchain->getAdjustedDifficulty();
-            _miner.setDifficulty(newDifficulty);
+            Transactions txs;
+            txs.push_back(ash::CreateCoinbaseTransaction(index, _rewardAddress));
+
+            newblock = std::make_unique<Block>(index, prevHash, std::move(txs));
+            newblock->setMiner(_uuid);
         }
     
         _logger->debug("mining block #{} with difficulty {}", 
             index, _miner.difficulty());
 
-        const std::string data = fmt::format(":coinbase{}", index);
-        auto result = _miner.mineBlock(index, data, prevHash, keepMiningCallback);
+        auto result = _miner.mineBlock(*newblock, keepMiningCallback);
 
-        if (std::get<0>(result) == Miner::ABORT)
+        if (result == Miner::ABORT)
         {
             _logger->debug("mining block #{} was aborted", index);
             syncBlockchain();
             continue;
         }
 
-        auto& newblock = std::get<1>(result);
-        newblock.setMiner(_uuid);
-
         // TODO: need better locking/syncing on the chain from 
         //       point on
 
         // append the block to the chain
-        if (!_blockchain->addNewBlock(newblock))
+        if (!_blockchain->addNewBlock(*newblock))
         {
-            _logger->error("could not add new block #{} to blockchain, stopping mining", newblock.index());
+            _logger->error("could not add new block #{} to blockchain, stopping mining", newblock->index());
             _miningDone = true;
             break;
         }
 
         // write the block to the database
-        _database->write(newblock);
+        _database->write(*newblock);
 
         // see if there's an update waiting for the local
         // copy of the chain
         if (!syncBlockchain())
         {
             // let the network know about our new coin
-            broadcastNewBlock(newblock);
+            broadcastNewBlock(*newblock);
         }
     }
 }

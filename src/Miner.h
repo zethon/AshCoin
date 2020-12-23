@@ -1,6 +1,7 @@
 #pragma once
 #include "Block.h"
 #include "AshLogger.h"
+#include "CryptoUtils.h"
 
 namespace ash
 {
@@ -38,13 +39,11 @@ public:
         _keepTrying.store(false, std::memory_order_release);
     }
 
-    Result mineBlock(std::uint64_t index, 
-        const std::string& data, 
-        const std::string& prev,
+    ResultType mineBlock(Block& block,
         std::function<bool(std::uint64_t)> keepGoingFunc = nullptr)
     {
-        assert(index > 0);
-        assert(prev.size() > 0 || (index - 1 == 0));
+        assert(block.index() > 0);
+        assert(block.previousHash().size() > 0 || (block.index() - 1 == 0));
 
         std::string zeros;
         zeros.assign(_difficulty, '0');
@@ -54,8 +53,12 @@ public:
             std::chrono::time_point_cast<std::chrono::milliseconds>
                 (std::chrono::system_clock::now());
 
+        const auto extra = 
+            ash::crypto::SHA256(nl::json(block.transactions()).dump());
+
         std::string hash = 
-            CalculateBlockHash(index, nonce, _difficulty, time, data, prev);
+            CalculateBlockHash(
+                block.index(), nonce, _difficulty, time, block.data(), block.previousHash(), extra);
 
         _keepTrying = true;
 
@@ -65,10 +68,10 @@ public:
             // do some extra stuff every few seconds
             if ((nonce & 0x3ffff) == 0)
             {
-                if (keepGoingFunc && !keepGoingFunc(index))
+                if (keepGoingFunc && !keepGoingFunc(block.index()))
                 {
                     // our callback has told us to bail
-                    return { ResultType::ABORT, {} };
+                    return ResultType::ABORT;
                 }
 
                 time = 
@@ -77,25 +80,19 @@ public:
             }
 
             nonce++;
-            hash = CalculateBlockHash(index, nonce, _difficulty, time, data, prev);
+            hash = CalculateBlockHash(
+                block.index(), nonce, _difficulty, time, block.data(), block.previousHash(), extra);
         }
 
         if (!_keepTrying)
         {
-            return { ResultType::ABORT, {} };
+            return ResultType::ABORT;
         }
 
-        // TODO: this function might only need to return 'nonce', 
-        // 'time' and 'hash' instead of a whole new block
-        Block retval { index, data };
-        retval._hashed._nonce = nonce;
-        retval._hashed._difficulty = _difficulty;
-        retval._hashed._time = time;
-        retval._hashed._prev = prev;
-        retval._hash = hash;
+        block.setMinedData(nonce, _difficulty, time, hash);
 
         _logger->info("successfully mined bock {}", index);
-        return { ResultType::SUCCESS, retval };
+        return ResultType::SUCCESS;
     }
 };
 

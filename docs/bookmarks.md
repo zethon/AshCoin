@@ -1,5 +1,9 @@
 This is a list of useful links that I encountered while developing Ash.
 
+## Naivecoin
+
+https://github.com/lhartikk/naivecoin
+
 ## Boost Serialization
 
 * https://www.boost.org/doc/libs/1_73_0/libs/serialization/doc/tutorial.html
@@ -35,3 +39,16 @@ https://github.com/bumptop/BumpTop/blob/466d23597a07ae738f4265262fa01087fc6e257c
 https://stackoverflow.com/questions/22291506/persisting-stdchrono-time-point-instances
 https://stackoverflow.com/questions/31255486/c-how-do-i-convert-a-stdchronotime-point-to-long-and-back
 https://stackoverflow.com/questions/39763161/portable-way-to-store-milliseconds-with-chrono
+
+## Memory Mapped Files
+
+https://stackoverflow.com/questions/29602311/storing-vector-in-memory-mapped-file
+http://coliru.stacked-crooked.com/a/84f306bd98f6815e
+
+## Proof of Stake
+
+https://naivecoinstake.learn.uno/
+
+## CryptoPP
+
+http://marko-editor.com/articles/cryptopp_sign_string/

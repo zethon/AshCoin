@@ -79,11 +79,6 @@ public:
     bool addNewBlock(const Block& block);
     bool addNewBlock(const Block& block, bool checkPreviousBlock);
 
-    const Block& getBlockByIndex(std::size_t idx) 
-    { 
-        return _blocks.at(idx); 
-    }
-
     bool isValidBlockPair(std::size_t idx) const;
     bool isValidChain() const;
 

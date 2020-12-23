@@ -25,6 +25,11 @@ inline void write_data(std::ostream& stream, T value)
     stream.write(reinterpret_cast<PointerType>(&value), sizeof(value));
 }
 
+inline void write_data(std::ostream& stream, double val)
+{
+    stream.write(reinterpret_cast<PointerType>(&val), sizeof(double));
+}
+
 inline void write_data(std::ostream& stream, std::string_view data)
 {
     auto size = static_cast<StrLenType>(data.size());
@@ -32,11 +37,16 @@ inline void write_data(std::ostream& stream, std::string_view data)
     stream.write(data.data(), size);
 }
 
-template <typename T,
+template<typename T,
     typename = typename std::enable_if<(std::is_integral<T>::value)>::type>
 inline void read_data(std::istream& stream, T& value)
 {
     stream.read(reinterpret_cast<PointerType>(&value), sizeof(value));
+}
+
+inline void read_data(std::istream& stream, double& val)
+{
+    stream.read(reinterpret_cast<PointerType>(&val), sizeof(double));
 }
 
 inline void read_data(std::istream& stream, std::string& data)
@@ -57,12 +67,14 @@ class ChainDatabase
 {
 
 public:
+    using GenesisCallback = std::function<Block(void)>;
+
     ChainDatabase(std::string_view folder);
 
     void write(const Block& block);
     void writeChain(const Blockchain& chain);
 
-    void initialize(Blockchain& chain);
+    void initialize(Blockchain& chain, GenesisCallback gcb);
     void reset();
 
 private:
