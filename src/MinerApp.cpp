@@ -2,6 +2,7 @@
 #include <cassert>
 
 #include <nlohmann/json.hpp>
+#include <fmt/chrono.h>
 
 #include "index_html.h"
 
@@ -17,6 +18,8 @@ namespace nl = nlohmann;
 
 namespace ash
 {
+
+constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
 
 MinerApp::MinerApp(SettingsPtr settings)
     : _settings{ std::move(settings) },
@@ -312,7 +315,14 @@ void MinerApp::run()
         {
             Transactions txs;
             txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
-            return Block{ 0, "", std::move(txs) };
+            Block gen{ 0, "", std::move(txs) };
+
+            std::time_t t = std::time(nullptr);
+            const auto gendata = fmt::format("{} {:%Y-%m-%d %H:%M:%S %Z}.", GENESIS_BLOCK, *std::localtime(&t));
+            gen.setData(gendata);
+            _logger->debug("creating gensis block with data '{}'", gendata);
+
+            return gen;
         });
 
     _httpThread = std::thread(

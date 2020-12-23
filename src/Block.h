@@ -29,7 +29,8 @@ std::string CalculateBlockHash(
     std::uint32_t difficulty,
     BlockTime time,
     const std::string& data, 
-    const std::string& previous);
+    const std::string& previous,
+    const std::string& extra);
 
 class Block 
 {
@@ -40,7 +41,6 @@ class Block
 
 public:
     Block() = default;
-    // Block(uint64_t nIndexIn, std::string_view sDataIn);
     Block(std::uint64_t index, std::string_view prevHash, Transactions&& tx);
 
     bool operator==(const Block& other) const;
@@ -52,7 +52,10 @@ public:
     std::uint64_t index() const { return _hashed._index; }
     std::uint32_t nonce() const { return _hashed._nonce; }
     std::uint32_t difficulty() const { return _hashed._difficulty; }
+    
     std::string data() const { return _hashed._data;  }
+    void setData(std::string_view data) { _hashed._data = data; }
+
     BlockTime time() const { return _hashed._time; }
     std::string previousHash() const { return _hashed._prev; }
 

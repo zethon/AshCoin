@@ -1,6 +1,7 @@
 #pragma once
 #include "Block.h"
 #include "AshLogger.h"
+#include "CryptoUtils.h"
 
 namespace ash
 {
@@ -52,9 +53,12 @@ public:
             std::chrono::time_point_cast<std::chrono::milliseconds>
                 (std::chrono::system_clock::now());
 
+        const auto extra = 
+            ash::crypto::SHA256(nl::json(block.transactions()).dump());
+
         std::string hash = 
             CalculateBlockHash(
-                block.index(), nonce, _difficulty, time, block.data(), block.previousHash());
+                block.index(), nonce, _difficulty, time, block.data(), block.previousHash(), extra);
 
         _keepTrying = true;
 
@@ -77,7 +81,7 @@ public:
 
             nonce++;
             hash = CalculateBlockHash(
-                block.index(), nonce, _difficulty, time, block.data(), block.previousHash());
+                block.index(), nonce, _difficulty, time, block.data(), block.previousHash(), extra);
         }
 
         if (!_keepTrying)

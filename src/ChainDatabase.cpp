@@ -1,13 +1,9 @@
-#include <fmt/chrono.h>
-
 #include "Transactions.h"
 #include "Blockchain.h"
 #include "ChainDatabase.h"
 
 namespace ash
 {
-
-constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
 
 void write_data(std::ostream& stream, const TxIn& tx)
 {
@@ -164,10 +160,6 @@ void ChainDatabase::initialize(Blockchain& blockchain, GenesisCallback gcb)
     {
         _logger->warn("creating genesis block, starting new chain");
         assert(gcb);
-
-        std::time_t t = std::time(nullptr);
-        const auto gendata = fmt::format("{} {:%Y-%m-%d %H:%M:%S %Z}.",GENESIS_BLOCK, *std::localtime(&t));
-        _logger->trace("generating genesis block with data '{}'", gendata);
         write(gcb());
     }
 
