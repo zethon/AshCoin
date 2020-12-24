@@ -127,6 +127,7 @@ public:
     // but ideally this should be a private function that is 
     // called internally when needed
     void updateUnspentTxOuts();
+    
     const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
 };
 

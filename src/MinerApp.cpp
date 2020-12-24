@@ -6,6 +6,7 @@
 #include <range/v3/all.hpp>
 
 #include "index_html.h"
+#include "balance_html.h"
 
 #include "CryptoUtils.h"
 #include "utils.h"
@@ -242,12 +243,27 @@ void MinerApp::initRest()
             const auto& unspent = this->_blockchain->unspentTransactionOuts();
             _chainMutex.unlock();
 
-            double total { 0.0 };
+            const auto address = request->path_match[1].str();
+            auto results = unspent | ranges::views::filter(
+                [address](const UnspentTxOut& txout) 
+                { 
+                    return txout.address == address; 
+                });
 
-            auto rng = unspent | ranges::views::all;
-            
-            double x = ranges::accumulate()
+            double total = std::accumulate(
+                std::begin(results), std::end(results), 0.0,
+                [](const auto& x, const auto& y)
+                {
+                    return x + y.amount;
+                });
 
+            utils::Dictionary dict;
+            dict["%address%"] = address;
+            dict["%amount%"] = std::to_string(total);
+
+            std::stringstream out;
+            out << utils::DoDictionary(balance_html, dict);
+            response->write(out);
         };
 }
 
@@ -411,6 +427,7 @@ void MinerApp::runMineThread()
 
             newblock = std::make_unique<Block>(index, prevHash, std::move(txs));
             newblock->setMiner(_uuid);
+            newblock->setData(fmt::format("coindbase block#{}", index));
         }
     
         _logger->debug("mining block #{} with difficulty {}", 
