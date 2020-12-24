@@ -119,7 +119,7 @@ UnspentTxOuts Blockchain::getUnspentTxOuts(const Block& block)
 
 void Blockchain::updateUnspentTxOuts()
 {
-    _logger->debug("updated unspent transactions");
+    _logger->trace("updated unspent transactions");
     
     _unspentTxOuts.clear();
     
@@ -129,7 +129,7 @@ void Blockchain::updateUnspentTxOuts()
         std::move(temp.begin(), temp.end(), std::back_inserter(_unspentTxOuts));
     }
 
-    _logger->trace("blockchain contains {} unspent transactions", _unspentTxOuts.size());
+    _logger->debug("blockchain contains {} unspent transactions", _unspentTxOuts.size());
 }
 
 } // namespace
