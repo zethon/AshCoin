@@ -71,7 +71,7 @@ bool Blockchain::isValidChain() const
 {
     if (_blocks.size() == 0)
     {
-        return false;
+        return true;
     }
 
     for (auto idx = 1u; idx < _blocks.size(); idx++)
@@ -101,18 +101,20 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
 
 UnspentTxOuts Blockchain::getUnspentTxOuts(const Block& block)
 {
-    UnspentTxOuts retval;
+    UnspentTxOuts newTxOuts;
 
     for (const auto& tx : block.transactions())
     {
         for (const auto& txout : tx.txOuts())
         {
-            retval.emplace_back(
+            newTxOuts.emplace_back(
                 UnspentTxOut{tx.id(), block.index(), txout.address(), txout.amount()});
         }
     }
 
-    return retval;
+
+
+    return newTxOuts;
 }
 
 void Blockchain::updateUnspentTxOuts()
