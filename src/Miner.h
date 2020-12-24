@@ -91,7 +91,7 @@ public:
 
         block.setMinedData(nonce, _difficulty, time, hash);
 
-        _logger->info("successfully mined bock {}", index);
+        _logger->info("successfully mined bock {}", block.index());
         return ResultType::SUCCESS;
     }
 };
