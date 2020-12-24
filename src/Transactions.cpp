@@ -42,7 +42,7 @@ void to_json(nl::json& j, const TxOuts& txouts)
 
 void to_json(nl::json& j, const Transaction& tx)
 {
-    j["id'"] = tx.id();
+    j["id"] = tx.id();
     j["inputs"] = tx.txIns();
     j["outputs"] = tx.txOuts();
 }
