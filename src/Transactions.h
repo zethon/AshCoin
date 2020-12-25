@@ -23,12 +23,13 @@ using Transactions = std::vector<Transaction>;
 void to_json(nl::json& j, const Transactions& txs);
 void from_json(const nl::json& j, Transactions& txs);
 
+Transaction CreateTransaction(std::string_view receiver, double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts);
 Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address);
 
 class TxIn final
 {
-    std::string     _txOutId;
-    std::uint64_t   _txOutIndex;
+    std::string     _txOutId;       
+    std::uint64_t   _txOutIndex;    
     std::string     _signature;
 
     friend void read_data(std::istream& stream, TxIn& txin);
@@ -49,7 +50,7 @@ public:
 
 class TxOut final
 {
-    std::string _address;
+    std::string _address;   // public-key/address of receiver
     double      _amount;
 
     friend void read_data(std::istream& stream, TxOut& txout);

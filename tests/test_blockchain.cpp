@@ -5,34 +5,23 @@
 
 #include "../src/Block.h"
 #include "../src/Blockchain.h"
+#include "../src/Miner.h"
 
 namespace nl = nlohmann;
 using namespace std::string_literals;
 
 BOOST_AUTO_TEST_SUITE(block)
 
-// BOOST_AUTO_TEST_CASE(basicBlockchain) 
-// {
-//     ash::Blockchain chain;
-//     BOOST_REQUIRE_EQUAL(chain.size(), 1);
+BOOST_AUTO_TEST_CASE(getUnspentTxOutsTest)
+{
+    ash::Miner miner{0}; 
+    ash::Block block;
+    auto& txs = block.transactions();
 
-//     const auto& genblock = chain.at(0);
-//     BOOST_REQUIRE_EQUAL(genblock.data(), "Genesis Block");
-// }
+    ash::TxIn in { }
 
-// BOOST_AUTO_TEST_CASE(chainValidity)
-// {
-//     ash::Blockchain chain;
-//     BOOST_REQUIRE_EQUAL(chain.isValidChain(), true);
-// }
+}
 
-// BOOST_AUTO_TEST_CASE(blockEquality)
-// {
-//     ash::Blockchain chain;
-//     BOOST_REQUIRE_EQUAL(chain.at(0), ash::Block(0, "Genesis Block"));
-//     BOOST_REQUIRE_NE(chain.at(0), ash::Block(0, "Dummy Block"));
-//     BOOST_REQUIRE_NE(chain.at(0), ash::Block(1, "Genesis Block"));
-// }
 
 // 1 block w/1 transaction: https://pastebin.com/vvCp1iHT
 constexpr std::string_view blockjson = 

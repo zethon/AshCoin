@@ -138,4 +138,11 @@ Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view a
     return tx;
 }
 
+Transaction CreateTransaction(std::string_view receiver, 
+    double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts)
+{
+    const std::string sender
+}
+
+
 } // namespace ash

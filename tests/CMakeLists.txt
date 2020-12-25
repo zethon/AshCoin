@@ -29,6 +29,8 @@ set(ASH_FILES
     ../src/Block.h
     ../src/Blockchain.cpp
     ../src/Blockchain.h
+    # ../src/Miner.cpp
+    ../src/Miner.h
     ../src/Transactions.cpp
     ../src/Transactions.h
 
