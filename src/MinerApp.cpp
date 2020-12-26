@@ -427,7 +427,7 @@ void MinerApp::runMineThread()
 
             newblock = std::make_unique<Block>(index, prevHash, std::move(txs));
             newblock->setMiner(_uuid);
-            newblock->setData(fmt::format("coindbase block#{}", index));
+            newblock->setData(fmt::format("coinbase block#{}", index));
         }
     
         _logger->debug("mining block #{} with difficulty {}", 
