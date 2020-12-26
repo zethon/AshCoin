@@ -8,7 +8,7 @@ namespace ash
 
 class Miner
 {
-    std::uint32_t       _difficulty = 0;
+    std::uint64_t       _difficulty = 0;
     std::uint64_t       _maxTries = 0;
     std::atomic_bool    _keepTrying = true;
     std::uint32_t       _timeout; // seconds
@@ -31,8 +31,8 @@ public:
         // nothing to do
     }
 
-    std::uint32_t difficulty() const noexcept { return _difficulty; }
-    void setDifficulty(std::uint32_t val) { _difficulty = val; }
+    std::uint64_t difficulty() const noexcept { return _difficulty; }
+    void setDifficulty(std::uint64_t val) { _difficulty = val; }
 
     void abort() 
     { 
@@ -48,7 +48,7 @@ public:
         std::string zeros;
         zeros.assign(_difficulty, '0');
 
-        std::uint32_t nonce = 0;
+        std::uint64_t nonce = 0;
         auto time = 
             std::chrono::time_point_cast<std::chrono::milliseconds>
                 (std::chrono::system_clock::now());
@@ -91,7 +91,7 @@ public:
 
         block.setMinedData(nonce, _difficulty, time, hash);
 
-        _logger->info("successfully mined bock {}", index);
+        _logger->info("successfully mined bock {}", block.index());
         return ResultType::SUCCESS;
     }
 };

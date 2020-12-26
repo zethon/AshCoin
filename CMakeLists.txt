@@ -44,7 +44,13 @@ if (MSVC)
         /wd4996
         
         # ignore macro redefinition warnings because of PDCurses and MOUSE_MOVED
-        /wd4005 
+        /wd4005
+
+        /wd5105
+        /wd5104
+        /permissive-
+        /Zc:preprocessor
+        # /experimental:preprocessor
     )
 endif(MSVC)
 

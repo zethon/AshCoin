@@ -22,11 +22,14 @@ class Block;
 void to_json(nl::json& j, const Block& b);
 void from_json(const nl::json& j, Block& b);
 
+bool ValidHash(const Block& block);
+bool ValidNewBlock(const Block& block, const Block& prevblock);
+
 std::string CalculateBlockHash(const Block& block);
 std::string CalculateBlockHash(
     std::uint64_t index, 
-    std::uint32_t nonce, 
-    std::uint32_t difficulty,
+    std::uint64_t nonce, 
+    std::uint64_t difficulty,
     BlockTime time,
     const std::string& data, 
     const std::string& previous,
@@ -50,8 +53,8 @@ public:
     }
 
     std::uint64_t index() const { return _hashed._index; }
-    std::uint32_t nonce() const { return _hashed._nonce; }
-    std::uint32_t difficulty() const { return _hashed._difficulty; }
+    std::uint64_t nonce() const { return _hashed._nonce; }
+    std::uint64_t difficulty() const { return _hashed._difficulty; }
     
     std::string data() const { return _hashed._data;  }
     void setData(std::string_view data) { _hashed._data = data; }
@@ -83,8 +86,8 @@ private:
     struct HashedData
     {
         std::uint64_t       _index;
-        std::uint32_t       _nonce;
-        std::uint32_t       _difficulty;
+        std::uint64_t       _nonce;
+        std::uint64_t       _difficulty;
         std::string         _data;
         BlockTime           _time;
         std::string         _prev;

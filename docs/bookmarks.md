@@ -52,3 +52,13 @@ https://naivecoinstake.learn.uno/
 ## CryptoPP
 
 http://marko-editor.com/articles/cryptopp_sign_string/
+
+## Merkle Root
+
+https://www.oreilly.com/library/view/mastering-bitcoin/9781491902639/ch07.html#:~:text=Each%20block%20in%20the%20bitcoin,of%20large%20sets%20of%20data
+https://bitcoin.stackexchange.com/questions/69018/merkle-root-and-merkle-proofs
+
+## Range-V3
+
+https://www.walletfox.com/course/quickref_range_v3.php
+https://www.codeproject.com/Articles/5276756/An-Introduction-to-the-Range-v3-Library

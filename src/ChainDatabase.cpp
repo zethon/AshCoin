@@ -46,8 +46,8 @@ void write_data(std::ostream& stream, const Transaction& tx)
 void write_block(std::ostream& stream, const Block& block)
 {
     ash::db::write_data<std::uint64_t>(stream, block.index());
-    ash::db::write_data<std::uint32_t>(stream, block.nonce());
-    ash::db::write_data<std::uint32_t>(stream, block.difficulty());
+    ash::db::write_data<std::uint64_t>(stream, block.nonce());
+    ash::db::write_data<std::uint64_t>(stream, block.difficulty());
     ash::db::write_data(stream, block.data());
 
     std::uint64_t dtime = 

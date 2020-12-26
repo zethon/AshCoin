@@ -13,8 +13,8 @@ namespace ash
 
 void to_json(nl::json& j, const TxIn& tx)
 {
-    j["outid"] = tx.txOutId();
-    j["outindex"] = tx.txOutIndex();
+    j["txOutId"] = tx.txOutId();
+    j["txOutIndex"] = tx.txOutIndex();
     j["signature"] = tx.signature();
 }
 
@@ -42,7 +42,7 @@ void to_json(nl::json& j, const TxOuts& txouts)
 
 void to_json(nl::json& j, const Transaction& tx)
 {
-    j["id'"] = tx.id();
+    j["id"] = tx.id();
     j["inputs"] = tx.txIns();
     j["outputs"] = tx.txOuts();
 }
@@ -57,8 +57,8 @@ void to_json(nl::json& j, const Transactions& txs)
 
 void from_json(const nl::json& j, TxIn& txin)
 {
-    j["outid"].get_to(txin._txOutId);
-    j["outindex"].get_to(txin._txOutIndex);
+    j["txOutId"].get_to(txin._txOutId);
+    j["txOutIndex"].get_to(txin._txOutIndex);
     j["signature"].get_to(txin._signature);
 }
 
@@ -137,5 +137,13 @@ Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view a
     tx._id = GetTransactionId(tx);
     return tx;
 }
+
+Transaction CreateTransaction(std::string_view receiver, 
+    double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts)
+{
+    //const std::string sender
+    return {};
+}
+
 
 } // namespace ash
