@@ -74,7 +74,7 @@ bool Blockchain::addNewBlock(const Block& block)
 
 bool Blockchain::addNewBlock(const Block& block, bool checkPreviousBlock)
 {
-    if (block.hash() != CalculateBlockHash(block))
+    if (!ValidHash(block))
     {
         return false;
     }

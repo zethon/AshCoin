@@ -40,6 +40,35 @@ void from_json(const nl::json& j, Block& b)
         BlockTime{std::chrono::milliseconds{j["time"].get<std::uint64_t>()}};
 }
 
+bool ValidHash(const Block& block)
+{
+    const auto computedHash = CalculateBlockHash(block);
+    if (computedHash != block.hash())
+    {
+        return false;
+    }
+
+    std::string zeros;
+    zeros.assign(block.difficulty(), '0');
+    if (block.hash().compare(0, block.difficulty(), zeros) != 0)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool ValidNewBlock(const Block& block, const Block& prevblock)
+{
+    if (!ValidHash(block))
+    {
+        return false;
+    }
+
+    return block.index() == prevblock.index() + 1
+        && block.previousHash() == prevblock.hash();
+}
+
 std::string CalculateBlockHash(
     std::uint64_t index, 
     std::uint64_t nonce, 

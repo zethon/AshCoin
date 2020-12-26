@@ -22,6 +22,9 @@ class Block;
 void to_json(nl::json& j, const Block& b);
 void from_json(const nl::json& j, Block& b);
 
+bool ValidHash(const Block& block);
+bool ValidNewBlock(const Block& block, const Block& prevblock);
+
 std::string CalculateBlockHash(const Block& block);
 std::string CalculateBlockHash(
     std::uint64_t index, 
