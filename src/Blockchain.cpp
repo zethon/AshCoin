@@ -36,7 +36,27 @@ UnspentTxOuts GetUnspentTxOuts(const Block& block)
         }
     }
 
+    for (const auto& tx : block.transactions())
+    {
+        for (const auto& txin : tx.txIns())
+        {
+            if (txin.txOutIndex() != block.index())
+            {
+                continue;
+            }
 
+            auto tempIt = std::find_if(newTxOuts.begin(), newTxOuts.end(),
+                [outid = txin.txOutId()](const UnspentTxOut& unspent)
+                {
+                    return outid == unspent.id;
+                });
+
+            if (tempIt != newTxOuts.end())
+            {
+                newTxOuts.erase(tempIt);
+            }
+        }
+    }
 
     return newTxOuts;
 }
@@ -125,7 +145,7 @@ void Blockchain::updateUnspentTxOuts()
     
     for (const auto& block : _blocks)
     {
-        const auto temp = getUnspentTxOuts(block);
+        const auto temp = GetUnspentTxOuts(block);
         std::move(temp.begin(), temp.end(), std::back_inserter(_unspentTxOuts));
     }
 
