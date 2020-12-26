@@ -89,7 +89,7 @@ function getBlockTableRow(block)
 
     var blocklink = serviceUrl + "block-idx/" + block.index;
     var row = "<td><a href='"+blocklink+"'>" + block.index.toLocaleString() + "</a></td>";
-    row += "<td>" + dt.format("YYYY-MM-DD hh:mm:ss") + "</td>";
+    row += "<td>" + dt.format("YYYY-MM-DD HH:mm:ss") + "</td>";
     row += "<td>" + block.transactions.length + "</td>";
     row += "<td class='minercol'>" + block.miner + "</td>";
     row += "<td>" + block.difficulty + "</td>";
@@ -110,7 +110,7 @@ function getBlockRowElement(block)
         "<a href='"+blocklink+"'>" + block.index.toLocaleString() + "</a></td>";
 
     var dt = moment.unix(block.time/1000).utc();
-    tr.appendChild(d.createElement('td')).innerHTML = dt.format("YYYY-MM-DD hh:mm:ss");
+    tr.appendChild(d.createElement('td')).innerHTML = dt.format("YYYY-MM-DD HH:mm:ss");
 
     tr.appendChild(d.createElement('td')).innerHTML = block.transactions.length;
 
