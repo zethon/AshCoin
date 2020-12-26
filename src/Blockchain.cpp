@@ -23,6 +23,24 @@ void from_json(const nl::json& j, Blockchain& b)
     }
 }
 
+UnspentTxOuts GetUnspentTxOuts(const Block& block)
+{
+    UnspentTxOuts newTxOuts;
+
+    for (const auto& tx : block.transactions())
+    {
+        for (const auto& txout : tx.txOuts())
+        {
+            newTxOuts.emplace_back(
+                UnspentTxOut{ tx.id(), block.index(), txout.address(), txout.amount() });
+        }
+    }
+
+
+
+    return newTxOuts;
+}
+
 Blockchain::Blockchain()
     : _logger(ash::initializeLogger("Blockchain"))
 {
@@ -97,24 +115,6 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
     }
 
     return total;
-}
-
-UnspentTxOuts Blockchain::getUnspentTxOuts(const Block& block)
-{
-    UnspentTxOuts newTxOuts;
-
-    for (const auto& tx : block.transactions())
-    {
-        for (const auto& txout : tx.txOuts())
-        {
-            newTxOuts.emplace_back(
-                UnspentTxOut{tx.id(), block.index(), txout.address(), txout.amount()});
-        }
-    }
-
-
-
-    return newTxOuts;
 }
 
 void Blockchain::updateUnspentTxOuts()

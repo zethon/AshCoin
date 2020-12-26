@@ -25,6 +25,8 @@ using BlockChainPtr = std::unique_ptr<Blockchain>;
 void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
+UnspentTxOuts GetUnspentTxOuts(const Block& block);
+
 //! This class is not thread safe and assumes that the
 //  client handles synchronization
 class Blockchain final
@@ -32,8 +34,6 @@ class Blockchain final
     std::vector<Block>  _blocks;
     UnspentTxOuts       _unspentTxOuts;
     SpdLogPtr           _logger;
-
-    UnspentTxOuts getUnspentTxOuts(const Block& block);
 
     friend class ChainDatabase;
     friend void to_json(nl::json& j, const Blockchain& b);
@@ -95,7 +95,7 @@ public:
 
     std::uint64_t cumDifficulty(std::size_t idx) const;
 
-    std::uint32_t getAdjustedDifficulty()
+    std::uint64_t getAdjustedDifficulty()
     {
         const auto chainsize = size();
         assert(chainsize > 0);

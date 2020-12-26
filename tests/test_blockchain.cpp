@@ -12,14 +12,17 @@ using namespace std::string_literals;
 
 BOOST_AUTO_TEST_SUITE(block)
 
+constexpr std::string_view tx1 = 
+    R"({"data":"HenryCoin Genesis 2020-12-25 21:45:22 Eastern Standard Time.","difficulty":1,"hash":"18496b380c9de32f4538c0b47ec7f5eeb1b387d7cff2b346f9150d22e0afeb12","index":0,"miner":"","nonce":0,"prev":"","time":1608950722344,"transactions":[{"id":"transaction0","inputs":[{"txOutId":"","txOutIndex":0,"signature":""}],"outputs":[{"address":"Stefan","amount":10}]},{"id":"transaction1","inputs":[{"txOutId":"transaction0","txOutIndex":57,"signature":""}],"outputs":[{"address":"Henry","amount":4},{"address":"Addy","amount":3},{"address":"Stefan","amount":1}]}]})";
+
 BOOST_AUTO_TEST_CASE(getUnspentTxOutsTest)
 {
-    ash::Miner miner{0}; 
-    ash::Block block;
-    auto& txs = block.transactions();
+    nl::json json = nl::json::parse(tx1, nullptr, false);
+    BOOST_TEST(!json.is_discarded());
 
-    ash::TxIn in { }
-
+    auto block = json.get<ash::Block>();
+    auto unspent = ash::GetUnspentTxOuts(block);
+    BOOST_TEST(unspent.size() > 0);
 }
 
 

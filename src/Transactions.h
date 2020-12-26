@@ -15,10 +15,12 @@ constexpr double COINBASE_REWARD = 57.2718281828;
 class TxIn;
 class TxOut;
 class Transaction;
+struct UnspentTxOut;
 
 using TxIns = std::vector<TxIn>;
 using TxOuts = std::vector<TxOut>;
 using Transactions = std::vector<Transaction>;
+using UnspentTxOuts = std::vector<UnspentTxOut>;
 
 void to_json(nl::json& j, const Transactions& txs);
 void from_json(const nl::json& j, Transactions& txs);

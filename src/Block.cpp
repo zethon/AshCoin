@@ -42,8 +42,8 @@ void from_json(const nl::json& j, Block& b)
 
 std::string CalculateBlockHash(
     std::uint64_t index, 
-    std::uint32_t nonce, 
-    std::uint32_t difficulty,
+    std::uint64_t nonce, 
+    std::uint64_t difficulty,
     BlockTime time,
     const std::string& data, 
     const std::string& previous,

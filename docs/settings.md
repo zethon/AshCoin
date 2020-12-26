@@ -44,6 +44,10 @@ The level of log messages.
 
 Whether or not mining should start automatically when the service is started.
 
+#### `mining.miner.public_key`
+
+Th wallet address/public-key to which mining rewards should be awarded.
+
 #### `peers.file`
 
 The file from which to load the list of peers.
