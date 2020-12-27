@@ -52,6 +52,7 @@ endif()
 z_compile_resources(RESOURCE_FILES
     html/index.html
     html/balance.html
+    html/style.css
 )
 
 add_executable(ash

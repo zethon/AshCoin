@@ -7,6 +7,7 @@
 
 #include "index_html.h"
 #include "balance_html.h"
+#include "style_css.h"
 
 #include "CryptoUtils.h"
 #include "utils.h"
@@ -90,6 +91,12 @@ void MinerApp::initRest()
         {
             this->printIndex(response);
         };
+
+    _httpServer.resource["^/style.css$"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+    {
+        response->write(style_css);
+    };
 
     _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
