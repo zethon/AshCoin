@@ -6,7 +6,7 @@
 #include <range/v3/all.hpp>
 
 #include "index_html.h"
-#include "balance_html.h"
+#include "address_html.h"
 #include "style_css.h"
 
 #include "CryptoUtils.h"
@@ -248,7 +248,6 @@ void MinerApp::initRest()
         {
             std::lock_guard<std::mutex> lock{_chainMutex};
             const auto& unspent = this->_blockchain->unspentTransactionOuts();
-            _chainMutex.unlock();
 
             const auto address = request->path_match[1].str();
             auto results = unspent | ranges::views::filter(
@@ -266,10 +265,17 @@ void MinerApp::initRest()
 
             utils::Dictionary dict;
             dict["%address%"] = address;
-            dict["%amount%"] = std::to_string(total);
+            dict["%balance%"] = std::to_string(total);
+
+            dict["%app-title%"] = APP_NAME_LONG;
+            dict["%app-domain%"] = APP_DOMAIN;
+            dict["%app-github%"] = GITHUB_PAGE;
+            dict["%app-copyright%"] = COPYRIGHT;
+            dict["%build-date%"] = BUILDTIMESTAMP;
+            dict["%build-version%"] = VERSION;
 
             std::stringstream out;
-            out << utils::DoDictionary(balance_html, dict);
+            out << utils::DoDictionary(address_html, dict);
             response->write(out);
         };
 }
