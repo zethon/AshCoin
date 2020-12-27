@@ -1,42 +1,21 @@
 <html>
 <head>
 <link rel="shortcut icon" href="#" />
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="style.css">
 <script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <style>
-table
+.info-table tr th
 {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
+    border: none;
 }
-.address-table tr th
+.info-table tr th:nth-child(2)
 {
-    border: 1px solid black;
-    background-color:lightblue;
-    text-align: left;
-    font-size: larger;
-    font-weight: bold;
-    padding: 5px;
+    font-size: 16px;
+    font-weight: normal;
+    text-align: right;
 }
-.address-table tr td:nth-child(1)
-{
-    font-weight: bold;
-    width: 33%;
-}
-.address-table td { padding: 4px; }
-.tx-table
-{
-    border: 1px solid black;
-    border-collapse: collapse;
-}
-.tx-table td, .tx-table th
-{
-    border: 1px solid #000000;
-    padding: 4px;
-}
-.tx-table tr:nth-child(even){background-color: #f2f2f2;}
+
 </style>
 </head>
 <body>
@@ -44,17 +23,21 @@ table
 <h2>%app-title% (%app-domain%)</h2>
 <!-- /HEADER -->
 
-<table class="address-table">
+<table class="info-table">
     <tr>
-        <th colspan="100%">Address %address%</th>
+        <th>Block #%block-id%</th>
+        <th><a href="/block/%block-previd%">prev</a>&nbsp;<a href="/block/%block-nextid%">next</a></th>
     </tr>
 
-    <tr><td class="key">Block</td><td>%hash%</td></tr>
-    <tr><td>Balance</td><td>%balance%</td></tr>
-    <tr><td>Transactions Received</td><td>%txreceived%</td></tr>
-    <tr><td>Received</td><td>%received%</td></tr>
-    <tr><td>Transactions Sent</td><td>%txsent%</td></tr>
-    <tr><td>Sent</td><td>%sent%</td></tr>
+    <tr><td>Hash</td><td>%block-hash%</td></tr>
+    <tr><td>Previous Hash</td><td>%block-previoushash%</td></tr>
+    <tr><td>Height</td><td>%block-id%</td></tr>
+    <tr><td>Merkle Root</td><td>%block-root%</td></tr>
+    <tr><td>Time</td><td>%block-time%</td></tr>
+    <tr><td>Difficulty</td><td>%block-difficulty%</td></tr>
+    <tr><td>Nonce</td><td>%block-nonce%</td></tr>
+    <tr><td>Transactions</td><td>%block-transactions%</td></tr>
+    <tr><td>Value Out</td><td>%block-valueout%</td></tr>
 </table>
 
 <br/>

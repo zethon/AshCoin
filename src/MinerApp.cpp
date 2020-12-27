@@ -8,6 +8,7 @@
 #include "index_html.h"
 #include "address_html.h"
 #include "style_css.h"
+#include "block_html.h"
 
 #include "CryptoUtils.h"
 #include "utils.h"
@@ -64,23 +65,30 @@ MinerApp::~MinerApp()
 void MinerApp::printIndex(HttpResponsePtr response)
 {
     utils::Dictionary dict;
+    getStandardDictionary(dict);
+
+    dict["%chain-size%"] = std::to_string(_blockchain->size() - 1);
+    dict["%chain-diff%"] = std::to_string(_miner.difficulty());
+    dict["%chain-cumdiff%"] = std::to_string(_blockchain->cumDifficulty());
+    dict["%mining-status%"] = (_miningDone ? "stopped" : "started");
+    dict["%mining-uuid%"] = _uuid;
+
+
+    std::stringstream out;
+    out << utils::DoDictionary(index_html, dict);
+    response->write(out);
+}
+
+void MinerApp::getStandardDictionary(utils::Dictionary& dict)
+{
     dict["%app-title%"] = APP_NAME_LONG;
     dict["%app-domain%"] = APP_DOMAIN;
     dict["%app-github%"] = GITHUB_PAGE;
     dict["%app-copyright%"] = COPYRIGHT;
     dict["%build-date%"] = BUILDTIMESTAMP;
     dict["%build-version%"] = VERSION;
-    dict["%chain-size%"] = std::to_string(_blockchain->size() - 1);
-    dict["%chain-diff%"] = std::to_string(_miner.difficulty());
-    dict["%chain-cumdiff%"] = std::to_string(_blockchain->cumDifficulty());
-    dict["%mining-status%"] = (_miningDone ? "stopped" : "started");
-    dict["%mining-uuid%"] = _uuid;
     dict["%rest-port%"] 
         = std::to_string(_settings->value("rest.port", HTTPServerPortDefault));
-
-    std::stringstream out;
-    out << utils::DoDictionary(index_html, dict);
-    response->write(out);
 }
 
 void MinerApp::initRest()
@@ -92,7 +100,7 @@ void MinerApp::initRest()
             this->printIndex(response);
         };
 
-    _httpServer.resource["^/style.css$"]["GET"] =
+    _httpServer.resource[R"x(^/.*?style.css.*?$)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
     {
         response->write(style_css);
@@ -193,25 +201,6 @@ void MinerApp::initRest()
             response->write(jresponse.dump());
         };
 
-    _httpServer.resource["^/block/([0-9]+)$"]["GET"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
-        {
-            const auto indexStr = request->path_match[1].str();
-            int blockIndex = 0;
-            auto result = 
-                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), blockIndex);
-
-            if (result.ec == std::errc::invalid_argument
-                || blockIndex >= _blockchain->size())
-            {
-                response->write(SimpleWeb::StatusCode::client_error_bad_request);
-                return;
-            }
-
-            nl::json json = _blockchain->at(blockIndex);
-            response->write(json.dump());
-        };
-
     _httpServer.resource["^/blocks/last/([0-9]+)$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
@@ -276,6 +265,59 @@ void MinerApp::initRest()
 
             std::stringstream out;
             out << utils::DoDictionary(address_html, dict);
+            response->write(out);
+        };
+
+    _httpServer.resource[R"x(^/block/([0-9,]+)(?:\/(json)){0,1})x"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            std::lock_guard<std::mutex> lock{_chainMutex};
+            int blockIndex = 0;
+            bool json = false;
+
+            const auto indexStr = request->path_match[1].str();
+            auto result = 
+                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), blockIndex);
+
+            if (result.ec == std::errc::invalid_argument
+                || blockIndex >= _blockchain->size())
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+                return;
+            }
+
+            const auto& block = _blockchain->at(blockIndex);
+            assert(block.index() == blockIndex);
+
+            if (request->path_match.size() > 2 
+                && request->path_match[2].str() == "json")
+            {
+                nl::json json = block;
+                response->write(json.dump());
+                return;
+            }
+
+            utils::Dictionary dict;
+            getStandardDictionary(dict);
+            dict["%block-id%"] = std::to_string(blockIndex);
+            dict["%block-hash%"] = block.hash();
+            dict["%block-previoushash%"] = block.previousHash();
+            dict["%block-root%"] = "TODO: MERKLE ROOT";
+            dict["%block-time%"] = "TODO: BLOCK TIME";
+            dict["%block-difficulty%"] = std::to_string(block.difficulty());
+            dict["%block-nonce%"] = std::to_string(block.nonce());
+            dict["%block-transactions%"] = std::to_string(block.transactions().size());
+            dict["%block-valueout%"] = "TODO: VALUE OUT";
+            dict["%block-previd%"] = "TODO: VALUE OUT";
+
+            dict["%block-previd%"] = std::to_string(blockIndex - 1);
+            if (blockIndex == 0) dict["%block-previd%"] = std::to_string(_blockchain->size() - 1);
+
+            auto nextId = (blockIndex + 1) % _blockchain->size();
+            dict["%block-nextid%"] = std::to_string(nextId);
+
+            std::stringstream out;
+            out << utils::DoDictionary(block_html, dict);
             response->write(out);
         };
 }

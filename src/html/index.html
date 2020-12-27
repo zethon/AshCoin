@@ -54,8 +54,8 @@ var updateStatsWorker =
 function getBlockTableRow(block)
 {
     var dt = moment.unix(block.time/1000).utc();
+    var blocklink = serviceUrl + "block/" + block.index;
 
-    var blocklink = serviceUrl + "block-idx/" + block.index;
     var row = "<td><a href='"+blocklink+"'>" + block.index.toLocaleString() + "</a></td>";
     row += "<td>" + dt.format("YYYY-MM-DD HH:mm:ss") + "</td>";
     row += "<td>" + block.transactions.length + "</td>";
@@ -69,7 +69,7 @@ function getBlockTableRow(block)
 
 function getBlockRowElement(block)
 {
-    var blocklink = serviceUrl + "block-idx/" + block.index;
+    var blocklink = serviceUrl + "block/" + block.index;
 
     let d = document;
     let tr = document.createElement('tr');

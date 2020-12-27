@@ -11,6 +11,7 @@
 #pragma warning(pop)
 #endif
 
+#include "utils.h"
 #include "AshLogger.h"
 #include "Blockchain.h"
 #include "ChainDatabase.h"
@@ -80,6 +81,7 @@ private:
 
     // TODO: should be moved to an HttpServer class
     void printIndex(HttpResponsePtr response);
+    void getStandardDictionary(utils::Dictionary& dict);
 
 private:
     std::string             _uuid;
