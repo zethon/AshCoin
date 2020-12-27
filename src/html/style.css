@@ -60,3 +60,10 @@ h3
 { 
     padding: 4px; 
 }
+#txlist tr td:nth-child(1)
+{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
