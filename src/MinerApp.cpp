@@ -1,6 +1,8 @@
 #include <charconv>
 #include <cassert>
 
+#include <boost/filesystem.hpp>
+
 #include <nlohmann/json.hpp>
 #include <fmt/chrono.h>
 #include <range/v3/all.hpp>
@@ -19,6 +21,7 @@
 #include "MinerApp.h"
 
 namespace nl = nlohmann;
+namespace bfs = boost::filesystem;
 
 namespace ash
 {
@@ -62,20 +65,35 @@ MinerApp::~MinerApp()
     }
 }
 
-void MinerApp::printIndex(HttpResponsePtr response)
+void MinerApp::servePage(HttpResponsePtr response, 
+    std::string_view filename, const std::string& content, const utils::Dictionary& dict)
 {
-    utils::Dictionary dict;
-    getStandardDictionary(dict);
-
-    dict["%chain-size%"] = std::to_string(_blockchain->size() - 1);
-    dict["%chain-diff%"] = std::to_string(_miner.difficulty());
-    dict["%chain-cumdiff%"] = std::to_string(_blockchain->cumDifficulty());
-    dict["%mining-status%"] = (_miningDone ? "stopped" : "started");
-    dict["%mining-uuid%"] = _uuid;
-
-
     std::stringstream out;
-    out << utils::DoDictionary(index_html, dict);
+    const std::string datafolder = _settings->value("database.folder", "");
+    assert(!datafolder.empty());
+    
+    bfs::path file{ datafolder };
+    file /= "html"; 
+    file /= filename.data();
+
+    if (bfs::is_symlink(file))
+    {
+        file = bfs::read_symlink(file);
+    }
+    
+    if (bfs::exists(file))
+    {
+        std::ifstream t(file.string());
+        std::string data((std::istreambuf_iterator<char>(t)),
+            std::istreambuf_iterator<char>());
+
+        out << utils::DoDictionary(data, dict);
+    }
+    else
+    {
+        out << utils::DoDictionary(content.data(), dict);
+    }
+
     response->write(out);
 }
 
@@ -97,13 +115,22 @@ void MinerApp::initRest()
     _httpServer.resource["^/$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
-            this->printIndex(response);
+            utils::Dictionary dict;
+            getStandardDictionary(dict);
+
+            dict["%chain-size%"] = std::to_string(_blockchain->size() - 1);
+            dict["%chain-diff%"] = std::to_string(_miner.difficulty());
+            dict["%chain-cumdiff%"] = std::to_string(_blockchain->cumDifficulty());
+            dict["%mining-status%"] = (_miningDone ? "stopped" : "started");
+            dict["%mining-uuid%"] = _uuid;
+
+            this->servePage(response, "index.html", index_html, dict);
         };
 
     _httpServer.resource[R"x(^/.*?style.css.*?$)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
     {
-        response->write(style_css);
+        this->servePage(response, "style.css", style_css, {});
     };
 
     _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] = 
@@ -217,7 +244,8 @@ void MinerApp::initRest()
             nl::json json;
 
             startingIdx = std::max(
-		static_cast<std::uint64_t>(0), static_cast<std::uint64_t>(_blockchain->size() - startingIdx));
+		        static_cast<std::uint64_t>(0), 
+                static_cast<std::uint64_t>(_blockchain->size() - startingIdx));
 
             for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
             {
@@ -263,16 +291,14 @@ void MinerApp::initRest()
             dict["%build-date%"] = BUILDTIMESTAMP;
             dict["%build-version%"] = VERSION;
 
-            std::stringstream out;
-            out << utils::DoDictionary(address_html, dict);
-            response->write(out);
+            this->servePage(response, "address.html", address_html, dict);
         };
 
     _httpServer.resource[R"x(^/block/([0-9,]+)(?:\/(json)){0,1})x"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
             std::lock_guard<std::mutex> lock{_chainMutex};
-            int blockIndex = 0;
+            std::uint64_t blockIndex = 0u;
             bool json = false;
 
             const auto indexStr = request->path_match[1].str();
@@ -316,9 +342,7 @@ void MinerApp::initRest()
             auto nextId = (blockIndex + 1) % _blockchain->size();
             dict["%block-nextid%"] = std::to_string(nextId);
 
-            std::stringstream out;
-            out << utils::DoDictionary(block_html, dict);
-            response->write(out);
+            this->servePage(response, "block.html", block_html, dict);
         };
 }
 
@@ -478,7 +502,7 @@ void MinerApp::runMineThread()
             prevHash = lastBlock.hash();
 
             Transactions txs;
-            txs.push_back(ash::CreateCoinbaseTransaction(index, _rewardAddress));
+            txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
 
             newblock = std::make_unique<Block>(index, prevHash, std::move(txs));
             newblock->setMiner(_uuid);

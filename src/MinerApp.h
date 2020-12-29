@@ -79,8 +79,8 @@ private:
     void handleChainResponse(HcConnectionPtr, const Blockchain&);
     void handleError(HcConnectionPtr, const nl::json&);
 
-    // TODO: should be moved to an HttpServer class
-    void printIndex(HttpResponsePtr response);
+    void servePage(HttpResponsePtr response, 
+        std::string_view filename, const std::string& content, const utils::Dictionary& dict);
     void getStandardDictionary(utils::Dictionary& dict);
 
 private:

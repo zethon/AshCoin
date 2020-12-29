@@ -12,15 +12,29 @@ function getTxElement(tx)
     let d = document;
     let tr = d.createElement('tr');
     tr.appendChild(d.createElement('td')).innerHTML = tx.id;
-    tr.appendChild(d.createElement('td')).innerHTML = 'TODO: FROM';
-    tr.appendChild(d.createElement('td')).innerHTML = 'TODO: TO';
 
-    var amount = 0.0;
+    var txInHtml = '';
+    if (tx.inputs.length == 1 && tx.inputs[0].txOutIndex == 0)
+    {
+        // this is the coinbase transaction
+        var amount = tx.outputs[0].amount;
+        txInHtml += "Coinbase: " + amount;
+    }
+    tr.appendChild(d.createElement('td')).innerHTML = txInHtml;
+
+    var totalamount = 0.0;
+    var outputHtml = '';
     for (x = 0; x < tx.outputs.length; x++)
     {
-        amount += tx.outputs[x].amount;
+        var amount = tx.outputs[x].amount;
+        var address = tx.outputs[x].address;
+
+        totalamount += tx.outputs[x].amount;
+        outputHtml += `<a href='${restUrl}/address/${address}'>${address}</a>: ${amount}<br/>`;
     }
-    tr.appendChild(d.createElement('td')).innerHTML = amount;
+
+    tr.appendChild(d.createElement('td')).innerHTML = outputHtml;
+    tr.appendChild(d.createElement('td')).innerHTML = totalamount;
     return tr;
 }
 
@@ -43,14 +57,6 @@ function onLoad()
                 var newel = getTxElement(tx);
                 el.appendChild(newel);
             }
-            // data.blocks.slice().reverse().forEach(block => 
-            //     {
-            //         table.append(getBlockTableRow(block));
-            //     });
-
-            // firstChainIndex = data.blocks[0].index;
-            // lastChainIndex = data.blocks[data.blocks.length-1].index;
-            // setTimeout(updateChainWorker, 1000);
         },
         error: function()
         {
@@ -116,31 +122,6 @@ function onLoad()
 
     <tbody id="txlist">
     </tbody>
-
-    <!-- <tr>
-        <td>123123j3j12io3joi12j3</td>
-        <td>333,129</td>
-        <td>2019-03-24 11:33:02</td>
-        <td>199.5712</td>
-    </tr>
-    <tr>
-        <td>123123j3j12io3joi12j3</td>
-        <td>333,129</td>
-        <td>2019-03-24 11:33:02</td>
-        <td>199.5712</td>
-    </tr>
-    <tr>
-        <td>123123j3j12io3joi12j3</td>
-        <td>333,129</td>
-        <td>2019-03-24 11:33:02</td>
-        <td>199.5712</td>
-    </tr>
-    <tr>
-        <td>123123j3j12io3joi12j3</td>
-        <td>333,129</td>
-        <td>2019-03-24 11:33:02</td>
-        <td>199.5712</td>
-    </tr>     -->
 </table>
 
 <!-- FOOTER -->

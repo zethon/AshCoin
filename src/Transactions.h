@@ -31,7 +31,7 @@ Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view a
 class TxIn final
 {
     std::string     _txOutId;       
-    std::uint64_t   _txOutIndex;    
+    std::uint64_t   _txOutIndex = 0;
     std::string     _signature;
 
     friend void read_data(std::istream& stream, TxIn& txin);
