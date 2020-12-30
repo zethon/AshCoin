@@ -53,6 +53,7 @@ https://naivecoinstake.learn.uno/
 
 http://marko-editor.com/articles/cryptopp_sign_string/
 https://stackoverflow.com/questions/21024399/get-ecdsa-signature-with-crypto
+https://www.cryptopp.com/wiki/Elliptic_Curve_Digital_Signature_Algorithm
 
 ## Merkle Root
 
