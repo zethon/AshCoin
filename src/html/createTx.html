@@ -5,14 +5,38 @@
 <script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript">
+var restUrl = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+
+function onSendComplete()
+{
+    console.log("onSendComplete()");
+}
+
+function onSendError()
+{
+    console.log("onSendError()");
+}
+
 function onSendClick()
 {
-    var publickey = $("#publickey").val();
     var privatekey = $("#privatekey").val();
     var toaddress = $("#toaddress").val();
     var amount = $("#amount").val();
 
-    console.log(`${publickey},${privatekey},${toaddress},${amount}`);
+    var requestStr = JSON.stringify({
+        privatekey : $("#privatekey").val(),
+        toaddress : $("#toaddress").val(),
+        amount : $("#amount").val(),
+    });
+
+    $.ajax({
+        url: restUrl + "/createTx",
+        type: 'POST',
+        data: requestStr,
+        success: onSendComplete(),
+        error: onSendError()
+    });
+    console.log(`${requestStr}`);
 }
 </script>
 <style>
@@ -43,6 +67,11 @@ textarea
     width: 33%;
 }
 .address-table td { padding: 4px; }
+.private-key
+{
+    font-weight: bold;
+    color: red;
+}
 </style>
 </head>
 <body>
@@ -55,8 +84,7 @@ textarea
         <th colspan="100%">Create Transaction</th>
     </tr>
 
-    <tr><td>Public Key</td><td><textarea id="publickey"></textarea></td></tr>
-    <tr><td>Private Key</td><td><textarea id="privatekey"></textarea></td></tr>
+    <tr><td><div class="private-key">Private Key</div><small>Using this page exposes your private key over the Internet. You have been warned! - Henry</small></small></td><td><textarea id="privatekey"></textarea></td></tr>
     <tr><td>Reciever</td><td><textarea id="toaddress"></textarea></td></tr>
     <tr><td>Amount</td><td><input id="amount"/></td></tr>
     <tr><td colspan="100%"><center><button onclick="javascript:onSendClick();">Send Coins</button></center></td></tr>

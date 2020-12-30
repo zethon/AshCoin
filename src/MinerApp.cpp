@@ -350,7 +350,14 @@ void MinerApp::initRest()
     _httpServer.resource[R"x(^/createTx)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-        this->servePage(response, "createTx.html", createTx_html, {});
+            this->servePage(response, "createTx.html", createTx_html, {});
+        };
+
+    _httpServer.resource[R"x(^/createTx)x"]["POST"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            std::string payload = request->content.string();
+            std::cout << "payload: " << payload << '\n';
         };
 }
 
@@ -700,7 +707,21 @@ void MinerApp::dispatchRequest(HcConnectionPtr connection, const nl::json& json)
     }
     else if (message == "createtx")
     {
+        if (!json.contains("privatekey")
+            || !json.contains("toaddress")
+            || !json.contains("amount"))
+        {
+            jresponse["error"] = "invalid transaction";
+        }
+        else
+        {
+            const auto privatekey = json["privatekey"].get<std::string>();
+            const auto toaddress = json["toaddress"].get<std::string>();
+            const auto amount = json["amount"].get<double>();
 
+            _logger->debug("{}-{}-{}", privatekey, toaddress, amount);
+
+        }
     }
     else
     {
