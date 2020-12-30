@@ -52,6 +52,7 @@ https://naivecoinstake.learn.uno/
 ## CryptoPP
 
 http://marko-editor.com/articles/cryptopp_sign_string/
+https://stackoverflow.com/questions/21024399/get-ecdsa-signature-with-crypto
 
 ## Merkle Root
 
