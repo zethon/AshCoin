@@ -11,6 +11,7 @@
 #include "address_html.h"
 #include "style_css.h"
 #include "block_html.h"
+#include "createTx_html.h"
 
 #include "CryptoUtils.h"
 #include "utils.h"
@@ -68,6 +69,14 @@ MinerApp::~MinerApp()
 void MinerApp::servePage(HttpResponsePtr response, 
     std::string_view filename, const std::string& content, const utils::Dictionary& dict)
 {
+    auto tempDict = dict; // copy!
+    tempDict["%app-title%"] = APP_NAME_LONG;
+    tempDict["%app-domain%"] = APP_DOMAIN;
+    tempDict["%app-github%"] = GITHUB_PAGE;
+    tempDict["%app-copyright%"] = COPYRIGHT;
+    tempDict["%build-date%"] = BUILDTIMESTAMP;
+    tempDict["%build-version%"] = VERSION;
+
     std::stringstream out;
     const std::string datafolder = _settings->value("database.folder", "");
     assert(!datafolder.empty());
@@ -87,11 +96,11 @@ void MinerApp::servePage(HttpResponsePtr response,
         std::string data((std::istreambuf_iterator<char>(t)),
             std::istreambuf_iterator<char>());
 
-        out << utils::DoDictionary(data, dict);
+        out << utils::DoDictionary(data, tempDict);
     }
     else
     {
-        out << utils::DoDictionary(content.data(), dict);
+        out << utils::DoDictionary(content.data(), tempDict);
     }
 
     response->write(out);
@@ -127,7 +136,7 @@ void MinerApp::initRest()
             this->servePage(response, "index.html", index_html, dict);
         };
 
-    _httpServer.resource[R"x(^/.*?style.css.*?$)x"]["GET"] =
+    _httpServer.resource[R"x(^/.*?style.css$)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
     {
         this->servePage(response, "style.css", style_css, {});
@@ -284,13 +293,6 @@ void MinerApp::initRest()
             dict["%address%"] = address;
             dict["%balance%"] = std::to_string(total);
 
-            dict["%app-title%"] = APP_NAME_LONG;
-            dict["%app-domain%"] = APP_DOMAIN;
-            dict["%app-github%"] = GITHUB_PAGE;
-            dict["%app-copyright%"] = COPYRIGHT;
-            dict["%build-date%"] = BUILDTIMESTAMP;
-            dict["%build-version%"] = VERSION;
-
             this->servePage(response, "address.html", address_html, dict);
         };
 
@@ -343,6 +345,12 @@ void MinerApp::initRest()
             dict["%block-nextid%"] = std::to_string(nextId);
 
             this->servePage(response, "block.html", block_html, dict);
+        };
+
+    _httpServer.resource[R"x(^/createTx)x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+        this->servePage(response, "createTx.html", createTx_html, {});
         };
 }
 
@@ -689,6 +697,10 @@ void MinerApp::dispatchRequest(HcConnectionPtr connection, const nl::json& json)
             connection->sendRequest("summary");
             return;
         }
+    }
+    else if (message == "createtx")
+    {
+
     }
     else
     {

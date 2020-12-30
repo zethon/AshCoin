@@ -1,0 +1,72 @@
+<html>
+<head>
+<link rel="shortcut icon" href="#" />
+<link rel="stylesheet" href="/style.css">
+<script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript">
+function onSendClick()
+{
+    var publickey = $("#publickey").val();
+    var privatekey = $("#privatekey").val();
+    var toaddress = $("#toaddress").val();
+    var amount = $("#amount").val();
+
+    console.log(`${publickey},${privatekey},${toaddress},${amount}`);
+}
+</script>
+<style>
+table
+{
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+textarea
+{
+    width: 100%; 
+    max-width: 100%;
+    height: 50px;;
+}
+.address-table tr th
+{
+    border: 1px solid black;
+    background-color:lightblue;
+    text-align: left;
+    font-size: larger;
+    font-weight: bold;
+    padding: 5px;
+}
+.address-table tr td:nth-child(1)
+{
+    font-weight: bold;
+    width: 33%;
+}
+.address-table td { padding: 4px; }
+</style>
+</head>
+<body>
+<!-- HEADER -->
+<h2>%app-title% (%app-domain%)</h2>
+<!-- /HEADER -->
+
+<table class="address-table">
+    <tr>
+        <th colspan="100%">Create Transaction</th>
+    </tr>
+
+    <tr><td>Public Key</td><td><textarea id="publickey"></textarea></td></tr>
+    <tr><td>Private Key</td><td><textarea id="privatekey"></textarea></td></tr>
+    <tr><td>Reciever</td><td><textarea id="toaddress"></textarea></td></tr>
+    <tr><td>Amount</td><td><input id="amount"/></td></tr>
+    <tr><td colspan="100%"><center><button onclick="javascript:onSendClick();">Send Coins</button></center></td></tr>
+</table>
+
+<br/>
+
+<!-- FOOTER -->
+<br/>
+<small>%app-copyright% (<a href="%app-github%" target="_blank">%app-github%</a>)</small>
+<!-- /FOOTER -->
+</body>
+</html>
