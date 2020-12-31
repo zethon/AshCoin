@@ -54,6 +54,9 @@ https://naivecoinstake.learn.uno/
 http://marko-editor.com/articles/cryptopp_sign_string/
 https://stackoverflow.com/questions/21024399/get-ecdsa-signature-with-crypto
 https://www.cryptopp.com/wiki/Elliptic_Curve_Digital_Signature_Algorithm
+https://bitcoin.stackexchange.com/questions/69315/how-are-compressed-pubkeys-generated
+http://gobittest.appspot.com/Address
+https://learnmeabitcoin.com/technical/public-key-hash
 
 ## Merkle Root
 

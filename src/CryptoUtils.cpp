@@ -10,6 +10,8 @@ namespace ash
 namespace crypto
 {
 
+
+
 std::string SHA256(std::string_view data)
 {
     std::string digest;
