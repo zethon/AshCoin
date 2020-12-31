@@ -210,6 +210,19 @@ function clickShutdown()
 <body onload="javascript:onLoad();" style="font-family:'courier new'; margin-left:3%;margin-right:3%;">
 <h2>%app-title% (%app-domain%)</h2>
 
+<div style="text-align:right;">
+    <b>Command:</b>
+    <select>
+        <option selected="true" disabled="disabled">-</option>
+        <option value="createtx">Create Transaction</option>
+        <option value="mining">Start Mining</option>
+        <option value="shutdown">Shutdown</option>
+    </select>
+    <button>Go</button>
+</div>
+
+<br/>
+
 <div class="container">
     <div class="floatLeft">
     <tr>
