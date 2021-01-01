@@ -57,6 +57,7 @@ https://www.cryptopp.com/wiki/Elliptic_Curve_Digital_Signature_Algorithm
 https://bitcoin.stackexchange.com/questions/69315/how-are-compressed-pubkeys-generated
 http://gobittest.appspot.com/Address
 https://learnmeabitcoin.com/technical/public-key-hash
+https://bitcoin.stackexchange.com/questions/89569/how-does-a-wallet-get-the-public-key-from-an-address
 
 ## Merkle Root
 
