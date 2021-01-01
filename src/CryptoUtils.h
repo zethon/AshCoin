@@ -7,12 +7,14 @@
 #include <cryptopp/eccrypto.h>
 #include <cryptopp/dsa.h>
 #include <cryptopp/sha.h>
+#include <cryptopp/ripemd.h>
 #include <cryptopp/hex.h>
 
 #include <cryptopp/ecp.h>
 #include <cryptopp/oids.h>
 #include <cryptopp/osrng.h>
 
+#include <cryptopp/basecode.h>
 
 namespace ash
 {
@@ -20,9 +22,13 @@ namespace ash
 namespace crypto
 {
 
-using FieldType = CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>;
-
 std::string SHA256(std::string_view data);
+std::string SHA256HexString(std::string_view data);
+std::string RIPEMD160HexString(std::string_view data);
+
+std::string Base58Encode(CryptoPP::Integer num);
+
+using FieldType = CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>;
 
 inline std::string GetPublicKey(std::string_view privateKeyStr)
 {
@@ -52,11 +58,8 @@ inline std::string GetPublicKey(std::string_view privateKeyStr)
     std::string qy = ssy.str();
     qy.pop_back();
 
-    return boost::algorithm::to_upper_copy("04" + qx + qy);
+    return "04" + qx + qy;
 }
-
-
-
 
 
 

@@ -39,22 +39,4 @@ set(ASH_FILES
 )
 
 create_test("blockchain" "${ASH_FILES}")
-
-# set(UTILS_FILES
-#     TestBlock.cpp
-# )
-
-# add_executable(TestBlock
-#     main.cpp
-#     ${ASH_FILES}
-#     ${UTILS_FILES}
-# )
-
-# target_link_libraries(TestBlock
-#     PUBLIC
-#     ${CONAN_LIBS}
-# )
-
-# add_test(NAME TestBlock
-#     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/TestBlock
-# )
+create_test("crypto" "${ASH_FILES}")
