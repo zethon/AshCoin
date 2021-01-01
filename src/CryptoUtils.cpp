@@ -1,8 +1,16 @@
-#include <cryptopp/sha.h>
-#include <cryptopp/filters.h>
+#include <iomanip>
+
+#include <fmt/core.h>
+
 #include <cryptopp/hex.h>
+#include <cryptopp/eccrypto.h>
+#include <cryptopp/ripemd.h>
+#include <cryptopp/oids.h>
 
 #include "CryptoUtils.h"
+
+using namespace std::string_literals;
+using namespace std::string_view_literals;
 
 namespace ash
 {
@@ -56,27 +64,87 @@ std::string RIPEMD160HexString(std::string_view data)
     return digest;
 }
 
+constexpr auto base_count = 58u;
 constexpr std::string_view base58Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-// std::string Base58Encode(std::string_view data)
-// {
 std::string Base58Encode(CryptoPP::Integer num)
-  {
-    std::string alphabet[58] = {"1","2","3","4","5","6","7","8","9","A","B","C","D","E","F",
-    "G","H","J","K","L","M","N","P","Q","R","S","T","U","V","W","X","Y","Z","a","b","c",
-    "d","e","f","g","h","i","j","k","m","n","o","p","q","r","s","t","u","v","w","x","y","z"};
-    int base_count = 58; 
+{
     std::string encoded; 
-    CryptoPP::Integer div; 
     CryptoPP::Integer mod;
     while (num >= base_count)
     {
-        div = num / base_count;
+        CryptoPP::Integer div = num / base_count;
         mod = (num - (base_count * div));
-        encoded = alphabet[ mod.ConvertToLong() ] + encoded;
+        encoded = base58Alphabet[mod.ConvertToLong()] + encoded;
         num = div;
     }
-    encoded = alphabet[ num.ConvertToLong() ] + encoded;
+    encoded = base58Alphabet[num.ConvertToLong()] + encoded;
     return encoded;
+}
+
+std::string GetPublicKey(std::string_view privateKeyStr)
+{
+    using FieldType = CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>;
+    FieldType::PrivateKey privateKey;
+
+    CryptoPP::HexDecoder decoder;
+    decoder.Put(reinterpret_cast<const CryptoPP::byte*>(privateKeyStr.data()), privateKeyStr.size());
+    decoder.MessageEnd();
+
+    CryptoPP::Integer x;
+    x.Decode(decoder, decoder.MaxRetrievable());
+
+    privateKey.Initialize(CryptoPP::ASN1::secp256k1(), x);
+    
+    FieldType::PublicKey publicKey;
+    privateKey.MakePublicKey(publicKey);
+
+    const CryptoPP::ECP::Point& q = publicKey.GetPublicElement();
+
+    std::stringstream ssx;
+    ssx << std::hex << q.x;
+    std::string qx = ssx.str();
+    qx.pop_back();
+    qx = fmt::format("{:0>64}", qx);
+
+    std::stringstream ssy;
+    ssy << std::hex << q.y;
+    std::string qy = ssy.str();
+    qy.pop_back();
+    qy = fmt::format("{:0>64}", qy);
+
+    return fmt::format("04{}{}",qx,qy);
+}
+
+std::string GetAddressFromPrivateKey(std::string_view privateKeyStr)
+{
+    // 1 - Public ECDSA Key
+    const auto publicKey = ash::crypto::GetPublicKey(privateKeyStr);
+
+    // 2 - SHA-256 hash of 1
+    const auto publicKeyHash = ash::crypto::SHA256HexString(publicKey);
+
+    // 3 - RIPEMD-160 Hash of 2
+    const auto ripeHash = ash::crypto::RIPEMD160HexString(publicKeyHash);
+
+    //4 - Adding network bytes to 3
+    const auto step4 = "00"s + ripeHash;
+
+    // 5 - SHA-256 hash of 4
+    auto networkBytesHash = ash::crypto::SHA256HexString(step4);
+
+    // 6 - SHA-256 hash of 5
+    networkBytesHash = ash::crypto::SHA256HexString(networkBytesHash);
+
+    // 7 - First four bytes of 6
+    const auto step7 = networkBytesHash.substr(0, 8);
+
+    // 8 - Adding 7 at the end of 4
+    // const auto step8 = step4 + step7;
+
+    // 9 - Base58 encoding of 8
+    const std::string step8h = fmt::format("{}{}h", step4, step7);
+    CryptoPP::Integer step9 { step8h.data() };
+    return "1"s + ash::crypto::Base58Encode(step9);
 }
 
 } // namespace ash::crypto
