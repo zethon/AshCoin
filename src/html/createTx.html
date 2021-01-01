@@ -52,6 +52,20 @@ textarea
     max-width: 100%;
     height: 50px;;
 }
+input[type=text] 
+{
+  width: 100%;
+  padding: 5px 5px;
+  margin: 8px 0;
+  box-sizing: border-box;
+}
+#amount
+{
+    width: 50%;
+    padding: 5px 5px;
+    margin: 8px 0;
+    box-sizing: border-box;
+}
 .address-table tr th
 {
     border: 1px solid black;
@@ -72,6 +86,12 @@ textarea
     font-weight: bold;
     color: red;
 }
+.warning
+{
+    padding: 5px;
+    background-color: rgb(255, 0, 0);
+    color: white;
+}
 </style>
 </head>
 <body>
@@ -79,14 +99,16 @@ textarea
 <h2>%app-title% (%app-domain%)</h2>
 <!-- /HEADER -->
 
+<div class="warning"><center><b><big>WARNING!</big></b></center>This page does not ask for a confirmation! Once you click "Send" the funds are sent! Be sure all information is correct!</div>
+<br/>
 <table class="address-table">
     <tr>
         <th colspan="100%">Create Transaction</th>
     </tr>
 
     <tr><td><div class="private-key">Private Key</div><small>Using this page exposes your private key over the Internet. You have been warned! - Henry</small></small></td><td><textarea id="privatekey"></textarea></td></tr>
-    <tr><td>Reciever</td><td><textarea id="toaddress"></textarea></td></tr>
-    <tr><td>Amount</td><td><input id="amount"/></td></tr>
+    <tr><td>Reciever Address</td><td><input type="text" id="toaddress"/></td></tr>
+    <tr><td>Amount</td><td><input type="text" id="amount"/></td></tr>
     <tr><td colspan="100%"><center><button onclick="javascript:onSendClick();">Send Coins</button></center></td></tr>
 </table>
 

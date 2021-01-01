@@ -44,9 +44,9 @@ The level of log messages.
 
 Whether or not mining should start automatically when the service is started.
 
-#### `mining.miner.public_key`
+#### `mining.miner.adress`
 
-Th wallet address/public-key to which mining rewards should be awarded.
+Th wallet address to which mining rewards should be awarded.
 
 #### `peers.file`
 

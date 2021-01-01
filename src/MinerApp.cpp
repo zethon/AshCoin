@@ -359,6 +359,19 @@ void MinerApp::initRest()
             std::string payload = request->content.string();
             std::cout << "payload: " << payload << '\n';
         };
+
+    _httpServer.resource[R"x(^/createAddress)x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+        {
+            const auto privateKey = ash::crypto::GeneratePrivateKey();
+            
+            nl::json json;
+            json["private-key"] = privateKey;
+            json["public-key"] = ash::crypto::GetPublicKey(privateKey);
+            json["address"] = ash::crypto::GetAddressFromPrivateKey(privateKey);
+
+            response->write(json.dump(4));
+        };
 }
 
 void MinerApp::initWebSocket()
@@ -425,10 +438,10 @@ void MinerApp::initPeers()
 
 void MinerApp::run()
 {
-    _rewardAddress= _settings->value("mining.miner.public_key", "");
+    _rewardAddress= _settings->value("mining.miner.address", "");
     if (_rewardAddress.empty() || _rewardAddress == "<CHANGE ME>")
     {
-        _logger->critical("the setting 'mining.miner.public_key' in the config file must be updated");
+        _logger->critical("the setting 'mining.miner.address' in the config file must be updated");
         return;
     }
 

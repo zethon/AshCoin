@@ -6,6 +6,7 @@
 #include <cryptopp/eccrypto.h>
 #include <cryptopp/ripemd.h>
 #include <cryptopp/oids.h>
+#include <cryptopp/osrng.h>
 
 #include "CryptoUtils.h"
 
@@ -80,9 +81,10 @@ std::string Base58Encode(CryptoPP::Integer num)
     return encoded;
 }
 
+using FieldType = CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>;
+
 std::string GetPublicKey(std::string_view privateKeyStr)
 {
-    using FieldType = CryptoPP::ECDSA<CryptoPP::ECP, CryptoPP::SHA256>;
     FieldType::PrivateKey privateKey;
 
     CryptoPP::HexDecoder decoder;
@@ -144,6 +146,22 @@ std::string GetAddressFromPrivateKey(std::string_view privateKeyStr)
     const std::string step8h = fmt::format("{}{}h", step4, step7);
     CryptoPP::Integer step9 { step8h.data() };
     return "1"s + ash::crypto::Base58Encode(step9);
+}
+
+std::string GeneratePrivateKey()
+{
+    CryptoPP::AutoSeededRandomPool prng;
+    FieldType::PrivateKey privateKey;
+    privateKey.Initialize(prng, CryptoPP::ASN1::secp256k1());
+
+    if (privateKey.Validate(prng, 3))
+    {
+        std::stringstream ss;
+        ss << std::hex << privateKey.GetPrivateExponent();
+        return fmt::format("{:0>64}", ss.str());
+    }
+
+    return {};
 }
 
 } // namespace ash::crypto
