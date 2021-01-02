@@ -1,6 +1,11 @@
 #include <range/v3/all.hpp>
+#include <range/v3/view/filter.hpp>
+#include <range/v3/view/transform.hpp>
 
+#include "CryptoUtils.h"
 #include "Blockchain.h"
+
+namespace nl = nlohmann;
 
 namespace ash
 {
@@ -150,6 +155,34 @@ void Blockchain::updateUnspentTxOuts()
     }
 
     _logger->debug("blockchain contains {} unspent transactions", _unspentTxOuts.size());
+}
+
+bool Blockchain::createTransaction(std::string_view receiver, double amount, std::string_view privateKey)
+{
+    // first get the address of the sender from the privateKey
+    const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(privateKey);
+
+    // now get all of the unspent txouts of the sender
+    auto senderUnspentList = _unspentTxOuts
+        | ranges::views::filter([senderAddress](const UnspentTxOut& uout) { return uout.address == senderAddress; });
+
+    bool success = false;
+    double currentAmount = 0;
+    double leftoverAmount = 0;
+    ash::UnspentTxOuts txOuts;
+
+    for (const auto& unspent : senderUnspentList)
+    {
+        txOuts.push_back(unspent);
+        currentAmount = currentAmount + unspent.amount;
+        if (currentAmount >= amount) 
+        {
+            leftoverAmount = currentAmount - amount;
+            break;
+        }
+    }
+
+    return success;
 }
 
 } // namespace

@@ -129,6 +129,8 @@ public:
     void updateUnspentTxOuts();
     
     const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
+
+    bool createTransaction(std::string_view receiver, double amount, std::string_view privateKey);
 };
 
 }

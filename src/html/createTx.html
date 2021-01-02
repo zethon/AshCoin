@@ -26,7 +26,7 @@ function onSendClick()
     var requestStr = JSON.stringify({
         privatekey : $("#privatekey").val(),
         toaddress : $("#toaddress").val(),
-        amount : $("#amount").val(),
+        amount : Number($("#amount").val()),
     });
 
     $.ajax({

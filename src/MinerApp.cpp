@@ -356,17 +356,34 @@ void MinerApp::initRest()
     _httpServer.resource[R"x(^/createTx)x"]["POST"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-            std::lock_guard<std::mutex> lock{_chainMutex};
             const nl::json json = 
                 nl::json::parse(request->content.string(), nullptr, false);
-
+            if (json.is_discarded() 
+                || !json.contains("toaddress")
+                || !json.contains("privatekey")
+                || !json.contains("amount")
+                || !json["amount"].is_number())
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+                return;
+            }
+            
             const auto toaddress = json["toaddress"].get<std::string>();
-            const auto privateKey = json["privateKey"].get<std::string>();
+            const auto privateKey = json["privatekey"].get<std::string>();
             const auto amount = json["amount"].get<double>();
 
-            const auto& unspentOuts = this->_blockchain->unspentTransactionOuts();
-            std::string payload = request->content.string();
-            std::cout << "payload: " << payload << '\n';
+            std::lock_guard<std::mutex> lock{_chainMutex};
+            if (_blockchain->createTransaction(toaddress, amount, privateKey))
+            {
+                response->write("Ok");
+                return;
+            }
+            else
+            {
+                _logger->error("could not create new transaction"); 
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+                return;
+            }
         };
 
     _httpServer.resource[R"x(^/createAddress)x"]["GET"] =
