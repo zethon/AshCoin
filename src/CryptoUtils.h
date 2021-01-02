@@ -1,7 +1,19 @@
 #pragma once
 #include <string_view>
 
+#if _WINDOWS
+#pragma warning(push)
+#pragma warning(disable:4242)
+#endif
 #include <cryptopp/integer.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/eccrypto.h>
+#include <cryptopp/ripemd.h>
+#include <cryptopp/oids.h>
+#include <cryptopp/osrng.h>
+#if _WINDOWS
+#pragma warning(pop)
+#endif
 
 namespace ash
 {
