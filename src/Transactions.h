@@ -25,6 +25,11 @@ using UnspentTxOuts = std::vector<UnspentTxOut>;
 void to_json(nl::json& j, const Transactions& txs);
 void from_json(const nl::json& j, Transactions& txs);
 
+void to_json(nl::json& j, const UnspentTxOut& txout);
+void from_json(const nl::json& j, UnspentTxOut& txout);
+void to_json(nl::json& j, const UnspentTxOuts& txout);
+void from_json(const nl::json& j, UnspentTxOuts& txout);
+
 Transaction CreateTransaction(std::string_view receiver, double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts);
 Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address);
 
@@ -101,12 +106,10 @@ public:
 
 struct UnspentTxOut
 {
-    std::string     id;         // txid
+    std::string     txOutId;    // txid
     std::uint64_t   txOutIndex; // block index
     std::string     address;
     double          amount;
 };
-
-using UnspentTxOuts = std::vector<UnspentTxOut>;
 
 } // namespace ash

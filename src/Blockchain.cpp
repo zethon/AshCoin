@@ -48,7 +48,7 @@ UnspentTxOuts GetUnspentTxOuts(const Block& block)
             auto tempIt = std::find_if(newTxOuts.begin(), newTxOuts.end(),
                 [outid = txin.txOutId()](const UnspentTxOut& unspent)
                 {
-                    return outid == unspent.id;
+                    return outid == unspent.txOutId;
                 });
 
             if (tempIt != newTxOuts.end())

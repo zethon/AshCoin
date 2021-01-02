@@ -356,6 +356,15 @@ void MinerApp::initRest()
     _httpServer.resource[R"x(^/createTx)x"]["POST"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
+            std::lock_guard<std::mutex> lock{_chainMutex};
+            const nl::json json = 
+                nl::json::parse(request->content.string(), nullptr, false);
+
+            const auto toaddress = json["toaddress"].get<std::string>();
+            const auto privateKey = json["privateKey"].get<std::string>();
+            const auto amount = json["amount"].get<double>();
+
+            const auto& unspentOuts = this->_blockchain->unspentTransactionOuts();
             std::string payload = request->content.string();
             std::cout << "payload: " << payload << '\n';
         };
@@ -371,6 +380,14 @@ void MinerApp::initRest()
             json["address"] = ash::crypto::GetAddressFromPrivateKey(privateKey);
 
             response->write(json.dump(4));
+        };
+
+    _httpServer.resource[R"x(^/unspentTxOuts)x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+        {
+            std::lock_guard<std::mutex> lock{_chainMutex};
+            nl::json j = this->_blockchain->unspentTransactionOuts();
+            response->write(j.dump(4));
         };
 }
 
@@ -530,7 +547,7 @@ void MinerApp::runMineThread()
             prevHash = lastBlock.hash();
 
             Transactions txs;
-            txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
+            txs.push_back(ash::CreateCoinbaseTransaction(index, _rewardAddress));
 
             newblock = std::make_unique<Block>(index, prevHash, std::move(txs));
             newblock->setMiner(_uuid);

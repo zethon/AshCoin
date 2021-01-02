@@ -105,6 +105,40 @@ void from_json(const nl::json& j, Transactions& txs)
     }
 }
 
+void to_json(nl::json& j, const UnspentTxOut& unspent)
+{
+    j["txOutId"] = unspent.txOutId;
+    j["txOutIndex"] = unspent.txOutIndex;
+    j["address"] = unspent.address;
+    j["amount"] = unspent.amount;
+}
+
+void from_json(const nl::json& j, UnspentTxOut& unspent)
+{
+    j["txOutId"].get_to(unspent.txOutId);
+    j["txOutIndex"].get_to(unspent.txOutIndex);
+    j["address"].get_to(unspent.address);
+    j["amount"].get_to(unspent.amount);
+}
+
+void to_json(nl::json& j, const UnspentTxOuts& outs)
+{
+    for (const auto& tx : outs)
+    {
+        j.push_back(tx);
+    }
+}
+
+void from_json(const nl::json& j, UnspentTxOuts& outs)
+{
+    outs.clear();
+
+    for (const auto& jtx : j.items())
+    {
+        outs.push_back(jtx.value().get<UnspentTxOut>());
+    }
+}
+
 std::string GetTransactionId(const Transaction& tx)
 {
     std::stringstream ss;
