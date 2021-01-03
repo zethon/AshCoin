@@ -44,6 +44,13 @@ class TxIn final
 
 public:
     TxIn() = default;
+
+    TxIn(std::string_view outid, std::uint64_t outidx)
+        : TxIn(outid, outidx, {})
+    {
+        // nothing to do
+    }
+
     TxIn(std::string_view outid, std::uint64_t outidx, std::string_view signature)
         : _txOutId{outid}, _txOutIndex{outidx}, _signature{signature}
     {
@@ -88,6 +95,8 @@ class Transaction final
 public:
 
     std::string id() const { return _id; }
+    void calcuateId();
+
     const TxIns& txIns() const { return _txIns; }
     TxIns& txIns()
     {

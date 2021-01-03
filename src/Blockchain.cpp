@@ -169,18 +169,35 @@ bool Blockchain::createTransaction(std::string_view receiver, double amount, std
     bool success = false;
     double currentAmount = 0;
     double leftoverAmount = 0;
-    ash::UnspentTxOuts txOuts;
+    ash::UnspentTxOuts includedUnspentOuts;
 
     for (const auto& unspent : senderUnspentList)
     {
-        txOuts.push_back(unspent);
-        currentAmount = currentAmount + unspent.amount;
+        includedUnspentOuts.push_back(unspent);
+        currentAmount += unspent.amount;
         if (currentAmount >= amount) 
         {
             leftoverAmount = currentAmount - amount;
             break;
         }
     }
+
+    ash::Transaction tx;
+
+    auto& txins = tx.txIns();
+    for (const auto& uout : includedUnspentOuts)
+    {
+        txins.emplace_back(uout.txOutId, uout.txOutIndex);
+    }
+
+    auto& outs = tx.txOuts();
+    outs.emplace_back(receiver, amount);
+    if (leftoverAmount > 0)
+    {
+        outs.emplace_back(senderAddress, leftoverAmount);
+    }
+
+    tx.calcuateId();
 
     return success;
 }

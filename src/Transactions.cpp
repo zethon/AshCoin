@@ -180,4 +180,9 @@ Transaction CreateTransaction(std::string_view receiver,
 }
 
 
+void Transaction::calcuateId()
+{
+    _id = ash::GetTransactionId(*this);
+}
+
 } // namespace ash
