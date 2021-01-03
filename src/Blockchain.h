@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <queue>
 
 #include "Transactions.h"
 #include "Settings.h"
@@ -32,7 +33,10 @@ UnspentTxOuts GetUnspentTxOuts(const Block& block);
 class Blockchain final
 {
     std::vector<Block>  _blocks;
-    UnspentTxOuts       _unspentTxOuts;
+    
+    UnspentTxOuts               _unspentTxOuts;
+    std::queue<Transaction>     _txQueue; // transactions waiting to be mined by this miner
+    
     SpdLogPtr           _logger;
 
     friend class ChainDatabase;
@@ -131,6 +135,9 @@ public:
     const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
 
     bool createTransaction(std::string_view receiver, double amount, std::string_view privateKey);
+
+    void getTransactionsToBeMined(Block& block);
+    std::size_t reQueueTransactions(Block& block);
 };
 
 }

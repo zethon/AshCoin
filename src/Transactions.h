@@ -111,6 +111,12 @@ public:
             (static_cast<const Transaction*>(this))->txOuts());
     }
 
+    bool isCoinebase() const
+    {
+        return _txOuts.size() == 1
+            && _txIns.size() == 1
+            && _txIns.front().signature().empty();
+    }
 };
 
 struct UnspentTxOut

@@ -270,7 +270,8 @@ void MinerApp::initRest()
         };
 
     _httpServer.resource["^/address/(.*?)$"]["GET"] =
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+    _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)(?:\/(json)){0,1})x"]["GET"] =
+            [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
             std::lock_guard<std::mutex> lock{_chainMutex};
             const auto& unspent = this->_blockchain->unspentTransactionOuts();
@@ -569,16 +570,24 @@ void MinerApp::runMineThread()
             newblock = std::make_unique<Block>(index, prevHash, std::move(txs));
             newblock->setMiner(_uuid);
             newblock->setData(fmt::format("coinbase block#{}", index));
+
+            // grab everything from the tx queue
+            this->_blockchain->getTransactionsToBeMined(*newblock);
         }
     
-        _logger->debug("mining block #{} with difficulty {}", 
-            index, _miner.difficulty());
+        _logger->debug("mining block #{}, difficulty={}, tx-count={}", 
+            index, _miner.difficulty(), newblock->transactions().size());
 
         auto result = _miner.mineBlock(*newblock, keepMiningCallback);
 
         if (result == Miner::ABORT)
         {
-            _logger->debug("mining block #{} was aborted", index);
+            {
+                std::lock_guard<std::mutex> lock{_chainMutex};
+                auto count = _blockchain->reQueueTransactions(*newblock);
+                _logger->debug("mining block #{} was aborted, requeueing {} transaction", index, count);
+            }
+
             syncBlockchain();
             continue;
         }

@@ -199,7 +199,36 @@ bool Blockchain::createTransaction(std::string_view receiver, double amount, std
 
     tx.calcuateId();
 
+    // TODO: SIGN TX!
+    _txQueue.push(std::move(tx));
+
     return success;
+}
+
+void Blockchain::getTransactionsToBeMined(Block& block)
+{
+    auto& txs = block.transactions();
+
+    // we assume someone else is making sure we're thread safe!
+    while (!_txQueue.empty())
+    {
+        txs.push_back(_txQueue.front());
+        _txQueue.pop();
+    }
+}
+
+std::size_t Blockchain::reQueueTransactions(Block& block)
+{
+    std::size_t count = 0;
+
+    for (const auto& tx : block.transactions())
+    {
+        if (tx.isCoinebase()) continue;
+        _txQueue.push(tx); // copy!!
+        count++;
+    }
+
+    return count;
 }
 
 } // namespace
