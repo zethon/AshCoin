@@ -4,7 +4,7 @@
 
 The default settings file is name `.ash_config` and is located in the users home directoy.
 
-If this file does not exist when the program is read, then it will be automatically genated in the user's home folder. These locations are typicalling in the following folders on each OS:
+If this file does not exist when the program is run it will automatically be generated in the user's home folder. These locations are typically in the following folders on each OS:
 
 * MacOS - `/Users/<username>`
 * Ubuntu - `/home/<username>`
@@ -44,9 +44,9 @@ The level of log messages.
 
 Whether or not mining should start automatically when the service is started.
 
-#### `mining.miner.adress`
+#### `mining.miner.address`
 
-Th wallet address to which mining rewards should be awarded.
+The wallet address to which mining rewards should be awarded.
 
 #### `peers.file`
 
@@ -54,7 +54,7 @@ The file from which to load the list of peers.
 
 #### `rest.autoload`
 
-Whether or not load a browser with the REST interface when the process is started in console mode.
+Whether or not load a browser with the REST interface when the process is started in console mode. Default: *false*
 
 #### `rest.port`
 
