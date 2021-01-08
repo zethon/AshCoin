@@ -1,0 +1,53 @@
+<html>
+<head>
+<link rel="shortcut icon" href="#" />
+<link rel="stylesheet" href="style.css">
+<script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript">
+function onLoad()
+{
+    console.log("loading");
+}
+</script>
+<style>
+</style>
+</head>
+<body onload="javascript:onLoad();"
+
+<!-- HEADER -->
+<h2>%app-title% (%app-domain%)</h2>
+<!-- /HEADER -->
+
+<table class="info-table">
+    <tr>
+        <th>Transaction #%tx-id%</th>
+        <th><a href="/block/%block-previd%">prev</a>&nbsp;<a href="/block/%block-nextid%">next</a></th>
+    </tr>
+
+    <tr><td>Hash</td><td id="tx-id"></td></tr>
+    <tr><td>Block</td><td id="block-id"></td></tr>
+    <tr><td>Block</td><td id="block-id"></td></tr>
+</table>
+
+<br/>
+
+<h3>Transactions</h3>
+<table class="detail-table">
+    <tr>
+        <th>Transaction ID</th>
+        <th>Sender</th>
+        <th>Receiver</th>
+        <th>Amount</th>
+    </tr>
+
+    <tbody id="txlist">
+    </tbody>
+</table>
+
+<!-- FOOTER -->
+<br/>
+<small>%app-copyright% (<a href="%app-github%" target="_blank">%app-github%</a>)</small>
+<!-- /FOOTER -->
+</body>
+</html>

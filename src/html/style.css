@@ -43,7 +43,7 @@ a
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100px;
+    max-width: 500px;
 }
 
 /******* NEW STUFF **********/

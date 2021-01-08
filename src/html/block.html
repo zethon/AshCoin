@@ -12,15 +12,31 @@ function getTxElement(tx)
     let d = document;
     let tr = d.createElement('tr');
     tr.appendChild(d.createElement('td')).innerHTML = tx.id;
+    // tr.lastElementChild.setAttribute('class', 'minercol');
 
     var txInHtml = '';
-    if (tx.inputs.length == 1 && tx.inputs[0].txOutIndex == 0)
+    // if (tx.inputs.length == 1 && tx.inputs[0].txOutIndex == 0)
+    // {
+    //     // this is the coinbase transaction
+    //     var amount = tx.outputs[0].amount;
+    //     txInHtml += "Coinbase: " + amount;
+    // }
+    for (idx = 0; idx < tx.inputs.length; idx++)
     {
-        // this is the coinbase transaction
-        var amount = tx.outputs[0].amount;
-        txInHtml += "Coinbase: " + amount;
+        var sourceAddress = tx.inputs[idx].txOutId;
+        // assume this is the generation tx
+        if (sourceAddress.length == 0) 
+        {
+            txInHtml += "<i>Mining Reward</i>: " + tx.outputs[0].amount + "<br/>";
+            break;
+        }
+        else
+        {
+            txInHtml += "(" + tx.inputs[0].txOutIndex + ":" + sourceAddress + ")<br/>";
+        }
     }
     tr.appendChild(d.createElement('td')).innerHTML = txInHtml;
+    // tr.lastElementChild.setAttribute('class', 'minercol');
 
     var totalamount = 0.0;
     var outputHtml = '';
@@ -50,6 +66,11 @@ function onLoad()
             console.log("get json(" + blockJsonPath + ")");
             var el = document.getElementById("txlist");
             var block = JSON.parse(datastr);
+
+            var dt = moment.unix(block.time/1000).utc();
+            $('#blocktime').text(dt.format("YYYY-MM-DD HH:mm:ss"));
+
+            
 
             for (i = 0; i < block.transactions.length; i++)
             {
@@ -101,12 +122,10 @@ function onLoad()
     <tr><td>Hash</td><td>%block-hash%</td></tr>
     <tr><td>Previous Hash</td><td>%block-previoushash%</td></tr>
     <tr><td>Height</td><td>%block-id%</td></tr>
-    <tr><td>Merkle Root</td><td>%block-root%</td></tr>
-    <tr><td>Time</td><td>%block-time%</td></tr>
+    <tr><td>Time</td><td id="blocktime"></td></tr>
     <tr><td>Difficulty</td><td>%block-difficulty%</td></tr>
     <tr><td>Nonce</td><td>%block-nonce%</td></tr>
     <tr><td>Transactions</td><td>%block-transactions%</td></tr>
-    <tr><td>Value Out</td><td>%block-valueout%</td></tr>
 </table>
 
 <br/>
@@ -115,8 +134,8 @@ function onLoad()
 <table class="tx-table">
     <tr>
         <th>Transaction ID</th>
-        <th>Sender</th>
-        <th>Receiver</th>
+        <th>From (amount)</th>
+        <th>To (amount)</th>
         <th>Amount</th>
     </tr>
 

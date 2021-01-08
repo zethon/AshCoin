@@ -142,18 +142,33 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
     return total;
 }
 
+// TODO: this is gonna be slow af
 void Blockchain::updateUnspentTxOuts()
 {
     _logger->trace("updated unspent transactions");
     
     _unspentTxOuts.clear();
     
+    // gather up all the outs
     for (const auto& block : _blocks)
     {
         const auto temp = GetUnspentTxOuts(block);
         std::move(temp.begin(), temp.end(), std::back_inserter(_unspentTxOuts));
     }
 
+    // now go through the txins and remove the textouts
+    for (const auto& block : _blocks)
+    {
+        for (const auto& tx : block.transactions())
+        {
+            for (const auto& txin : tx.txIns())
+            {
+                auto it = std::find_if(_unspentTxOuts.begin(), _unspentTxOuts.end()
+                [](){ });
+            }
+        }
+    }
+    
     _logger->debug("blockchain contains {} unspent transactions", _unspentTxOuts.size());
 }
 

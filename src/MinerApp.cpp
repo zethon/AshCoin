@@ -269,10 +269,27 @@ void MinerApp::initRest()
             response->write("<h1>peer added</h1>");
         };
 
-    _httpServer.resource["^/address/(.*?)$"]["GET"] =
     _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)(?:\/(json)){0,1})x"]["GET"] =
             [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
+            if (request->path_match.size() == 3
+                && request->path_match[2] == "json")
+            {
+                std::lock_guard<std::mutex> lock{_chainMutex};
+                ash::Transactions txlist;
+                for (const auto& block : *(this->_blockchain))
+                {
+                    for (const auto& tx : block.transactions())
+                    {
+                        txlist.push_back(tx);
+                    }
+                }
+
+                nl::json json = txlist;
+                response->write(json.dump());
+                return;
+            }
+
             std::lock_guard<std::mutex> lock{_chainMutex};
             const auto& unspent = this->_blockchain->unspentTransactionOuts();
 
