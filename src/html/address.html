@@ -68,7 +68,7 @@ function onLoad()
             $('#balance').text(parseFloat(balance).toFixed(4));
             $('#rcvd').text(parseFloat(rcvd).toFixed(4));
             $('#rcvdcount').text(rcvdcount);
-            $('#sent').text(parseFloat(sent).toFixed(4));
+            $('#sent').text(parseFloat(sent * -1.0).toFixed(4));
             $('#sentcount').text(sentcount);
         },
         error: function()
@@ -103,10 +103,10 @@ function onLoad()
     <tr><td>Hash</td><td>%address%</td></tr>
     <tr><td>Balance</td><td id="balance"></td></tr>
     <tr><td colspan="100%" style="background-color:lightblue;"></td></tr>
-    <tr><td>Transactions Received</td><td id="rcvd"></td></tr>
-    <tr><td>Amount Received</td><td id="rcvdcount"></td></tr>
-    <tr><td>Transactions Sent</td><td id="sent"></td></tr>
-    <tr><td>Amount Sent</td><td id="sentcount"></td></tr>
+    <tr><td>Transactions Received</td><td id="rcvdcount"></td></tr>
+    <tr><td>Amount Received</td><td id="rcvd"></td></tr>
+    <tr><td>Transactions Sent</td><td id="sentcount"></td></tr>
+    <tr><td>Amount Sent</td><td id="sent"></td></tr>
 </table>
 
 <br/>
