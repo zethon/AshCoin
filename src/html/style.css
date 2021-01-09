@@ -73,6 +73,24 @@ a
     max-width: 100px;
 }
 
+/****** HEADER TABLE ********/
+.header-table, .header-table tr, .header-table td
+{
+    border:none;
+    border-collapse: collapse;
+}
+.header-table tr:nth-child(1) td
+{
+    vertical-align: top;
+    font-weight: bold;
+    font-size: large;
+}
+.header-table tr td:nth-child(2)
+{
+    vertical-align: top;
+    text-align:right;
+}
+
 /****** DATA TABLE ********/
 .data-table
 {

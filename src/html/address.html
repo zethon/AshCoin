@@ -2,6 +2,7 @@
 <head>
 <link rel="shortcut icon" href="#" />
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript">
@@ -45,23 +46,24 @@ function onLoad()
             let sent = 0.0;
             let sentcount = 0;
 
-            for (i = 0; i < ledger.length; i++)
-            {
-                var newel = getDataElement(ledger[i]);
-                el.appendChild(newel);
-                balance += ledger[i].amount;
+            ledger.slice().reverse().forEach(
+                function(info)
+                {
+                    var newel = getDataElement(info);
+                    el.appendChild(newel);
+                    balance += info.amount;
 
-                if (ledger[i].amount > 0)
-                {
-                    rcvd += ledger[i].amount;
-                    rcvdcount++;
-                }
-                else
-                {
-                    sent += ledger[i].amount;
-                    sentcount++;
-                }
-            }
+                    if (info.amount > 0)
+                    {
+                        rcvd += info.amount;
+                        rcvdcount++;
+                    }
+                    else
+                    {
+                        sent += info.amount;
+                        sentcount++;
+                    }
+                });
 
             $('#balance').text(parseFloat(balance).toFixed(4));
             $('#rcvd').text(parseFloat(rcvd).toFixed(4));
@@ -85,7 +87,12 @@ function onLoad()
 <body onload="javascript:onLoad();">
 
 <!-- HEADER -->
-<h2>%app-title% (%app-domain%)</h2>
+<table cellspacing="0" cellpadding="0" class="header-table">
+<tr>
+    <td><h2>%app-title% (%app-domain%)</h2></td>
+    <td><a href="/"><i class="fa fa-home"></i></a></td>
+</tr>
+</table>
 <!-- /HEADER -->
 
 <table class="info-table">
@@ -117,7 +124,9 @@ function onLoad()
 
 <!-- FOOTER -->
 <br/>
+<hr/>
 <small>%app-copyright% (<a href="%app-github%" target="_blank">%app-github%</a>)</small>
 <!-- /FOOTER -->
+
 </body>
 </html>

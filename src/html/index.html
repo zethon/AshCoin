@@ -2,7 +2,7 @@
 <head>
 <link rel="shortcut icon" href="#" />
 <link rel="stylesheet" href="/style.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript">
@@ -56,10 +56,10 @@ function getBlockTableRow(block)
     var dt = moment.unix(block.time/1000).utc();
     var blocklink = serviceUrl + "block/" + block.index;
 
-    var row = "<td><a href='"+blocklink+"'>" + block.index.toLocaleString() + "</a></td>";
+    let row =  `<td><a href="${blocklink}">#${block.index.toLocaleString()}</a></td>`;
     row += "<td>" + dt.format("YYYY-MM-DD HH:mm:ss") + "</td>";
     row += "<td>" + block.transactions.length + "</td>";
-    row += "<td class='minercol'>" + block.miner + "</td>";
+    row += "<td>" + block.miner + "</td>";
     row += "<td>" + block.difficulty + "</td>";
     row += "<td class='minercol'>" + block.hash + "</td>";
     row += "<td>" + block.nonce.toLocaleString() + "</td>";
@@ -69,13 +69,15 @@ function getBlockTableRow(block)
 
 function getBlockRowElement(block)
 {
-    var blocklink = serviceUrl + "block/" + block.index;
+    let blocklink = serviceUrl + "block/" + block.index;
+    let blocktxt = '#' + block.index.toLocaleString(); 
 
     let d = document;
     let tr = document.createElement('tr');
     tr.setAttribute('id', 'block' + block.index);
     tr.appendChild(d.createElement('td')).innerHTML = 
-        "<a href='"+blocklink+"'>" + block.index.toLocaleString() + "</a></td>";
+        `<a href="${blocklink}">1#${block.index.toLocaleString()}</a></td>`;
+        // "<a href='"+blocklink+"'>" + block.index.toLocaleString() + "</a></td>";
 
     var dt = moment.unix(block.time/1000).utc();
     tr.appendChild(d.createElement('td')).innerHTML = dt.format("YYYY-MM-DD HH:mm:ss");
@@ -83,7 +85,7 @@ function getBlockRowElement(block)
     tr.appendChild(d.createElement('td')).innerHTML = block.transactions.length;
 
     tr.appendChild(d.createElement('td')).innerHTML = block.miner;
-    tr.lastElementChild.setAttribute('class', 'minercol');
+    // tr.lastElementChild.setAttribute('class', 'minercol');
 
     tr.appendChild(d.createElement('td')).innerHTML = block.difficulty;
 
@@ -205,12 +207,37 @@ function clickShutdown()
     shutdownHttp.onreadystatechange = (e) => { };
 }
 </script>
-
+<style>
+#blocklist tr td
+{
+    padding: 5px;
+}
+#blocklist tr td:nth-child(1)
+{
+    text-align: center;
+}
+#blocklist tr td:nth-child(4), #blocklist tr td:nth-child(6)
+{
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+</style>
 </head>
 <body onload="javascript:onLoad();" style="font-family:'courier new'; margin-left:3%;margin-right:3%;">
-<h2>%app-title% (%app-domain%)</h2>
 
-<div style="text-align:right;">
+<!-- HEADER -->
+<table cellspacing="0" cellpadding="0" class="header-table">
+<tr>
+    <td><h2>%app-title% (%app-domain%)</h2></td>
+    <td><a href="/"><i class="fa fa-home"></i></a></td>
+</tr>
+</table>
+<!-- /HEADER -->
+
+<!-- <div style="text-align:right;">
     <b>Command:</b>
     <select>
         <option selected="true" disabled="disabled">-</option>
@@ -221,7 +248,7 @@ function clickShutdown()
     <button>Go</button>
 </div>
 
-<br/>
+<br/> -->
 
 <div class="container">
     <div class="floatLeft">
@@ -304,8 +331,11 @@ function clickShutdown()
     </tbody>
 </table>
 
+<!-- FOOTER -->
 <br/>
+<hr/>
 <small>%app-copyright% (<a href="%app-github%" target="_blank">%app-github%</a>)</small>
+<!-- /FOOTER -->
 
 </body>
 </html>
