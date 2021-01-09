@@ -38,12 +38,12 @@ a
 .floatRight {width: 49%; float: right; }
 .container { overflow: hidden; }
 
-.mineruuid, .minercol
+.mineruuid, .minercol, .hash-col
 {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 500px;
+    max-width: 100px;
 }
 
 /******* NEW STUFF **********/

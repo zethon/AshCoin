@@ -272,20 +272,69 @@ void MinerApp::initRest()
     _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)(?:\/(json)){0,1})x"]["GET"] =
             [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
+            const auto address = request->path_match[1].str();
+
             if (request->path_match.size() == 3
                 && request->path_match[2] == "json")
             {
                 std::lock_guard<std::mutex> lock{_chainMutex};
-                ash::Transactions txlist;
+
+                AddressLedger ledger;
+
+                // gather up all the txouts of this address
                 for (const auto& block : *(this->_blockchain))
                 {
                     for (const auto& tx : block.transactions())
                     {
-                        txlist.push_back(tx);
+                        for (const auto& txout : tx.txOuts())
+                        {
+                            if (txout.address() != address)
+                            {
+                                continue;
+                            }
+
+                            ledger.emplace_back(LedgerInfo{tx.id(), block.index(), block.time(), txout.amount()});
+                        }
                     }
                 }
 
-                nl::json json = txlist;
+                // now go through and conver the txins to negatives
+                // (this is gonna be SLOW)
+                for (const auto& block : *(this->_blockchain))
+                {
+                    for (const auto& tx : block.transactions())
+                    {
+                        for (const auto& txin : tx.txIns())
+                        {
+                            auto it = std::find_if(ledger.begin(), ledger.end(),
+                                [index = txin.txOutIndex(), txid = txin.txOutId()]
+                                (const LedgerInfo& info)
+                                {
+                                    return info.txid == txid
+                                        && info.blockIdx == index;
+                                });
+
+                            if (it != ledger.end())
+                            {
+                                ledger.push_back(
+                                    LedgerInfo({tx.id(), block.index(), block.time(), it->amount * -1.0}));
+                            }
+                        }
+                    }
+                }
+
+                std::sort(ledger.begin(), ledger.end(),
+                    [](auto x, auto y) 
+                    { 
+                        if (x.time == y.time)
+                        {
+                            return x.amount < y.amount;
+                        }
+
+                        return x.time < y.time; 
+                    });
+
+                nl::json json = ledger;
                 response->write(json.dump());
                 return;
             }
@@ -293,7 +342,6 @@ void MinerApp::initRest()
             std::lock_guard<std::mutex> lock{_chainMutex};
             const auto& unspent = this->_blockchain->unspentTransactionOuts();
 
-            const auto address = request->path_match[1].str();
             auto results = unspent | ranges::views::filter(
                 [address](const UnspentTxOut& txout) 
                 { 

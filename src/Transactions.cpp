@@ -139,7 +139,24 @@ void from_json(const nl::json& j, UnspentTxOuts& outs)
     }
 }
 
-std::string GetTransactionId(const Transaction& tx)
+void to_json(nl::json& j, const LedgerInfo& li)
+{
+    j["txid"] = li.txid;
+    j["blockid"] = li.blockIdx;
+    j["amount"] = li.amount;
+    j["time"] = 
+        static_cast<std::uint64_t>(li.time.time_since_epoch().count());
+}
+
+void to_json(nl::json& j, const AddressLedger& ledger)
+{
+    for (const auto& i : ledger)
+    {
+        j.push_back(i);
+    }
+}
+
+std::string GetTransactionId(const Transaction& tx, std::uint64_t blockid)
 {
     std::stringstream ss;
     for (const auto& txin : tx.txIns())
@@ -151,6 +168,8 @@ std::string GetTransactionId(const Transaction& tx)
     {
         ss << txout.address() << txout.amount();
     }
+
+    ss << blockid;
 
     std::string digest;
     CryptoPP::SHA256 hash;
@@ -168,7 +187,7 @@ Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view a
     Transaction tx;
     tx.txIns().emplace_back("", blockIdx, "");
     tx.txOuts().emplace_back(address, COINBASE_REWARD);
-    tx._id = GetTransactionId(tx);
+    tx._id = GetTransactionId(tx, blockIdx);
     return tx;
 }
 
@@ -180,9 +199,9 @@ Transaction CreateTransaction(std::string_view receiver,
 }
 
 
-void Transaction::calcuateId()
+void Transaction::calcuateId(std::uint64_t blockid)
 {
-    _id = ash::GetTransactionId(*this);
+    _id = ash::GetTransactionId(*this, blockid);
 }
 
 } // namespace ash

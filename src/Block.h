@@ -14,9 +14,6 @@ namespace nl = nlohmann;
 namespace ash
 {
 
-using BlockTime = std::chrono::time_point<
-    std::chrono::system_clock, std::chrono::milliseconds>;
-
 class Block;
 
 void to_json(nl::json& j, const Block& b);

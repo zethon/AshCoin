@@ -38,8 +38,78 @@ table
 }
 .tx-table tr:nth-child(even){background-color: #f2f2f2;}
 </style>
+<script type="text/javascript">
+var restUrl = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
+
+function getDataElement(info)
+{
+    let d = document;
+    let tr = d.createElement('tr');
+    tr.appendChild(d.createElement('td')).innerHTML = info.txid;
+    tr.lastElementChild.setAttribute('class', 'minercol');
+
+    tr.appendChild(d.createElement('td')).innerHTML = 
+        `<a href="${restUrl}/block/${info.blockid}">${info.blockid}</a>`;
+
+    var dt = moment.unix(info.time/1000).utc();
+    tr.appendChild(d.createElement('td')).innerHTML = dt.format("YYYY-MM-DD HH:mm:ss");
+
+    tr.appendChild(d.createElement('td')).innerHTML = info.amount;
+
+    return tr;
+}
+
+function onLoad()
+{
+    var dataJsonPath = restUrl + location.pathname + "/json";
+    $.ajax(
+    {
+        url: dataJsonPath,
+        type: 'GET', 
+        success: function(datastr) 
+        {
+            var el = document.getElementById("data-list");
+            var ledger = JSON.parse(datastr);
+
+            let balance = 0.0;
+            let rcvd = 0.0;
+            let rcvdcount = 0;
+            let sent = 0.0;
+            let sentcount = 0;
+
+            for (i = 0; i < ledger.length; i++)
+            {
+                var newel = getDataElement(ledger[i]);
+                el.appendChild(newel);
+                balance += ledger[i].amount;
+
+                if (ledger[i].amount > 0)
+                {
+                    rcvd += ledger[i].amount;
+                    rcvdcount++;
+                }
+                else
+                {
+                    sent += ledger[i].amount;
+                    sentcount++;
+                }
+            }
+
+            $('#balance').text(balance);
+            $('#rcvd').text(rcvd);
+            $('#rcvdcount').text(rcvdcount);
+            $('#sent').text(sent);
+            $('#sentcount').text(sentcount);
+        },
+        error: function()
+        {
+        }
+    });
+}
+</script>
 </head>
-<body>
+<body onload="javascript:onLoad();">
+
 <!-- HEADER -->
 <h2>%app-title% (%app-domain%)</h2>
 <!-- /HEADER -->
@@ -50,11 +120,11 @@ table
     </tr>
 
     <tr><td>Hash</td><td>%address%</td></tr>
-    <tr><td>Balance</td><td>%balance%</td></tr>
-    <tr><td>Transactions Received</td><td>%txreceived%</td></tr>
-    <tr><td>Amount Received</td><td>%received%</td></tr>
-    <tr><td>Transactions Sent</td><td>%txsent%</td></tr>
-    <tr><td>Amount Sent</td><td>%sent%</td></tr>
+    <tr><td>Balance</td><td id="balance"></td></tr>
+    <tr><td>Transactions Received</td><td id="rcvd"></td></tr>
+    <tr><td>Amount Received</td><td id="rcvdcount"></td></tr>
+    <tr><td>Transactions Sent</td><td id="sent"></td></tr>
+    <tr><td>Amount Sent</td><td id="sentcount"></td></tr>
 </table>
 
 <br/>
@@ -67,31 +137,7 @@ table
         <th>Date (UTC)</th>
         <th>Amount</th>
     </tr>
-
-    <tr>
-        <td>123123j3j12io3joi12j3</td>
-        <td>333,129</td>
-        <td>2019-03-24 11:33:02</td>
-        <td>199.5712</td>
-    </tr>
-    <tr>
-        <td>123123j3j12io3joi12j3</td>
-        <td>333,129</td>
-        <td>2019-03-24 11:33:02</td>
-        <td>199.5712</td>
-    </tr>
-    <tr>
-        <td>123123j3j12io3joi12j3</td>
-        <td>333,129</td>
-        <td>2019-03-24 11:33:02</td>
-        <td>199.5712</td>
-    </tr>
-    <tr>
-        <td>123123j3j12io3joi12j3</td>
-        <td>333,129</td>
-        <td>2019-03-24 11:33:02</td>
-        <td>199.5712</td>
-    </tr>    
+    <tbody id="data-list"></tbody>
 </table>
 
 <!-- FOOTER -->

@@ -163,8 +163,8 @@ void Blockchain::updateUnspentTxOuts()
         {
             for (const auto& txin : tx.txIns())
             {
-                auto it = std::find_if(_unspentTxOuts.begin(), _unspentTxOuts.end()
-                [](){ });
+                // auto it = std::find_if(_unspentTxOuts.begin(), _unspentTxOuts.end()
+                // [](){ });
             }
         }
     }
@@ -212,9 +212,6 @@ bool Blockchain::createTransaction(std::string_view receiver, double amount, std
         outs.emplace_back(senderAddress, leftoverAmount);
     }
 
-    tx.calcuateId();
-
-    // TODO: SIGN TX!
     _txQueue.push(std::move(tx));
 
     return success;
@@ -227,7 +224,9 @@ void Blockchain::getTransactionsToBeMined(Block& block)
     // we assume someone else is making sure we're thread safe!
     while (!_txQueue.empty())
     {
-        txs.push_back(_txQueue.front());
+        auto& tx = _txQueue.front();
+        tx.calcuateId(block.index());
+        txs.push_back(std::move(tx));
         _txQueue.pop();
     }
 }

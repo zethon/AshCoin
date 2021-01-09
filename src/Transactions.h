@@ -12,6 +12,11 @@ namespace ash
 
 constexpr double COINBASE_REWARD = 57.2718281828;
 
+// this feels wrong being in here but I don't want to 
+// define it in multiple places
+using BlockTime = std::chrono::time_point<
+    std::chrono::system_clock, std::chrono::milliseconds>;
+
 class TxIn;
 class TxOut;
 class Transaction;
@@ -22,6 +27,9 @@ using TxOuts = std::vector<TxOut>;
 using Transactions = std::vector<Transaction>;
 using UnspentTxOuts = std::vector<UnspentTxOut>;
 
+struct LedgerInfo;
+using AddressLedger = std::vector<LedgerInfo>;
+
 void to_json(nl::json& j, const Transactions& txs);
 void from_json(const nl::json& j, Transactions& txs);
 
@@ -29,6 +37,9 @@ void to_json(nl::json& j, const UnspentTxOut& txout);
 void from_json(const nl::json& j, UnspentTxOut& txout);
 void to_json(nl::json& j, const UnspentTxOuts& txout);
 void from_json(const nl::json& j, UnspentTxOuts& txout);
+
+void to_json(nl::json& j, const LedgerInfo& li);
+void to_json(nl::json& j, const AddressLedger& ledger);
 
 Transaction CreateTransaction(std::string_view receiver, double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts);
 Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address);
@@ -95,7 +106,7 @@ class Transaction final
 public:
 
     std::string id() const { return _id; }
-    void calcuateId();
+    void calcuateId(std::uint64_t blockid);
 
     const TxIns& txIns() const { return _txIns; }
     TxIns& txIns()
@@ -124,6 +135,14 @@ struct UnspentTxOut
     std::string     txOutId;    // txid
     std::uint64_t   txOutIndex; // block index
     std::string     address;
+    double          amount;
+};
+
+struct LedgerInfo
+{
+    std::string     txid;
+    std::uint64_t   blockIdx;
+    BlockTime       time;
     double          amount;
 };
 
