@@ -27,8 +27,6 @@ namespace bfs = boost::filesystem;
 namespace ash
 {
 
-constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
-
 MinerApp::MinerApp(SettingsPtr settings)
     : _settings{ std::move(settings) },
       _httpThread{},
@@ -252,9 +250,10 @@ void MinerApp::initRest()
 
             nl::json json;
 
-            startingIdx = std::max(
-		        static_cast<std::uint64_t>(0), 
-                static_cast<std::uint64_t>(_blockchain->size() - startingIdx));
+            if (startingIdx >= _blockchain->size())
+            {
+                startingIdx = 0;
+            }
 
             for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
             {
@@ -555,9 +554,12 @@ void MinerApp::run()
             Transactions txs;
             txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
             Block gen{ 0, "", std::move(txs) };
+            gen.setMiner(fmt::format("Genesis Miner v{}", APP_TITLE));
 
             std::time_t t = std::time(nullptr);
-            const auto gendata = fmt::format("{} {:%Y-%m-%d %H:%M:%S %Z}.", GENESIS_BLOCK, *std::localtime(&t));
+            const auto gendata = 
+                fmt::format("Gensis Block created {:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&t));
+
             gen.setData(gendata);
             _logger->debug("creating gensis block with data '{}'", gendata);
 

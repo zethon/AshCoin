@@ -4,40 +4,6 @@
 <link rel="stylesheet" href="/style.css">
 <script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<style>
-table
-{
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-}
-.address-table tr th
-{
-    border: 1px solid black;
-    background-color:lightblue;
-    text-align: left;
-    font-size: larger;
-    font-weight: bold;
-    padding: 5px;
-}
-.address-table tr td:nth-child(1)
-{
-    font-weight: bold;
-    width: 33%;
-}
-.address-table td { padding: 4px; }
-.tx-table
-{
-    border: 1px solid black;
-    border-collapse: collapse;
-}
-.tx-table td, .tx-table th
-{
-    border: 1px solid #000000;
-    padding: 4px;
-}
-.tx-table tr:nth-child(even){background-color: #f2f2f2;}
-</style>
 <script type="text/javascript">
 var restUrl = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
 
@@ -45,16 +11,18 @@ function getDataElement(info)
 {
     let d = document;
     let tr = d.createElement('tr');
-    tr.appendChild(d.createElement('td')).innerHTML = info.txid;
+    tr.appendChild(d.createElement('td')).innerHTML =
+        `<a href="${restUrl}/tx/${info.txid}">${info.txid}</a>`;
     tr.lastElementChild.setAttribute('class', 'minercol');
 
     tr.appendChild(d.createElement('td')).innerHTML = 
         `<a href="${restUrl}/block/${info.blockid}">${info.blockid}</a>`;
 
     var dt = moment.unix(info.time/1000).utc();
-    tr.appendChild(d.createElement('td')).innerHTML = dt.format("YYYY-MM-DD HH:mm:ss");
+    tr.appendChild(d.createElement('td')).innerHTML =
+        dt.format("YYYY-MM-DD HH:mm:ss");
 
-    tr.appendChild(d.createElement('td')).innerHTML = info.amount;
+    tr.appendChild(d.createElement('td')).innerHTML = parseFloat(info.amount).toFixed(4);
 
     return tr;
 }
@@ -95,10 +63,10 @@ function onLoad()
                 }
             }
 
-            $('#balance').text(balance);
-            $('#rcvd').text(rcvd);
+            $('#balance').text(parseFloat(balance).toFixed(4));
+            $('#rcvd').text(parseFloat(rcvd).toFixed(4));
             $('#rcvdcount').text(rcvdcount);
-            $('#sent').text(sent);
+            $('#sent').text(parseFloat(sent).toFixed(4));
             $('#sentcount').text(sentcount);
         },
         error: function()
@@ -107,6 +75,12 @@ function onLoad()
     });
 }
 </script>
+<style>
+#data-list tr td:nth-child(4)
+{
+    text-align: right;
+}
+</style>
 </head>
 <body onload="javascript:onLoad();">
 
@@ -114,13 +88,14 @@ function onLoad()
 <h2>%app-title% (%app-domain%)</h2>
 <!-- /HEADER -->
 
-<table class="address-table">
+<table class="info-table">
     <tr>
         <th colspan="100%">Address %address%</th>
     </tr>
 
     <tr><td>Hash</td><td>%address%</td></tr>
     <tr><td>Balance</td><td id="balance"></td></tr>
+    <tr><td colspan="100%" style="background-color:lightblue;"></td></tr>
     <tr><td>Transactions Received</td><td id="rcvd"></td></tr>
     <tr><td>Amount Received</td><td id="rcvdcount"></td></tr>
     <tr><td>Transactions Sent</td><td id="sent"></td></tr>
@@ -130,7 +105,7 @@ function onLoad()
 <br/>
 
 <h3>Transactions</h3>
-<table class="tx-table">
+<table class="data-table">
     <tr>
         <th>Transaction ID</th>
         <th>Block</th>

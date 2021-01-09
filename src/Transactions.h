@@ -10,7 +10,7 @@ namespace nl = nlohmann;
 namespace ash
 {
 
-constexpr double COINBASE_REWARD = 57.2718281828;
+constexpr double COINBASE_REWARD = 57.00;
 
 // this feels wrong being in here but I don't want to 
 // define it in multiple places
