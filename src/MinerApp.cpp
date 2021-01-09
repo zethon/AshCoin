@@ -64,6 +64,31 @@ MinerApp::~MinerApp()
     }
 }
 
+// looks in the given folder for the file in an `html` folder and
+// returns it if it exists, otherwise returns the passed in content
+std::string GetRawHtmlContent(std::string_view datafolder, std::string_view filename, std::string_view content)
+{
+    bfs::path file{ datafolder.data() };
+    file /= "html"; 
+    file /= filename.data();
+
+    if (bfs::is_symlink(file))
+    {
+        file = bfs::read_symlink(file);
+    }
+
+    if (bfs::exists(file))
+    {
+        std::ifstream t(file.string());
+        std::string data((std::istreambuf_iterator<char>(t)),
+            std::istreambuf_iterator<char>());
+
+        return data;
+    }
+
+    return std::string{ content };
+}
+
 void MinerApp::servePage(HttpResponsePtr response, 
     std::string_view filename, const std::string& content, const utils::Dictionary& dict)
 {
@@ -78,28 +103,9 @@ void MinerApp::servePage(HttpResponsePtr response,
     std::stringstream out;
     const std::string datafolder = _settings->value("database.folder", "");
     assert(!datafolder.empty());
-    
-    bfs::path file{ datafolder };
-    file /= "html"; 
-    file /= filename.data();
 
-    if (bfs::is_symlink(file))
-    {
-        file = bfs::read_symlink(file);
-    }
-    
-    if (bfs::exists(file))
-    {
-        std::ifstream t(file.string());
-        std::string data((std::istreambuf_iterator<char>(t)),
-            std::istreambuf_iterator<char>());
-
-        out << utils::DoDictionary(data, tempDict);
-    }
-    else
-    {
-        out << utils::DoDictionary(content.data(), tempDict);
-    }
+    auto data = GetRawHtmlContent(datafolder, filename, content);
+    out << utils::DoDictionary(data, tempDict);
 
     response->write(out);
 }
@@ -119,6 +125,19 @@ void MinerApp::getStandardDictionary(utils::Dictionary& dict)
 void MinerApp::initRest()
 {
     _httpServer.config.port = _settings->value("rest.port", HTTPServerPortDefault);
+
+    _httpServer.resource[R"x(^/.*?style.css$)x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+    {
+        // special handling for stylesheet
+        std::stringstream out;
+        const std::string datafolder = _settings->value("database.folder", "");
+        assert(!datafolder.empty());
+        
+        const auto data = GetRawHtmlContent(datafolder, "style.css", style_css);
+        response->write(data, {{"Content-Type", "text/css"}});
+    };
+
     _httpServer.resource["^/$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
@@ -133,12 +152,6 @@ void MinerApp::initRest()
 
             this->servePage(response, "index.html", index_html, dict);
         };
-
-    _httpServer.resource[R"x(^/.*?style.css$)x"]["GET"] =
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
-    {
-        this->servePage(response, "style.css", style_css, {});
-    };
 
     _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
