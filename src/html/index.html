@@ -1,5 +1,7 @@
 <html>
 <head>
+<meta charset="utf-8">
+<title>AshCoin - The official ashcoin blockchain explorer</title>
 <link rel="shortcut icon" href="#" />
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -232,23 +234,32 @@ function clickShutdown()
 <table cellspacing="0" cellpadding="0" class="header-table">
 <tr>
     <td><h2>%app-title% (%app-domain%)</h2></td>
-    <td><a href="/"><i class="fa fa-home"></i></a></td>
+    <td>
+        <table class="header-table">
+            <tr>
+                <td align="right" style="width:60%;">
+                    <a href="/"><i class="fa fa-home"></i></a>
+                </td>
+                <td>
+                    <!-- <div style="text-align:right;"> -->
+                        <select>
+                            <option selected="true" disabled="disabled">-</option>
+                            <option value="createAddress">Create Address</option>
+                            <option value="createtx">Create Transaction</option>
+                            <option value="mining">Start Mining</option>
+                            <option value="shutdown">Shutdown</option>
+                        </select>
+                        <button onclick="javascript:onAction();">Go</button>
+                    <!-- </div> -->
+                </td>
+            </tr>
+        </table>
+    </td>
 </tr>
 </table>
 <!-- /HEADER -->
 
-<!-- <div style="text-align:right;">
-    <b>Command:</b>
-    <select>
-        <option selected="true" disabled="disabled">-</option>
-        <option value="createtx">Create Transaction</option>
-        <option value="mining">Start Mining</option>
-        <option value="shutdown">Shutdown</option>
-    </select>
-    <button>Go</button>
-</div>
-
-<br/> -->
+<br/>
 
 <div class="container">
     <div class="floatLeft">
