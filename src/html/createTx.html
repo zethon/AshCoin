@@ -2,6 +2,7 @@
 <head>
 <link rel="shortcut icon" href="#" />
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript">
@@ -12,16 +13,66 @@ function onSendComplete()
     console.log("onSendComplete()");
 }
 
-function onSendError()
+function onSendError(error)
 {
-    console.log("onSendError()");
+    if (error.length > 0)
+    {
+        $('#status').text(error);
+    }
+    else
+    {
+        $('#status').text("There was an error!");
+    }
+}
+
+function clearMessages()
+{
+    $("#privatekey-msg").text("");
+    $("#receiver-msg").text("");
+    $("#amount-msg").text("");
+    $("#confirm-msg").text("");
+}
+
+function clearInputs()
+{
+    $("#privatekey").val("");
+    $("#toaddress").val("");
+    $("#amount").val("");
 }
 
 function onSendClick()
 {
+    clearMessages();
+    clearInputs();
+
     var privatekey = $("#privatekey").val();
     var toaddress = $("#toaddress").val();
     var amount = $("#amount").val();
+
+    if (privatekey.length == 0)
+    {
+        $("#privatekey-msg").text("Must enter a private key!");
+        return;
+    }
+
+    if (toaddress.length == 0)
+    {
+        $("#receiver-msg").text("Must enter destination address!");
+        return;
+    }
+
+    if (amount.length == 0)
+    {
+        $("#amount-msg").text("Must enter an amount!");
+        return;
+    }
+
+    if (!($('#confirmation').is(":checked")))
+    {
+        $("#confirm-msg").text("You must confirm this!");
+        return;
+
+    }
 
     var requestStr = JSON.stringify({
         privatekey : $("#privatekey").val(),
@@ -36,7 +87,6 @@ function onSendClick()
         success: onSendComplete(),
         error: onSendError()
     });
-    console.log(`${requestStr}`);
 }
 </script>
 <style>
@@ -92,24 +142,58 @@ input[type=text]
     background-color: rgb(255, 0, 0);
     color: white;
 }
+#privatekey-msg, #receiver-msg, #amount-msg, #confirm-msg
+{
+    font-weight: bold;
+    color: red;
+}
 </style>
 </head>
 <body>
 <!-- HEADER -->
-<h2>%app-title% (%app-domain%)</h2>
+<table cellspacing="0" cellpadding="0" class="header-table">
+<tr>
+    <td><h2>%app-title% (%app-domain%)</h2></td>
+    <td><a href="/"><i class="fa fa-home"></i></a></td>
+</tr>
+</table>
 <!-- /HEADER -->
 
 <div class="warning"><center><b><big>WARNING!</big></b></center>This page does not ask for a confirmation! Once you click "Send" the funds are sent! Be sure all information is correct!</div>
 <br/>
+<span id="status"></span>
 <table class="address-table">
     <tr>
         <th colspan="100%">Create Transaction</th>
     </tr>
 
-    <tr><td><div class="private-key">Private Key</div><small>Using this page exposes your private key over the Internet. You have been warned! - Henry</small></small></td><td><textarea id="privatekey"></textarea></td></tr>
-    <tr><td>Reciever Address</td><td><input type="text" id="toaddress"/></td></tr>
-    <tr><td>Amount</td><td><input type="text" id="amount"/></td></tr>
-    <tr><td colspan="100%"><center><button onclick="javascript:onSendClick();">Send Coins</button></center></td></tr>
+    <tr>
+        <td><div class="private-key">Private Key</div><small>Using this page exposes your private key over the Internet. You have been warned! - Henry</small></small></td>
+        <td><textarea id="privatekey"></textarea><span id="privatekey-msg"></span></td>
+    </tr>
+    <tr>
+        <td>Reciever Address</td>
+        <td><input type="text" id="toaddress"/><br/><span id="receiver-msg"></span></td>
+    </tr>
+    <tr>
+        <td>Amount</td>
+        <td><input type="text" id="amount"/><br/><span id="amount-msg"></span></td>
+    </tr>
+    <tr>
+        <td>Confirmation</td>
+        <td>
+            <input type="checkbox" id="confirmation"/><label for="confirmation">I confirm that I know what I am doing</label>
+            <br/>
+            <span id="confirm-msg"></span>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="100%">
+            <center>
+                <button onclick="javascript:onSendClick();">Send Coins</button>
+            </center>
+        </td>
+    </tr>
 </table>
 
 <br/>

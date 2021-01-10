@@ -453,7 +453,7 @@ void MinerApp::initRest()
             std::lock_guard<std::mutex> lock{_chainMutex};
             if (_blockchain->createTransaction(toaddress, amount, privateKey))
             {
-                response->write("Ok");
+                response->write(SimpleWeb::StatusCode::success_created);
                 return;
             }
             else
