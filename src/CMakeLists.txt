@@ -55,6 +55,7 @@ z_compile_resources(RESOURCE_FILES
     html/createTx.html
     html/index.html
     html/style.css
+    html/common.js
 )
 
 add_executable(ash
