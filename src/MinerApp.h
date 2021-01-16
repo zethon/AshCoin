@@ -63,7 +63,10 @@ public:
     }
 
 private:
-    void initRest();
+    void initHttp();
+    void initWebService();
+    void initRestService();
+
     void initWebSocket();
     void initPeers();
 

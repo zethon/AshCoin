@@ -123,11 +123,8 @@ void MinerApp::getStandardDictionary(utils::Dictionary& dict)
         = std::to_string(_settings->value("rest.port", HTTPServerPortDefault));
 }
 
-void MinerApp::initRest()
+void MinerApp::initWebService()
 {
-    _httpServer.config.port = _settings->value("rest.port", HTTPServerPortDefault);
-
-
     _httpServer.resource[R"x(^/.*?style.css$)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
     {
@@ -151,7 +148,7 @@ void MinerApp::initRest()
         const auto data = GetRawHtmlContent(datafolder, "common.js", common_js);
         response->write(data, {{"Content-Type", "text/javascript"}});
     };
-
+    
     _httpServer.resource["^/$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
@@ -166,6 +163,29 @@ void MinerApp::initRest()
 
             this->servePage(response, "index.html", index_html, dict);
         };
+}
+
+void MinerApp::initRestService()
+{
+    _httpServer.resource[R"x(^/rest/createAddress)x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+        {
+            const auto privateKey = ash::crypto::GeneratePrivateKey();
+            
+            nl::json json;
+            json["private-key"] = privateKey;
+            json["public-key"] = ash::crypto::GetPublicKey(privateKey);
+            json["address"] = ash::crypto::GetAddressFromPrivateKey(privateKey);
+
+            response->write(json.dump(4));
+        };
+}
+
+void MinerApp::initHttp()
+{
+    _httpServer.config.port = _settings->value("rest.port", HTTPServerPortDefault);
+    initWebService();
+    initRestService();
 
     _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
@@ -478,19 +498,6 @@ void MinerApp::initRest()
             }
         };
 
-    _httpServer.resource[R"x(^/createAddress)x"]["GET"] =
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
-        {
-            const auto privateKey = ash::crypto::GeneratePrivateKey();
-            
-            nl::json json;
-            json["private-key"] = privateKey;
-            json["public-key"] = ash::crypto::GetPublicKey(privateKey);
-            json["address"] = ash::crypto::GetAddressFromPrivateKey(privateKey);
-
-            response->write(json.dump(4));
-        };
-
     _httpServer.resource[R"x(^/unspentTxOuts)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
         {
@@ -571,7 +578,7 @@ void MinerApp::run()
         return;
     }
 
-    initRest();
+    initHttp();
     initWebSocket();
     initPeers();
 
