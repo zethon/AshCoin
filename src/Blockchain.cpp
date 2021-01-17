@@ -66,6 +66,13 @@ UnspentTxOuts GetUnspentTxOuts(const Block& block)
     return newTxOuts;
 }
 
+UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain)
+{
+    UnspentTxOuts txOuts;
+
+    return txOuts;
+}
+
 Blockchain::Blockchain()
     : _logger(ash::initializeLogger("Blockchain"))
 {

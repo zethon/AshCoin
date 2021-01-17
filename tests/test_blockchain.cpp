@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_SUITE(block)
 
 using StringList = std::vector<std::string>;
 using UnspentTestData = std::tuple<std::string, StringList>;
-const UnspentTestData unspentData[]
+const UnspentTestData unspentDataBlockTest[]
 {
     UnspentTestData
     {
@@ -43,7 +43,7 @@ const UnspentTestData unspentData[]
     },
 };
 
-BOOST_DATA_TEST_CASE(getUnspentTxOutsTest, data::make(unspentData), blockjson, expectedIds)
+BOOST_DATA_TEST_CASE(getBlockUnspentTxOuts, data::make(unspentDataBlockTest), blockjson, expectedIds)
 {
     nl::json json = nl::json::parse(blockjson, nullptr, false);
     BOOST_TEST(!json.is_discarded());
@@ -56,6 +56,39 @@ BOOST_DATA_TEST_CASE(getUnspentTxOutsTest, data::make(unspentData), blockjson, e
     BOOST_TEST(tx.txOuts().size() > 0);
     
     auto unspent = ash::GetUnspentTxOuts(block);
+    BOOST_TEST(unspent.size() > 0);
+    BOOST_TEST(unspent.size() == expectedIds.size());
+
+    auto expectedCopy = expectedIds; // container copy!
+    ranges::sort(expectedCopy);
+    
+    auto actualUnspent = unspent 
+        | ranges::views::transform([](const ash::UnspentTxOut& txout) { return txout.address; })
+        | ranges::to<std::vector>()
+        | ranges::actions::sort;
+
+    BOOST_TEST(expectedCopy == actualUnspent, boost::test_tools::per_element());
+}
+
+const UnspentTestData unspentDataChainTest[]
+{
+    UnspentTestData
+    {
+        R"json([{"data":"B57","difficulty":0,"hash":"","index":57,"miner":"","nonce":0,"prev":"","time":1608950722344,"transactions":[{"id":"tx0","inputs":[{"txOutId":"","txOutIndex":0,"signature":""}],"outputs":[{"address":"Stefan","amount":10}]}]},{"data":"B58","difficulty":0,"hash":"","index":58,"miner":"","nonce":0,"prev":"","time":1608950722344,"transactions":[{"id":"tx1","inputs":[{"txOutId":"tx0","txOutIndex":57,"signature":""}],"outputs":[{"address":"Henry","amount":4},{"address":"Addy","amount":3},{"address":"Stefan","amount":1}]}]}])json"s,
+        StringList{ "Henry"s, "Addy"s, "Stefan"s }
+    },
+};
+
+// --run_test=block/getChainUnspentTxOuts
+BOOST_DATA_TEST_CASE(getChainUnspentTxOuts, data::make(unspentDataChainTest), chainjson, expectedIds)
+{
+    nl::json json = nl::json::parse(chainjson, nullptr, false);
+    BOOST_TEST(!json.is_discarded());
+
+    auto chain = json.get<ash::Blockchain>();
+    BOOST_TEST(chain.size() == 2);
+
+    auto unspent = ash::GetUnspentTxOuts(chain);
     BOOST_TEST(unspent.size() > 0);
     BOOST_TEST(unspent.size() == expectedIds.size());
 
