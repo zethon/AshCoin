@@ -168,8 +168,11 @@ void MinerApp::initWebService()
 void MinerApp::initRestService()
 {
     _httpServer.resource[R"x(^/rest/createAddress)x"]["GET"] =
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
+            _logger->trace("/rest/createAddress request from {}", 
+                request->remote_endpoint().address().to_string());
+
             const auto privateKey = ash::crypto::GeneratePrivateKey();
             
             nl::json json;
@@ -179,6 +182,67 @@ void MinerApp::initRestService()
 
             response->write(json.dump(4));
         };
+
+    _httpServer.resource["^/rest/startMining$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            _logger->trace("/rest/startMining request from {}", 
+                request->remote_endpoint().address().to_string());
+
+            if (this->_miningDone)
+            {
+                this->_miningDone = false;
+                this->_mineThread = std::thread(&MinerApp::runMineThread, this);
+                response->write(SimpleWeb::StatusCode::success_ok, "OK");
+            }
+            else
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+            }
+        };
+
+    _httpServer.resource["^/rest/stopMining$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            _logger->debug("/rest/stopMining request from {}", 
+                request->remote_endpoint().address().to_string());
+
+            if (!this->_miningDone)
+            {
+                this->stopMining();
+                if (this->_mineThread.joinable())
+                {
+                    this->_mineThread.join();
+                }
+                response->write(SimpleWeb::StatusCode::success_ok, "OK");
+            }
+            else
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+            }
+        };
+
+    _httpServer.resource["^/rest/shutdown$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            _logger->debug("shutdown request from {}", 
+                request->remote_endpoint().address().to_string());
+
+            response->write(SimpleWeb::StatusCode::success_ok, "OK");
+            this->signalExit();
+        };
+
+    _httpServer.resource["^/rest/summary$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            nl::json jresponse;
+            jresponse["blocks"].push_back(_blockchain->back());
+            jresponse["cumdiff"] = _blockchain->cumDifficulty();
+            jresponse["difficulty"] = _miner.difficulty();
+            jresponse["mining"] = !this->_miningDone;
+            response->write(jresponse.dump());
+        };
+
 }
 
 void MinerApp::initHttp()
@@ -213,75 +277,6 @@ void MinerApp::initHttp()
             response->write(ss);
         };
 
-    _httpServer.resource["^/shutdown$"]["POST"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
-        {
-            _logger->debug("shutdown request from {}", 
-                request->remote_endpoint().address().to_string());
-
-            response->write(SimpleWeb::StatusCode::success_ok, "OK");
-            this->signalExit();
-        };
-
-    _httpServer.resource["^/stopMining$"]["POST"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
-        {
-            _logger->debug("stopMining request from {}", 
-                request->remote_endpoint().address().to_string());
-
-            if (!this->_miningDone)
-            {
-                this->stopMining();
-                if (this->_mineThread.joinable())
-                {
-                    this->_mineThread.join();
-                }
-                response->write(SimpleWeb::StatusCode::success_ok, "OK");
-            }
-            else
-            {
-                response->write(SimpleWeb::StatusCode::client_error_bad_request);
-            }
-        };
-
-    _httpServer.resource["^/startMining$"]["POST"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
-        {
-            _logger->trace("startMining request from {}", 
-                request->remote_endpoint().address().to_string());
-
-            if (this->_miningDone)
-            {
-                this->_miningDone = false;
-                this->_mineThread = std::thread(&MinerApp::runMineThread, this);
-                response->write(SimpleWeb::StatusCode::success_ok, "OK");
-            }
-            else
-            {
-                response->write(SimpleWeb::StatusCode::client_error_bad_request);
-            }
-        };
-
-    _httpServer.resource["^/summary$"]["GET"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
-        {
-            nl::json jresponse;
-            jresponse["blocks"].push_back(_blockchain->back());
-            jresponse["cumdiff"] = _blockchain->cumDifficulty();
-            jresponse["difficulty"] = _miner.difficulty();
-
-            if (!this->_miningDone)
-            {
-                jresponse["status"] = "mining #" + std::to_string(_blockchain->back().index() + 1);
-            }
-            else
-            {
-                jresponse["status"] = "stopped";
-            }
-
-            response->write(jresponse.dump());
-        };
-
     _httpServer.resource["^/blocks/last/([0-9]+)$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
@@ -307,12 +302,6 @@ void MinerApp::initHttp()
                 json["blocks"].push_back(_blockchain->at(idx));
             }
             response->write(json.dump());
-        };
-
-    _httpServer.resource["^/addPeer/((?:[0-9]{1,3}\\.){3}[0-9]{1,3})$"]["GET"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
-        {
-            response->write("<h1>peer added</h1>");
         };
 
     _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)(?:\/(json)){0,1})x"]["GET"] =
@@ -564,7 +553,7 @@ void MinerApp::initPeers()
     _peers.connectAll(
         [](WsClientConnPtr conn)
         {
-            // when connecting to a peer, ask if for its peer
+            // when connecting to a peer, ask if for its chain
             conn->send(R"({"message":"summary", "message-type":"request"})");
         });
 }

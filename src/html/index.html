@@ -11,7 +11,6 @@
 <script type="text/javascript">
 
 var ismining = false;
-const serviceUrl = 'http://' + window.location.hostname + ':%rest-port%/';
 
 var Http = null;
 var updateHttp = null;
@@ -36,15 +35,24 @@ var updateStatsWorker =
     {
         $.ajax(
             {
-                url: serviceUrl + 'summary',
+                url: ServerUrl + '/rest/summary',
                 type: 'GET', 
                 success: function(datastr) 
                 {
                     var data = JSON.parse(datastr);
+                    console.log(data);
                     $("#cumdiff").text(data.cumdiff);
                     $("#chainsize").text(data.blocks[0].index);
                     $("#currentdiff").text(data.difficulty);
-                    $("#mining-status").text(data.status);
+                    if (data.mining)
+                    {
+                        let blockidx = data.blocks[0].index;
+                        $("#mining-status").text("mining #" + blockidx);
+                    }
+                    else
+                    {
+                        $("#mining-status").text("stopped");
+                    }
                 },
                 complete: function() 
                 {
@@ -57,7 +65,7 @@ var updateStatsWorker =
 function getBlockTableRow(block)
 {
     var dt = moment.unix(block.time/1000).utc();
-    var blocklink = serviceUrl + "block/" + block.index;
+    var blocklink = ServerUrl + "/block/" + block.index;
 
     let row =  `<td><a href="${blocklink}">#${block.index.toLocaleString()}</a></td>`;
     row += "<td>" + dt.format("YYYY-MM-DD HH:mm:ss") + "</td>";
@@ -72,7 +80,7 @@ function getBlockTableRow(block)
 
 function getBlockRowElement(block)
 {
-    let blocklink = serviceUrl + "block/" + block.index;
+    let blocklink = ServerUrl + "/block/" + block.index;
     let blocktxt = '#' + block.index.toLocaleString(); 
 
     let d = document;
@@ -104,7 +112,7 @@ function onLoadBlocks()
 {
     $.ajax(
     {
-        url: serviceUrl + 'blocks/last/10',
+        url: ServerUrl + '/blocks/last/10',
         type: 'GET', 
         success: function(datastr) 
         {
@@ -132,7 +140,7 @@ var updateChainWorker =
     {
         $.ajax(
             {
-                url: serviceUrl + 'block/' + (lastChainIndex + 1),
+                url: ServerUrl + '/block/' + (lastChainIndex + 1),
                 type: 'GET', 
                 success: function(datastr) 
                 {
@@ -172,12 +180,12 @@ function clickMiningButton()
     if (ismining)
     {
         $("#mining-status").text('stopping');
-        Http.open("POST", serviceUrl+"stopMining");
+        Http.open("GET", ServerUrl+"/rest/stopMining");
     }
     else
     {
         $("#mining-status").text('starting');
-        Http.open("POST", serviceUrl+"startMining");
+        Http.open("GET", ServerUrl+"/rest/startMining");
     }
     
     Http.onreadystatechange = (e) => 
@@ -205,7 +213,7 @@ function clickMiningButton()
 function clickShutdown()
 {
     var shutdownHttp = new XMLHttpRequest();
-    shutdownHttp.open("POST", serviceUrl + 'shutdown');
+    shutdownHttp.open("POST", `${ServerUrl}/rest/shutdown`);
     shutdownHttp.send();
     shutdownHttp.onreadystatechange = (e) => { };
 }
