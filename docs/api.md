@@ -14,7 +14,7 @@ HTTP endpoints are the user interface for the local instance of AshCoin. These e
 
 This is the main entry point for the application. T
 
-#### `/createTx`
+#### `/createtx`
 
 This page provides a means to create a transaction in the current node. 
 
@@ -22,7 +22,7 @@ This page provides a means to create a transaction in the current node.
 
 REST services are under the `/rest` path and accept JSON payloads as POST HTTP calls. All REST endpoints are prepended with `/rest`.
 
-#### `/rest/createTx`
+#### `/rest/createtx`
 
 Creates a transaction on the current node with the given parameters:
 

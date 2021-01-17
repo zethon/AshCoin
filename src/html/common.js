@@ -9,7 +9,7 @@ function onMainMenuAction()
         default:
             if (onLocalCallback) onLocalCallback(selected);
         break;
-        case 'createTx':
+        case 'createtx':
         case 'createAddress':
         case 'unspentTxOuts':
             window.location.assign(ServerUrl + '/' + selected);
