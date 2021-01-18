@@ -3,6 +3,8 @@
 #include <vector>
 #include <sstream>
 
+#include <boost/functional/hash.hpp>
+
 #include <nlohmann/json.hpp>
 
 namespace nl = nlohmann;
@@ -73,6 +75,26 @@ public:
     std::string signature() const { return _signature; }
 };
 
+} // ash
+
+
+namespace std
+{
+    template<> struct hash<ash::TxIn>
+    {
+        std::size_t operator()(const ash::TxIn& txin) const noexcept
+        {
+            std::size_t seed = 0;
+            boost::hash_combine(seed, std::hash<std::string>{}(txin.txOutId()));
+            boost::hash_combine(seed, std::hash<std::uint64_t>{}(txin.txOutIndex()));
+            return seed;
+        }
+    };
+}
+
+namespace ash
+{
+
 class TxOut final
 {
     std::string _address;   // public-key/address of receiver
@@ -92,6 +114,26 @@ public:
     std::string address() const { return _address; }
     double amount() const noexcept { return _amount; }
 };
+
+} // ash
+
+
+namespace std
+{
+    template<> struct hash<ash::TxOut>
+    {
+        std::size_t operator()(const ash::TxOut& txout) const noexcept
+        {
+            std::size_t seed = 0;
+            boost::hash_combine(seed, std::hash<std::string>{}(txout.address()));
+            boost::hash_combine(seed, std::hash<double>{}(txout.amount()));
+            return seed;
+        }
+    };
+}
+
+namespace ash
+{
 
 class Transaction final
 {

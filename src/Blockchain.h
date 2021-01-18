@@ -35,6 +35,7 @@ class Blockchain final
 {
     std::vector<Block>  _blocks;
     
+    std::set<std::size_t>       _txInHashes;
     UnspentTxOuts               _unspentTxOuts;
     std::queue<Transaction>     _txQueue; // transactions waiting to be mined by this miner
     
@@ -46,6 +47,14 @@ class Blockchain final
 
 public:
     Blockchain();
+    Blockchain(const Blockchain&)
+    {
+        throw std::runtime_error("not implemented");
+    }
+    Blockchain& operator=(const Blockchain&)
+    {
+        throw std::runtime_error("not implemented");
+    }
 
     auto begin() const -> decltype(_blocks.begin())
     {
@@ -135,10 +144,14 @@ public:
     
     const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
 
+
     bool createTransaction(std::string_view receiver, double amount, std::string_view privateKey);
 
     void getTransactionsToBeMined(Block& block);
     std::size_t reQueueTransactions(Block& block);
+
+private:
+    void getUnspentTxOuts(std::string_view address);
 };
 
 }

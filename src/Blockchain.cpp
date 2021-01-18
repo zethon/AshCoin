@@ -68,6 +68,8 @@ UnspentTxOuts GetUnspentTxOuts(const Block& block)
 
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain)
 {
+    // for every TxOut we have to check if there is a TxIn
+    // that references it
     UnspentTxOuts txOuts;
 
     return txOuts;
@@ -149,32 +151,63 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
     return total;
 }
 
-// TODO: this is gonna be slow af
+// void Blockchain::updateUnspentTxOuts(const Block& block)
+// {
+//     for (const auto& tx : block.transactions())
+//     {
+//         for (const auto& txin : tx.txIns())
+//         {
+//             _txInHashes.insert(std::hash<ash::TxIn>{}(txin));
+//         }
+//     }
+
+//     std::hash<ash::TxIn> hasher;
+//     for (const auto& tx : block.transactions())
+//     {
+//         for (const auto& txout : tx.txOuts())
+//         {
+//             const auto txin = std::find_if(_txInHashes.begin(), _txInHashes.end(),
+//                 [txout = txout, tx = tx, &block, &hasher]
+//                 (std::size_t txinhash)
+//                 {
+//                     return txinhash == hasher({tx.id(), block.index()});
+//                 });
+//         }
+//     }
+// }
+
+// TODO: THIS IS PROBABLY TRASH
 void Blockchain::updateUnspentTxOuts()
 {
     _logger->trace("updated unspent transactions");
     
     _unspentTxOuts.clear();
     
-    // gather up all the outs
-    for (const auto& block : _blocks)
-    {
-        const auto temp = GetUnspentTxOuts(block);
-        std::move(temp.begin(), temp.end(), std::back_inserter(_unspentTxOuts));
-    }
+    // // gather up all the outs
+    // for (const auto& block : _blocks)
+    // {
+    //     const auto temp = GetUnspentTxOuts(block);
+    //     std::move(temp.begin(), temp.end(), std::back_inserter(_unspentTxOuts));
+    // }
 
-    // now go through the txins and remove the textouts
-    for (const auto& block : _blocks)
-    {
-        for (const auto& tx : block.transactions())
-        {
-            for (const auto& txin : tx.txIns())
-            {
-                // auto it = std::find_if(_unspentTxOuts.begin(), _unspentTxOuts.end()
-                // [](){ });
-            }
-        }
-    }
+    // // now go through the txins and remove the textouts
+    // for (const auto& block : _blocks)
+    // {
+    //     for (const auto& tx : block.transactions())
+    //     {
+    //         for (const auto& txin : tx.txIns())
+    //         {
+    //             // auto it = std::find_if(_unspentTxOuts.begin(), _unspentTxOuts.end()
+    //             // [](){ });
+    //         }
+    //     }
+    // }
+
+    // _txInHashes.clear();
+    // for (const auto& block : _blocks)
+    // {
+    //     updateUnspentTxOuts(block);
+    // }
     
     _logger->debug("blockchain contains {} unspent transactions", _unspentTxOuts.size());
 }

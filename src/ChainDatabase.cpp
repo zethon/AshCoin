@@ -148,6 +148,11 @@ ChainDatabase::ChainDatabase(std::string_view folder)
 {
 }
 
+ChainDatabase::~ChainDatabase()
+{
+    delete _txIndex;
+}
+
 void ChainDatabase::initialize(Blockchain& blockchain, GenesisCallback gcb)
 {
     if (!boost::filesystem::exists(_path))
@@ -177,7 +182,16 @@ void ChainDatabase::initialize(Blockchain& blockchain, GenesisCallback gcb)
     {
         throw std::logic_error("invalid chain");
     }
-    
+
+    boost::filesystem::path txidx { _path / "txinindx" };
+    leveldb::Options options;
+    options.create_if_missing = true;
+    leveldb::Status status = leveldb::DB::Open(options, txidx.c_str(), &_txIndex);
+    if (!status.ok())
+    {
+        throw std::logic_error(fmt::format("could not open txin index: {}", status.ToString()));
+    }
+
     _logger->info("loaded {} blocks from saved chain", blockchain.size());
 }
 

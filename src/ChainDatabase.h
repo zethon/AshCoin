@@ -4,6 +4,8 @@
 
 #include <boost/filesystem.hpp>
 
+#include <leveldb/db.h>
+
 #include "Block.h"
 #include "AshLogger.h"
 
@@ -12,6 +14,8 @@ namespace ash
 
 namespace db
 {
+
+using LevelDBPtr = std::unique_ptr<leveldb::DB>;
 
 using ValueType = unsigned char;
 using Container = std::vector<ValueType>;
@@ -63,13 +67,14 @@ inline void read_data(std::istream& stream, std::string& data)
 class ChainDatabase;
 using ChainDatabasePtr = std::unique_ptr<ChainDatabase>;
 
-class ChainDatabase
+class ChainDatabase final
 {
 
 public:
     using GenesisCallback = std::function<Block(void)>;
 
     ChainDatabase(std::string_view folder);
+    ~ChainDatabase();
 
     void write(const Block& block);
     void writeChain(const Blockchain& chain);
@@ -82,6 +87,8 @@ private:
 
     boost::filesystem::path     _path;
     boost::filesystem::path     _dbfile;
+    // ash::db::LevelDBPtr         _txInIndex;
+    leveldb::DB*                _txIndex;
     
     SpdLogPtr                   _logger;
 };
