@@ -52,7 +52,7 @@ conan install .. -s build_type=Debug --build missing
 cmake .. "-GNinja" -DCMAKE_BUILD_TYPE=Debug -DBUILD_ASH_TESTS=On
 ```
 
-If there are no errors the the executable can be built with:
+If there are no errors then the executable can be built with:
 
 ```shell
 cmake --build . -- -j 8
