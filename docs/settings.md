@@ -2,9 +2,9 @@
 
 ## Overview
 
-The default settings file is name `.ash_config` and is located in the users home directoy.
+The default settings file is named `.ash_config` and is located in the user's home directoy.
 
-If this file does not exist when the program is run it will automatically be generated in the user's home folder. These locations are typically in the following folders on each OS:
+If this file does not exist when the program starts it will automatically be generated. These locations are typically in the following folders on each OS:
 
 * MacOS - `/Users/<username>`
 * Ubuntu - `/home/<username>`
@@ -12,7 +12,7 @@ If this file does not exist when the program is run it will automatically be gen
 
 ## Custom Config
 
-The default configuration file can be override using the `--config` or `-c` option on the command line.
+The default configuration file can be overriden using the `--config` or `-c` option on the command line.
 
 ```bash
 $> ash -c /path/to/my/config.file
