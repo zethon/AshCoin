@@ -176,6 +176,41 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
 //     }
 // }
 
+UnspentTxOuts Blockchain::getUnspentTxOuts(std::string_view address)
+{
+    UnspentTxOuts retval;
+
+    for (const auto& block : _blocks)
+    {
+        for (const auto& tx : block.transactions())
+        {
+            // collect the txouts first
+            for (const auto& txout : tx.txOuts())
+            {
+                if (txout.address() == address)
+                {
+                    retval.emplace_back(UnspentTxOut{tx.id(), block.index(), address.data(), txout.amount()});
+                }
+            }
+
+            // now scrub out the txins
+            for (const auto& txin : tx.txIns())
+            {
+                auto it = std::find_if(retval.begin(), retval.end(),
+                    [txin = txin](const UnspentTxOut& utxout)
+                    {
+                        return (utxout.txOutIndex == txin.txOutIndex()
+                            && utxout.txOutId == txin.txOutId());
+                    });
+
+                if (it != retval.end()) retval.erase(it);
+            }
+        }
+    }
+
+    return retval;
+}
+
 // TODO: THIS IS PROBABLY TRASH
 void Blockchain::updateUnspentTxOuts()
 {
@@ -218,8 +253,7 @@ bool Blockchain::createTransaction(std::string_view receiver, double amount, std
     const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(privateKey);
 
     // now get all of the unspent txouts of the sender
-    auto senderUnspentList = _unspentTxOuts
-        | ranges::views::filter([senderAddress](const UnspentTxOut& uout) { return uout.address == senderAddress; });
+    auto senderUnspentList = this->getUnspentTxOuts(senderAddress);
 
     bool success = false;
     double currentAmount = 0;

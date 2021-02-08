@@ -27,7 +27,7 @@ void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
 UnspentTxOuts GetUnspentTxOuts(const Block& block);
-UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain);
+UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain);;
 
 //! This class is not thread safe and assumes that the
 //  client handles synchronization
@@ -143,15 +143,12 @@ public:
     void updateUnspentTxOuts();
     
     const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
-
+    UnspentTxOuts getUnspentTxOuts(std::string_view address);
 
     bool createTransaction(std::string_view receiver, double amount, std::string_view privateKey);
 
     void getTransactionsToBeMined(Block& block);
     std::size_t reQueueTransactions(Block& block);
-
-private:
-    void getUnspentTxOuts(std::string_view address);
 };
 
 }
