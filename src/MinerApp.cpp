@@ -595,7 +595,7 @@ void MinerApp::run()
     _httpThread = std::thread(
         [this]()
         {
-            _logger->debug("http server listening on port {}", _httpServer.config.port);
+            _logger->info("http server listening on port {}", _httpServer.config.port);
             _httpServer.start();
         });
 

@@ -151,31 +151,6 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
     return total;
 }
 
-// void Blockchain::updateUnspentTxOuts(const Block& block)
-// {
-//     for (const auto& tx : block.transactions())
-//     {
-//         for (const auto& txin : tx.txIns())
-//         {
-//             _txInHashes.insert(std::hash<ash::TxIn>{}(txin));
-//         }
-//     }
-
-//     std::hash<ash::TxIn> hasher;
-//     for (const auto& tx : block.transactions())
-//     {
-//         for (const auto& txout : tx.txOuts())
-//         {
-//             const auto txin = std::find_if(_txInHashes.begin(), _txInHashes.end(),
-//                 [txout = txout, tx = tx, &block, &hasher]
-//                 (std::size_t txinhash)
-//                 {
-//                     return txinhash == hasher({tx.id(), block.index()});
-//                 });
-//         }
-//     }
-// }
-
 UnspentTxOuts Blockchain::getUnspentTxOuts(std::string_view address)
 {
     UnspentTxOuts retval;

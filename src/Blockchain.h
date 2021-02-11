@@ -27,7 +27,7 @@ void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
 UnspentTxOuts GetUnspentTxOuts(const Block& block);
-UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain);;
+UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain);
 
 //! This class is not thread safe and assumes that the
 //  client handles synchronization
@@ -46,6 +46,7 @@ class Blockchain final
     friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
+
     Blockchain();
     Blockchain(const Blockchain&)
     {
