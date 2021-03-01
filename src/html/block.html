@@ -71,8 +71,6 @@ function onLoad()
             var dt = moment.unix(block.time/1000).utc();
             $('#blocktime').text(dt.format("YYYY-MM-DD HH:mm:ss"));
 
-            
-
             for (i = 0; i < block.transactions.length; i++)
             {
                 var tx = block.transactions[i];

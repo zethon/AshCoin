@@ -232,17 +232,6 @@ void MinerApp::initRestService()
             this->signalExit();
         };
 
-    _httpServer.resource["^/rest/summary$"]["GET"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
-        {
-            nl::json jresponse;
-            jresponse["blocks"].push_back(_blockchain->back());
-            jresponse["cumdiff"] = _blockchain->cumDifficulty();
-            jresponse["difficulty"] = _miner.difficulty();
-            jresponse["mining"] = !this->_miningDone;
-            response->write(jresponse.dump());
-        };
-
     _httpServer.resource[R"x(^/rest/createtx)x"]["POST"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
@@ -276,6 +265,64 @@ void MinerApp::initRestService()
             }
         };
 
+    _httpServer.resource["^/rest/summary$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            nl::json jresponse;
+            jresponse["blocks"].push_back(_blockchain->back());
+            jresponse["cumdiff"] = _blockchain->cumDifficulty();
+            jresponse["difficulty"] = _miner.difficulty();
+            jresponse["mining"] = !this->_miningDone;
+            response->write(jresponse.dump());
+        };
+
+    _httpServer.resource[R"x(^/rest/unspent(?:/([0-9,]+))?$)x"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            if (request->path_match.size() > 1
+                && request->path_match[1].str().size() > 0)
+            {
+
+            }
+            else
+            {
+                std::lock_guard<std::mutex> lock{_chainMutex};
+                nl::json json = ash::GetUnspentTxOuts(*_blockchain);
+                response->write(json.dump(4));
+            }
+        };
+
+    _httpServer.resource[R"x(^/rest/block/([0-9,]+))x"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            std::uint64_t blockIndex = 0u;
+            const auto indexStr = request->path_match[1].str();
+            
+            auto result = 
+                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), blockIndex);
+
+            if (result.ec == std::errc::invalid_argument)
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+                return;
+            }
+
+            // ok NOW let's lock
+            std::lock_guard<std::mutex> lock{_chainMutex};
+
+            if (blockIndex >= _blockchain->size())
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+                return;
+            }
+
+            const auto& block = _blockchain->txDetails(blockIndex);
+            assert(block.index() == blockIndex);
+
+            nl::json json = block;
+            response->write(json.dump(4));
+            return;
+        };
 }
 
 void MinerApp::initHttp()
@@ -375,7 +422,7 @@ void MinerApp::initHttp()
                         for (const auto& txin : tx.txIns())
                         {
                             auto it = std::find_if(ledger.begin(), ledger.end(),
-                                [index = txin.txOutIndex(), txid = txin.txOutId()]
+                                [index = txin.txOutPt().txOutIndex, txid = txin.txOutPt().txOutId]
                                 (const LedgerInfo& info)
                                 {
                                     return info.txid == txid
@@ -659,7 +706,7 @@ void MinerApp::runMineThread()
 
             newblock = std::make_unique<Block>(index, prevHash, std::move(txs));
             newblock->setMiner(_uuid);
-            newblock->setData(fmt::format("coinbase block#{}", index));
+            newblock->setData(fmt::format("coinbase block #{}", index));
 
             // grab everything from the tx queue
             this->_blockchain->getTransactionsToBeMined(*newblock);

@@ -115,7 +115,7 @@ BOOST_DATA_TEST_CASE(getChainUnspentTxOuts, data::make(unspentDataChainTest), ch
 }
 
 constexpr std::string_view blockjson = 
-    R"x({"data":"coindbase block#13","difficulty":2,"hash":"002f0bb4639b8dd30cb37a4436d23ba85cb86afc09dfd0561869a24d8cb5cd0f","index":13,"miner":"4c5ee1d3ceb8692ebe83d7ecac1d2207051f8065d6022f5fb35fda59c51bd98f","nonce":13,"prev":"001b022fb0dc92b574fd7f516d2dcf5f7c5ee9a25c332837a017e04c5a57a06f","time":1608997664493,"transactions":[{"id":"8ab8c30a3e8061a7f4f308a10fe884e3c965b4e0607ec5ef29deea1e72e301de","inputs":[{"signature":"","txOutId":"","txOutIndex":13}],"outputs":[{"address":"TEST_PUBLIC_KEY","amount":57.2718281828}]}]})x";
+    R"x({"data":"coinbase block#13","difficulty":2,"hash":"002f0bb4639b8dd30cb37a4436d23ba85cb86afc09dfd0561869a24d8cb5cd0f","index":13,"miner":"4c5ee1d3ceb8692ebe83d7ecac1d2207051f8065d6022f5fb35fda59c51bd98f","nonce":13,"prev":"001b022fb0dc92b574fd7f516d2dcf5f7c5ee9a25c332837a017e04c5a57a06f","time":1608997664493,"transactions":[{"id":"8ab8c30a3e8061a7f4f308a10fe884e3c965b4e0607ec5ef29deea1e72e301de","inputs":[{"signature":"","txOutId":"","txOutIndex":13}],"outputs":[{"address":"TEST_PUBLIC_KEY","amount":57.2718281828}]}]})x";
 
 BOOST_AUTO_TEST_CASE(jsonLoading)
 {
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(jsonLoading)
     BOOST_TEST(!json.is_discarded());
     auto block = json.get<ash::Block>();
     BOOST_TEST(ash::ValidHash(block));
-    BOOST_TEST(block.data() == "coindbase block#13");
+    BOOST_TEST(block.data() == "coinbase block#13");
 }
 
 BOOST_AUTO_TEST_CASE(chainValidity)

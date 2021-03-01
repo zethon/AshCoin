@@ -46,10 +46,19 @@ void to_json(nl::json& j, const AddressLedger& ledger);
 Transaction CreateTransaction(std::string_view receiver, double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts);
 Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address);
 
+struct TxOutPoint
+{
+    std::uint64_t   blockIndex;    // the index of the block
+    std::string     txOutId;       // the transaction id inside the block
+    std::uint64_t   txOutIndex;    // the index of the TxOut inside the transaction
+
+    std::optional<std::string>  address;
+    std::optional<double>       amount;
+};
+
 class TxIn final
 {
-    std::string     _txOutId;       
-    std::uint64_t   _txOutIndex = 0;
+    TxOutPoint      _txOutPt;    
     std::string     _signature;
 
     friend void read_data(std::istream& stream, TxIn& txin);
@@ -58,25 +67,29 @@ class TxIn final
 public:
     TxIn() = default;
 
-    TxIn(std::string_view outid, std::uint64_t outidx)
-        : TxIn(outid, outidx, {})
+    TxIn(std::uint64_t blockindex, std::string_view outid, std::uint64_t outidx)
+        : TxIn(blockindex, outid, outidx, {})
     {
         // nothing to do
     }
 
-    TxIn(std::string_view outid, std::uint64_t outidx, std::string_view signature)
-        : _txOutId{outid}, _txOutIndex{outidx}, _signature{signature}
+    TxIn(std::uint64_t blockindex, std::string_view outid, std::uint64_t outidx, std::string_view signature)
+        : _txOutPt{blockindex, outid.data(), outidx},
+          _signature{signature}
     {
         // nothing to do
     }
 
-    std::string txOutId() const { return _txOutId; }
-    std::uint64_t txOutIndex() const noexcept { return _txOutIndex; }
+    TxOutPoint& txOutPt() { return _txOutPt; }
+    const TxOutPoint& txOutPt() const noexcept { return _txOutPt; }
+
+    // std::string txOutId() const noexcept { return _txOutPt.txOutId; }
+    // std::uint64_t txOutIndex() const noexcept { return _txOutPt.txOutIndex; }
+
     std::string signature() const { return _signature; }
 };
 
 } // ash
-
 
 namespace std
 {
@@ -85,8 +98,8 @@ namespace std
         std::size_t operator()(const ash::TxIn& txin) const noexcept
         {
             std::size_t seed = 0;
-            boost::hash_combine(seed, std::hash<std::string>{}(txin.txOutId()));
-            boost::hash_combine(seed, std::hash<std::uint64_t>{}(txin.txOutIndex()));
+            boost::hash_combine(seed, std::hash<std::string>{}(txin.txOutPt().txOutId));
+            boost::hash_combine(seed, std::hash<std::uint64_t>{}(txin.txOutPt().txOutIndex));
             return seed;
         }
     };

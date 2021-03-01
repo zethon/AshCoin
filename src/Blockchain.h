@@ -48,15 +48,13 @@ class Blockchain final
 public:
 
     Blockchain();
-    Blockchain(const Blockchain&)
-    {
-        throw std::runtime_error("not implemented");
-    }
-    Blockchain& operator=(const Blockchain&)
-    {
-        throw std::runtime_error("not implemented");
-    }
 
+    Blockchain(Blockchain&&) = default;
+    Blockchain& operator=(const Blockchain&) = default;
+
+    // Blockchain(const Blockchain&) = delete;
+    // Blockchain& operator=(Blockchain&&) = delete;
+    
     auto begin() const -> decltype(_blocks.begin())
     {
         return _blocks.begin();
@@ -96,6 +94,8 @@ public:
     {
         return _blocks.at(index);
     }
+
+    Block txDetails(std::size_t index) const;
 
     bool addNewBlock(const Block& block);
     bool addNewBlock(const Block& block, bool checkPreviousBlock);

@@ -45,13 +45,13 @@ UnspentTxOuts GetUnspentTxOuts(const Block& block)
     {
         for (const auto& txin : tx.txIns())
         {
-            if (txin.txOutIndex() != block.index())
+            if (txin.txOutPt().txOutIndex != block.index())
             {
                 continue;
             }
 
             auto tempIt = std::find_if(newTxOuts.begin(), newTxOuts.end(),
-                [outid = txin.txOutId()](const UnspentTxOut& unspent)
+                [outid = txin.txOutPt().txOutId](const UnspentTxOut& unspent)
                 {
                     return outid == unspent.txOutId;
                 });
@@ -79,6 +79,46 @@ Blockchain::Blockchain()
     : _logger(ash::initializeLogger("Blockchain"))
 {
     // nothing to do
+}
+
+Block Blockchain::txDetails(std::size_t index) const
+{ 
+    const auto chainsize = _blocks.size();
+    Block retblock = _blocks.at(index);
+    
+    // loops through the transactions of the block we're
+    // interested in
+    for (auto& tx : retblock.transactions())
+    {
+        // for each TxIn of the block we want to fill in
+        // some missing information
+        for (auto& txin : tx.txIns())
+        {
+            assert(txin.txOutPt().blockIndex < chainsize);
+
+            // we know the corresponding TxOut's block, txid 
+            // and txout index
+            const auto& outblock = _blocks.at(txin.txOutPt().blockIndex);
+            const auto& txs = outblock.transactions();
+
+            // find the transaction containing the TxOut from 
+            // which this TxIn was create
+            auto txoutit = std::find_if(txs.begin(), txs.end(),
+                [txid = txin.txOutPt().txOutId](const ash::Transaction& temptx)
+                {
+                    return txid == temptx.id();
+                });
+
+            if (txoutit == txs.end()) continue;
+            const auto& txout = *txoutit;
+
+            assert(txin.txOutPt().txOutIndex < txout.txIns().size());
+            txin.txOutPt().address = txout.txOuts().at(txin.txOutPt().txOutIndex).address();
+            txin.txOutPt().amount = txout.txOuts().at(txin.txOutPt().txOutIndex).amount();
+        }
+    }
+
+    return retblock;
 }
 
 bool Blockchain::addNewBlock(const Block& block)
@@ -174,8 +214,8 @@ UnspentTxOuts Blockchain::getUnspentTxOuts(std::string_view address)
                 auto it = std::find_if(retval.begin(), retval.end(),
                     [txin = txin](const UnspentTxOut& utxout)
                     {
-                        return (utxout.txOutIndex == txin.txOutIndex()
-                            && utxout.txOutId == txin.txOutId());
+                        return (utxout.txOutIndex == txin.txOutPt().txOutIndex
+                            && utxout.txOutId == txin.txOutPt().txOutId);
                     });
 
                 if (it != retval.end()) retval.erase(it);
@@ -224,44 +264,44 @@ void Blockchain::updateUnspentTxOuts()
 
 bool Blockchain::createTransaction(std::string_view receiver, double amount, std::string_view privateKey)
 {
-    // first get the address of the sender from the privateKey
-    const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(privateKey);
+    // // first get the address of the sender from the privateKey
+    // const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(privateKey);
 
-    // now get all of the unspent txouts of the sender
-    auto senderUnspentList = this->getUnspentTxOuts(senderAddress);
+    // // now get all of the unspent txouts of the sender
+    // auto senderUnspentList = this->getUnspentTxOuts(senderAddress);
 
     bool success = false;
-    double currentAmount = 0;
-    double leftoverAmount = 0;
-    ash::UnspentTxOuts includedUnspentOuts;
+    // double currentAmount = 0;
+    // double leftoverAmount = 0;
+    // ash::UnspentTxOuts includedUnspentOuts;
 
-    for (const auto& unspent : senderUnspentList)
-    {
-        includedUnspentOuts.push_back(unspent);
-        currentAmount += unspent.amount;
-        if (currentAmount >= amount) 
-        {
-            leftoverAmount = currentAmount - amount;
-            break;
-        }
-    }
+    // for (const auto& unspent : senderUnspentList)
+    // {
+    //     includedUnspentOuts.push_back(unspent);
+    //     currentAmount += unspent.amount;
+    //     if (currentAmount >= amount) 
+    //     {
+    //         leftoverAmount = currentAmount - amount;
+    //         break;
+    //     }
+    // }
 
-    ash::Transaction tx;
+    // ash::Transaction tx;
 
-    auto& txins = tx.txIns();
-    for (const auto& uout : includedUnspentOuts)
-    {
-        txins.emplace_back(uout.txOutId, uout.txOutIndex);
-    }
+    // auto& txins = tx.txIns();
+    // for (const auto& uout : includedUnspentOuts)
+    // {
+    //     txins.emplace_back(uout.txOutId, uout.txOutIndex);
+    // }
 
-    auto& outs = tx.txOuts();
-    outs.emplace_back(receiver, amount);
-    if (leftoverAmount > 0)
-    {
-        outs.emplace_back(senderAddress, leftoverAmount);
-    }
+    // auto& outs = tx.txOuts();
+    // outs.emplace_back(receiver, amount);
+    // if (leftoverAmount > 0)
+    // {
+    //     outs.emplace_back(senderAddress, leftoverAmount);
+    // }
 
-    _txQueue.push(std::move(tx));
+    // _txQueue.push(std::move(tx));
 
     return success;
 }

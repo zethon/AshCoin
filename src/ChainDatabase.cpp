@@ -5,10 +5,16 @@
 namespace ash
 {
 
+void write_data(std::ostream& stream, const TxOutPoint& pt)
+{
+    ash::db::write_data(stream, pt.blockIndex);
+    ash::db::write_data(stream, pt.txOutId);
+    ash::db::write_data(stream, pt.txOutIndex);
+}
+
 void write_data(std::ostream& stream, const TxIn& tx)
 {
-    ash::db::write_data(stream, tx.txOutId());
-    ash::db::write_data(stream, tx.txOutIndex());
+    ash::write_data(stream, tx.txOutPt());
     ash::db::write_data(stream, tx.signature());
 }
 
@@ -68,10 +74,16 @@ void write_block(std::ostream& stream, const Block& block)
     }
 }
 
+void read_data(std::istream& stream, TxOutPoint& pt)
+{
+    ash::db::read_data(stream, pt.blockIndex);
+    ash::db::read_data(stream, pt.txOutId);
+    ash::db::read_data(stream, pt.txOutIndex);
+}
+
 void read_data(std::istream& stream, TxIn& txin)
 {
-    ash::db::read_data(stream, txin._txOutId);
-    ash::db::read_data(stream, txin._txOutIndex);
+    ash::read_data(stream, txin.txOutPt());
     ash::db::read_data(stream, txin._signature);
 }
 
