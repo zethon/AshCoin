@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <chrono>
 
 #include <boost/functional/hash.hpp>
 

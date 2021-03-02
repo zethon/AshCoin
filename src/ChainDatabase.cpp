@@ -198,7 +198,7 @@ void ChainDatabase::initialize(Blockchain& blockchain, GenesisCallback gcb)
     boost::filesystem::path txidx { _path / "txinindx" };
     leveldb::Options options;
     options.create_if_missing = true;
-    leveldb::Status status = leveldb::DB::Open(options, txidx.c_str(), &_txIndex);
+    leveldb::Status status = leveldb::DB::Open(options, txidx.string(), &_txIndex);
     if (!status.ok())
     {
         throw std::logic_error(fmt::format("could not open txin index: {}", status.ToString()));

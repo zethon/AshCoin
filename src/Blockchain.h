@@ -34,7 +34,6 @@ class Blockchain final
 {
     std::vector<Block>  _blocks;
     
-    std::set<std::size_t>       _txInHashes;
     UnspentTxOuts               _unspentTxOuts;
     std::queue<Transaction>     _txQueue; // transactions waiting to be mined by this miner
     
