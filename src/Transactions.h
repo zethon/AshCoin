@@ -23,7 +23,8 @@ using BlockTime = std::chrono::time_point<
 class TxIn;
 class TxOut;
 class Transaction;
-struct UnspentTxOut;
+struct TxOutPoint;
+using UnspentTxOut = TxOutPoint;
 
 using TxIns = std::vector<TxIn>;
 using TxOuts = std::vector<TxOut>;
@@ -36,8 +37,8 @@ using AddressLedger = std::vector<LedgerInfo>;
 void to_json(nl::json& j, const Transactions& txs);
 void from_json(const nl::json& j, Transactions& txs);
 
-void to_json(nl::json& j, const UnspentTxOut& txout);
-void from_json(const nl::json& j, UnspentTxOut& txout);
+// void to_json(nl::json& j, const UnspentTxOut& txout);
+// void from_json(const nl::json& j, UnspentTxOut& txout);
 void to_json(nl::json& j, const UnspentTxOuts& txout);
 void from_json(const nl::json& j, UnspentTxOuts& txout);
 
@@ -131,7 +132,6 @@ public:
 
 } // ash
 
-
 namespace std
 {
     template<> struct hash<ash::TxOut>
@@ -186,13 +186,14 @@ public:
     }
 };
 
-struct UnspentTxOut
-{
-    std::uint64_t   blockIndex; // block index
-    std::string     txOutId;    // txid
-    std::string     address;
-    double          amount;
-};
+// struct UnspentTxOut
+// {
+//     std::uint64_t   blockIndex; // block index
+//     std::string     txOutId;    // txid
+//     std::string     address;
+//     double          amount;
+// };
+
 
 } // namespace ash
 
@@ -205,8 +206,16 @@ namespace std
             std::size_t seed = 0;
             boost::hash_combine(seed, std::hash<std::uint64_t>{}(unspent.blockIndex));
             boost::hash_combine(seed, std::hash<std::string>{}(unspent.txOutId));
-            boost::hash_combine(seed, std::hash<std::string>{}(unspent.address));
-            boost::hash_combine(seed, std::hash<double>{}(unspent.amount));
+            if (unspent.address.has_value())
+            {
+                boost::hash_combine(seed, std::hash<std::string>{}(*(unspent.address)));
+            }
+
+            if (unspent.amount.has_value())
+            {
+                boost::hash_combine(seed, std::hash<double>{}(*(unspent.amount)));
+            }
+            
             return seed;
         }
     };

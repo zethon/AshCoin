@@ -137,21 +137,15 @@ void from_json(const nl::json& j, Transactions& txs)
     }
 }
 
-void to_json(nl::json& j, const UnspentTxOut& unspent)
-{
-    j["txOutId"] = unspent.txOutId;
-    j["txOutIndex"] = unspent.blockIndex;
-    j["address"] = unspent.address;
-    j["amount"] = unspent.amount;
-}
+// void to_json(nl::json& j, const UnspentTxOut& unspent)
+// {
+//     to_json(j, static_cast<const TxOutPoint&>(unspent));
+// }
 
-void from_json(const nl::json& j, UnspentTxOut& unspent)
-{
-    j["txOutId"].get_to(unspent.txOutId);
-    j["txOutIndex"].get_to(unspent.blockIndex);
-    j["address"].get_to(unspent.address);
-    j["amount"].get_to(unspent.amount);
-}
+// void from_json(const nl::json& j, UnspentTxOut& unspent)
+// {
+//     from_json(j, static_cast<TxOutPoint&>(unspent));
+// }
 
 void to_json(nl::json& j, const UnspentTxOuts& outs)
 {

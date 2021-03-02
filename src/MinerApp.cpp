@@ -467,7 +467,8 @@ void MinerApp::initHttp()
                 std::begin(results), std::end(results), 0.0,
                 [](const auto& x, const auto& y)
                 {
-                    return x + y.amount;
+                    assert(y.amount.has_value());
+                    return x + *(y.amount);
                 });
 
             utils::Dictionary dict;

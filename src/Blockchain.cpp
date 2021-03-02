@@ -1,5 +1,7 @@
 #include <set>
 
+#include <boost/range/adaptor/indexed.hpp>
+
 #include <range/v3/all.hpp>
 #include <range/v3/view/filter.hpp>
 #include <range/v3/view/transform.hpp>
@@ -30,62 +32,10 @@ void from_json(const nl::json& j, Blockchain& b)
     }
 }
 
-// UnspentTxOuts GetUnspentTxOuts(const Block& block)
-// {
-//     UnspentTxOuts newTxOuts;
-
-//     for (auto txit = block.begin(); txit != block.end(); ++txit)
-//     {
-
-//     }
-
-
-//     for (const auto& tx : block.transactions())
-//     {
-//         for (const auto& txout : tx.txOuts())
-//         {
-//             newTxOuts.emplace_back(
-//                 UnspentTxOut{ tx.id(), block.index(), txout.address(), txout.amount() });
-//         }
-//     }
-
-//     while (!newTxOuts.empty())
-//     {
-
-//     }
-
-//     for (const auto& tx : block.transactions())
-//     {
-//         for (const auto& txin : tx.txIns())
-//         {
-//             if (txin.txOutPt().txOutIndex != block.index())
-//             {
-//                 continue;
-//             }
-
-//             auto tempIt = std::find_if(newTxOuts.begin(), newTxOuts.end(),
-//                 [outid = txin.txOutPt().txOutId](const UnspentTxOut& unspent)
-//                 {
-//                     return outid == unspent.txOutId;
-//                 });
-
-//             if (tempIt != newTxOuts.end())
-//             {
-//                 newTxOuts.erase(tempIt);
-//             }
-//         }
-//     }
-
-//     return newTxOuts;
-// }
-
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain)
 {
-    // for every TxOut we have to check if there is a TxIn
-    // that references it
-    
-    auto cmp = []
-        (const UnspentTxOut& a, const UnspentTxOut& b)
+    auto cmp = 
+        [](const UnspentTxOut& a, const UnspentTxOut& b)
         {
             return std::hash<UnspentTxOut>{}(a) < std::hash<UnspentTxOut>{}(b);
         };
@@ -96,33 +46,44 @@ UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain)
     {
         for (const auto& tx : block.transactions())
         {
-            for (const auto& txout : tx.txOuts())
+            for (const auto& item : tx.txOuts() | boost::adaptors::indexed())
             {
-                //outs.emplace(block.index(), tx.id(), txout.address(), txout.amount());
+                const auto index = item.index();
+                const auto& txout = item.value();
+
+                outs.insert({
+                    block.index(), 
+                    tx.id(), 
+                    static_cast<std::uint64_t>(index), 
+                    txout.address(), 
+                    txout.amount()});
             }
 
-            for (const auto& txin : block.transactions())
+            for (const auto& txin : tx.txIns())
             {
-                //auto it = std::find_if(outs.begin(), outs.end(),
-                //    [txin = txin](const UnspentTxOut& utxout)
-                //    {
-                //        TxOutPoint pt { utxout.blockIndex, utxout.txOutId, ut}
-                //        return utxout.
-                //        return (utxout.blockIndex == txin.txOutPt().txOutIndex
-                //            && utxout.txOutId == txin.txOutPt().txOutId);
-                //    });
+                auto it = std::find_if(outs.begin(), outs.end(),
+                   [txin = txin](const UnspentTxOut& utxout)
+                   {
+                        return (txin.txOutPt().blockIndex == utxout.blockIndex)
+                            && (txin.txOutPt().txOutId == utxout.txOutId)
+                            && (txin.txOutPt().txOutIndex == utxout.txOutIndex);
+                   });
 
-                //if (it != retval.end()) retval.erase(it);
+                if (it != outs.end())
+                {
+                    outs.erase(it);
+                }
             }
         }
     }
 
     UnspentTxOuts retval;
-    std::copy(outs.begin(), outs.end(), std::back_inserter(retval));
+    std::move(outs.begin(), outs.end(), std::back_inserter(retval));
 
     return retval;
 }
 
+//*** Blockchain
 Blockchain::Blockchain()
     : _logger(ash::initializeLogger("Blockchain"))
 {
