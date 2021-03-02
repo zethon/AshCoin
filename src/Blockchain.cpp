@@ -236,7 +236,7 @@ UnspentTxOuts Blockchain::getUnspentTxOuts(std::string_view address)
                 auto it = std::find_if(retval.begin(), retval.end(),
                     [txin = txin](const UnspentTxOut& utxout)
                     {
-                        return (utxout.txOutIndex == txin.txOutPt().txOutIndex
+                        return (utxout.blockIndex == txin.txOutPt().txOutIndex
                             && utxout.txOutId == txin.txOutPt().txOutId);
                     });
 

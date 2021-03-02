@@ -32,7 +32,7 @@ namespace std
     std::ostream& operator<<(std::ostream& out, const ash::UnspentTxOut& utxout)
     {
         out << '{';
-        out << utxout.txOutIndex 
+        out << utxout.blockIndex 
             << ',' << utxout.txOutId 
             << ',' << utxout.address
             << ',' << utxout.amount;
