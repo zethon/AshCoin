@@ -1,3 +1,5 @@
+#include <set>
+
 #include <range/v3/all.hpp>
 #include <range/v3/view/filter.hpp>
 #include <range/v3/view/transform.hpp>
@@ -81,20 +83,44 @@ UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain)
 {
     // for every TxOut we have to check if there is a TxIn
     // that references it
-    UnspentTxOuts txOuts;
+    
+    auto cmp = []
+        (const UnspentTxOut& a, const UnspentTxOut& b)
+        {
+            return std::hash<UnspentTxOut>{}(a) < std::hash<UnspentTxOut>{}(b);
+        };
+
+    std::set<UnspentTxOut, decltype(cmp)> outs;
 
     for (const auto& block : chain)
     {
         for (const auto& tx : block.transactions())
         {
-            for (const auto& txin : tx.txIns())
+            for (const auto& txout : tx.txOuts())
             {
-                // txOuts.push_back()
+                //outs.emplace(block.index(), tx.id(), txout.address(), txout.amount());
+            }
+
+            for (const auto& txin : block.transactions())
+            {
+                //auto it = std::find_if(outs.begin(), outs.end(),
+                //    [txin = txin](const UnspentTxOut& utxout)
+                //    {
+                //        TxOutPoint pt { utxout.blockIndex, utxout.txOutId, ut}
+                //        return utxout.
+                //        return (utxout.blockIndex == txin.txOutPt().txOutIndex
+                //            && utxout.txOutId == txin.txOutPt().txOutId);
+                //    });
+
+                //if (it != retval.end()) retval.erase(it);
             }
         }
     }
 
-    return txOuts;
+    UnspentTxOuts retval;
+    std::copy(outs.begin(), outs.end(), std::back_inserter(retval));
+
+    return retval;
 }
 
 Blockchain::Blockchain()
@@ -226,21 +252,21 @@ UnspentTxOuts Blockchain::getUnspentTxOuts(std::string_view address)
             {
                 if (txout.address() == address)
                 {
-                    retval.emplace_back(UnspentTxOut{block.index(), tx.id(), address.data(), txout.amount()});
+                    //retval.emplace_back(UnspentTxOut{block.index(), tx.id(), address.data(), txout.amount()});
                 }
             }
 
             // now scrub out the txins
             for (const auto& txin : tx.txIns())
             {
-                auto it = std::find_if(retval.begin(), retval.end(),
-                    [txin = txin](const UnspentTxOut& utxout)
-                    {
-                        return (utxout.blockIndex == txin.txOutPt().txOutIndex
-                            && utxout.txOutId == txin.txOutPt().txOutId);
-                    });
+                //auto it = std::find_if(retval.begin(), retval.end(),
+                //    [txin = txin](const unspenttxout& utxout)
+                //    {
+                //        return (utxout.blockindex == txin.txoutpt().txoutindex
+                //            && utxout.txoutid == txin.txoutpt().txoutid);
+                //    });
 
-                if (it != retval.end()) retval.erase(it);
+                //if (it != retval.end()) retval.erase(it);
             }
         }
     }
