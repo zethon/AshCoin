@@ -226,7 +226,7 @@ UnspentTxOuts Blockchain::getUnspentTxOuts(std::string_view address)
             {
                 if (txout.address() == address)
                 {
-                    retval.emplace_back(UnspentTxOut{tx.id(), block.index(), address.data(), txout.amount()});
+                    retval.emplace_back(UnspentTxOut{block.index(), tx.id(), address.data(), txout.amount()});
                 }
             }
 
