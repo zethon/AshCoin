@@ -28,49 +28,71 @@ void from_json(const nl::json& j, Blockchain& b)
     }
 }
 
-UnspentTxOuts GetUnspentTxOuts(const Block& block)
-{
-    UnspentTxOuts newTxOuts;
+// UnspentTxOuts GetUnspentTxOuts(const Block& block)
+// {
+//     UnspentTxOuts newTxOuts;
 
-    for (const auto& tx : block.transactions())
-    {
-        for (const auto& txout : tx.txOuts())
-        {
-            newTxOuts.emplace_back(
-                UnspentTxOut{ tx.id(), block.index(), txout.address(), txout.amount() });
-        }
-    }
+//     for (auto txit = block.begin(); txit != block.end(); ++txit)
+//     {
 
-    for (const auto& tx : block.transactions())
-    {
-        for (const auto& txin : tx.txIns())
-        {
-            if (txin.txOutPt().txOutIndex != block.index())
-            {
-                continue;
-            }
+//     }
 
-            auto tempIt = std::find_if(newTxOuts.begin(), newTxOuts.end(),
-                [outid = txin.txOutPt().txOutId](const UnspentTxOut& unspent)
-                {
-                    return outid == unspent.txOutId;
-                });
 
-            if (tempIt != newTxOuts.end())
-            {
-                newTxOuts.erase(tempIt);
-            }
-        }
-    }
+//     for (const auto& tx : block.transactions())
+//     {
+//         for (const auto& txout : tx.txOuts())
+//         {
+//             newTxOuts.emplace_back(
+//                 UnspentTxOut{ tx.id(), block.index(), txout.address(), txout.amount() });
+//         }
+//     }
 
-    return newTxOuts;
-}
+//     while (!newTxOuts.empty())
+//     {
+
+//     }
+
+//     for (const auto& tx : block.transactions())
+//     {
+//         for (const auto& txin : tx.txIns())
+//         {
+//             if (txin.txOutPt().txOutIndex != block.index())
+//             {
+//                 continue;
+//             }
+
+//             auto tempIt = std::find_if(newTxOuts.begin(), newTxOuts.end(),
+//                 [outid = txin.txOutPt().txOutId](const UnspentTxOut& unspent)
+//                 {
+//                     return outid == unspent.txOutId;
+//                 });
+
+//             if (tempIt != newTxOuts.end())
+//             {
+//                 newTxOuts.erase(tempIt);
+//             }
+//         }
+//     }
+
+//     return newTxOuts;
+// }
 
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain)
 {
     // for every TxOut we have to check if there is a TxIn
     // that references it
     UnspentTxOuts txOuts;
+
+    for (const auto& block : chain)
+    {
+        for (const auto& tx : block.transactions())
+        {
+            for (const auto& txin : tx.txIns())
+            {
+                // txOuts.push_back()
+            }
+        }
+    }
 
     return txOuts;
 }

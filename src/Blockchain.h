@@ -26,7 +26,6 @@ using BlockChainPtr = std::unique_ptr<Blockchain>;
 void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
-UnspentTxOuts GetUnspentTxOuts(const Block& block);
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain);
 
 //! This class is not thread safe and assumes that the
@@ -63,6 +62,16 @@ public:
     auto end() const -> decltype(_blocks.end())
     {
         return _blocks.end();
+    }
+
+    auto rbegin() const -> decltype(_blocks.rbegin())
+    {
+        return _blocks.rbegin();
+    }
+
+    auto rend() const -> decltype(_blocks.rend())
+    {
+        return _blocks.rend();
     }
 
     auto front() const -> decltype(_blocks.front())

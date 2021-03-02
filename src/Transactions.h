@@ -187,12 +187,34 @@ public:
 
 struct UnspentTxOut
 {
-    std::string     txOutId;    // txid
     std::uint64_t   txOutIndex; // block index
+    std::string     txOutId;    // txid
     std::string     address;
     double          amount;
 };
 
+} // namespace ash
+
+namespace std
+{
+    template<> struct hash<ash::UnspentTxOut>
+    {
+        std::size_t operator()(const ash::UnspentTxOut& unspent) const noexcept
+        {
+            std::size_t seed = 0;
+            boost::hash_combine(seed, std::hash<std::uint64_t>{}(unspent.txOutIndex));
+            boost::hash_combine(seed, std::hash<std::string>{}(unspent.txOutId));
+            boost::hash_combine(seed, std::hash<std::string>{}(unspent.address));
+            boost::hash_combine(seed, std::hash<double>{}(unspent.amount));
+            return seed;
+        }
+    };
+}
+
+namespace ash
+{
+
+// TODO: Delete This?
 struct LedgerInfo
 {
     std::string     txid;
