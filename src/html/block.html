@@ -13,18 +13,11 @@ function getTxElement(tx)
     let d = document;
     let tr = d.createElement('tr');
     tr.appendChild(d.createElement('td')).innerHTML = tx.id;
-    // tr.lastElementChild.setAttribute('class', 'minercol');
 
     var txInHtml = '';
-    // if (tx.inputs.length == 1 && tx.inputs[0].txOutIndex == 0)
-    // {
-    //     // this is the coinbase transaction
-    //     var amount = tx.outputs[0].amount;
-    //     txInHtml += "Coinbase: " + amount;
-    // }
     for (idx = 0; idx < tx.inputs.length; idx++)
     {
-        var sourceAddress = tx.inputs[idx].txOutId;
+        var sourceAddress = tx.inputs[idx].txOutPt.txOutId;
         // assume this is the generation tx
         if (sourceAddress.length == 0) 
         {
@@ -33,12 +26,17 @@ function getTxElement(tx)
         }
         else
         {
-            txInHtml += "(" + tx.inputs[0].txOutIndex + ":" + sourceAddress + ")<br/>";
+            let address = tx.inputs[idx].txOutPt.address;
+            txInHtml += 
+                `<a href='${restUrl}/address/${address}'>${address}</a>`
+                + ": " 
+                + tx.inputs[idx].txOutPt.amount 
+                + "<br/>";
         }
     }
-    tr.appendChild(d.createElement('td')).innerHTML = txInHtml;
-    // tr.lastElementChild.setAttribute('class', 'minercol');
 
+    tr.appendChild(d.createElement('td')).innerHTML = txInHtml;
+    
     var totalamount = 0.0;
     var outputHtml = '';
     for (x = 0; x < tx.outputs.length; x++)
@@ -57,14 +55,13 @@ function getTxElement(tx)
 
 function onLoad()
 {
-    var blockJsonPath = restUrl + location.pathname + "/json";
+    var blockJsonPath = restUrl + "/rest/block/" + %block-id%;
     $.ajax(
     {
         url: blockJsonPath,
         type: 'GET', 
         success: function(datastr) 
         {
-            console.log("get json(" + blockJsonPath + ")");
             var el = document.getElementById("data-list");
             var block = JSON.parse(datastr);
 
