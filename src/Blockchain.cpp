@@ -32,7 +32,7 @@ void from_json(const nl::json& j, Blockchain& b)
     }
 }
 
-UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain)
+UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address)
 {
     auto cmp = 
         [](const UnspentTxOut& a, const UnspentTxOut& b)
@@ -48,8 +48,13 @@ UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain)
         {
             for (const auto& item : tx.txOuts() | boost::adaptors::indexed())
             {
-                const auto index = item.index();
                 const auto& txout = item.value();
+                if (address.size() > 0 && txout.address() != address)
+                {
+                    continue;
+                }
+
+                const auto index = item.index();
 
                 outs.insert({
                     block.index(), 

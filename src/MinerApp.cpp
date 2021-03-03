@@ -276,20 +276,24 @@ void MinerApp::initRestService()
             response->write(jresponse.dump());
         };
 
-    _httpServer.resource[R"x(^/rest/unspent(?:/([0-9,]+))?$)x"]["GET"] = 
+    _httpServer.resource[R"x(^/rest/unspent(?:/+|(?:/([0-9a-zA-Z]+)))?$)x"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
+            std::lock_guard<std::mutex> lock{ _chainMutex };
+            nl::json json;
+
             if (request->path_match.size() > 1
                 && request->path_match[1].str().size() > 0)
             {
-
+                
+                json = ash::GetUnspentTxOuts(*_blockchain, request->path_match[1].str());
             }
             else
             {
-                std::lock_guard<std::mutex> lock{_chainMutex};
-                nl::json json = ash::GetUnspentTxOuts(*_blockchain);
-                response->write(json.dump(4));
+                json = ash::GetUnspentTxOuts(*_blockchain);
             }
+
+            response->write(json.dump(4));
         };
 
     _httpServer.resource[R"x(^/rest/block/([0-9,]+))x"]["GET"] = 

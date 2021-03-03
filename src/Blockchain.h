@@ -26,7 +26,7 @@ using BlockChainPtr = std::unique_ptr<Blockchain>;
 void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
-UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain);
+UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address = {});
 
 //! This class is not thread safe and assumes that the
 //  client handles synchronization

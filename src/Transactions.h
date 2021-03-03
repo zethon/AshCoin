@@ -186,15 +186,6 @@ public:
     }
 };
 
-// struct UnspentTxOut
-// {
-//     std::uint64_t   blockIndex; // block index
-//     std::string     txOutId;    // txid
-//     std::string     address;
-//     double          amount;
-// };
-
-
 } // namespace ash
 
 namespace std
