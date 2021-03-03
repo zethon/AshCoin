@@ -45,7 +45,15 @@ void from_json(const nl::json& j, UnspentTxOuts& txout);
 void to_json(nl::json& j, const LedgerInfo& li);
 void to_json(nl::json& j, const AddressLedger& ledger);
 
-Transaction CreateTransaction(std::string_view receiver, double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts);
+enum class TxResult
+{
+    SUCCESS,
+    INSUFFICIENT_FUNDS
+};
+
+TxResult CreateTransaction(
+        std::string_view receiver, double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts);
+
 Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address);
 
 struct TxOutPoint

@@ -15,7 +15,7 @@ function onSendComplete()
 
 function onSendError(error)
 {
-    if (error.length > 0)
+    if (error !== undefined && error.length > 0)
     {
         $('#status').text(error);
     }
@@ -42,8 +42,10 @@ function clearInputs()
 
 function onSendClick()
 {
+    console.log("submitting request to: " + restUrl + "/rest/createtx");
+    
     clearMessages();
-    clearInputs();
+    // clearInputs();
 
     var privatekey = $("#privatekey").val();
     var toaddress = $("#toaddress").val();
@@ -80,8 +82,9 @@ function onSendClick()
         amount : Number($("#amount").val()),
     });
 
+    console.log("submitting request to: " + restUrl + "/rest/createtx");
     $.ajax({
-        url: restUrl + "/createtx",
+        url: restUrl + "/rest/createtx",
         type: 'POST',
         data: requestStr,
         success: onSendComplete(),
@@ -149,6 +152,7 @@ input[type=text]
 }
 </style>
 </head>
+
 <body>
 <!-- HEADER -->
 <table cellspacing="0" cellpadding="0" class="header-table">

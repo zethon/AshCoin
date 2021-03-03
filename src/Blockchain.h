@@ -154,7 +154,7 @@ public:
     const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
     UnspentTxOuts getUnspentTxOuts(std::string_view address);
 
-    bool createTransaction(std::string_view receiver, double amount, std::string_view privateKey);
+    TxResult createTransaction(std::string_view receiver, double amount, std::string_view privateKey);
 
     void getTransactionsToBeMined(Block& block);
     std::size_t reQueueTransactions(Block& block);

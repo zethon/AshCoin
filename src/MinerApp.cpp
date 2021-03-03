@@ -237,6 +237,7 @@ void MinerApp::initRestService()
         {
             const nl::json json = 
                 nl::json::parse(request->content.string(), nullptr, false);
+                
             if (json.is_discarded() 
                 || !json.contains("toaddress")
                 || !json.contains("privatekey")
@@ -252,7 +253,8 @@ void MinerApp::initRestService()
             const auto amount = json["amount"].get<double>();
 
             std::lock_guard<std::mutex> lock{_chainMutex};
-            if (_blockchain->createTransaction(toaddress, amount, privateKey))
+            if (auto status = _blockchain->createTransaction(toaddress, amount, privateKey);
+                status == ash::TxResult::SUCCESS)
             {
                 response->write(SimpleWeb::StatusCode::success_created);
                 return;
