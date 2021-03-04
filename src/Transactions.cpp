@@ -165,23 +165,6 @@ void from_json(const nl::json& j, UnspentTxOuts& outs)
     }
 }
 
-void to_json(nl::json& j, const LedgerInfo& li)
-{
-    j["txid"] = li.txid;
-    j["blockid"] = li.blockIdx;
-    j["amount"] = li.amount;
-    j["time"] = 
-        static_cast<std::uint64_t>(li.time.time_since_epoch().count());
-}
-
-void to_json(nl::json& j, const AddressLedger& ledger)
-{
-    for (const auto& i : ledger)
-    {
-        j.push_back(i);
-    }
-}
-
 std::string GetTransactionId(const Transaction& tx, std::uint64_t blockid)
 {
     std::stringstream ss;

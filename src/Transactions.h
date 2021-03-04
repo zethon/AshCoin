@@ -23,6 +23,7 @@ using BlockTime = std::chrono::time_point<
 class TxIn;
 class TxOut;
 class Transaction;
+
 struct TxOutPoint;
 using UnspentTxOut = TxOutPoint;
 
@@ -31,19 +32,11 @@ using TxOuts = std::vector<TxOut>;
 using Transactions = std::vector<Transaction>;
 using UnspentTxOuts = std::vector<UnspentTxOut>;
 
-struct LedgerInfo;
-using AddressLedger = std::vector<LedgerInfo>;
-
 void to_json(nl::json& j, const Transactions& txs);
 void from_json(const nl::json& j, Transactions& txs);
 
-// void to_json(nl::json& j, const UnspentTxOut& txout);
-// void from_json(const nl::json& j, UnspentTxOut& txout);
 void to_json(nl::json& j, const UnspentTxOuts& txout);
 void from_json(const nl::json& j, UnspentTxOuts& txout);
-
-void to_json(nl::json& j, const LedgerInfo& li);
-void to_json(nl::json& j, const AddressLedger& ledger);
 
 enum class TxResult
 {
@@ -219,17 +212,3 @@ namespace std
         }
     };
 }
-
-namespace ash
-{
-
-// TODO: Delete This?
-struct LedgerInfo
-{
-    std::string     txid;
-    std::uint64_t   blockIdx;
-    BlockTime       time;
-    double          amount;
-};
-
-} // namespace ash

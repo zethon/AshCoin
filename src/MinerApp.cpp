@@ -165,6 +165,26 @@ void MinerApp::initWebService()
         };
 }
 
+template<typename T>
+int GetIdent(const T& map)
+{
+    if (auto identit = map.find("ident"); identit != map.end())
+    {
+        std::size_t ident = 0;
+        const auto& identstr = identit->second;
+
+        auto result =
+                std::from_chars(identstr.data(), identstr.data() + identstr.size(), ident);
+
+        if (result.ec != std::errc::invalid_argument)
+        {
+            return ident;
+        }
+    }
+
+    return -1;
+}
+
 void MinerApp::initRestService()
 {
     _httpServer.resource[R"x(^/rest/createAddress)x"]["GET"] =
@@ -278,27 +298,7 @@ void MinerApp::initRestService()
             response->write(jresponse.dump());
         };
 
-    _httpServer.resource[R"x(^/rest/unspent(?:/+|(?:/([0-9a-zA-Z]+)))?$)x"]["GET"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
-        {
-            std::lock_guard<std::mutex> lock{ _chainMutex };
-            nl::json json;
-
-            if (request->path_match.size() > 1
-                && request->path_match[1].str().size() > 0)
-            {
-                
-                json = ash::GetUnspentTxOuts(*_blockchain, request->path_match[1].str());
-            }
-            else
-            {
-                json = ash::GetUnspentTxOuts(*_blockchain);
-            }
-
-            response->write(json.dump(4));
-        };
-
-    _httpServer.resource[R"x(^/rest/block/([0-9,]+))x"]["GET"] = 
+    _httpServer.resource[R"x(^/rest/block/([0-9,]+))x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
             std::uint64_t blockIndex = 0u;
@@ -328,6 +328,40 @@ void MinerApp::initRestService()
             nl::json json = block;
             response->write(json.dump(4));
             return;
+        };
+
+    // returns a list of unspent txouts for either the entire chain or
+    // a specific address
+    _httpServer.resource[R"x(^/rest/unspent(?:/+|(?:/([0-9a-zA-Z]+)))?$)x"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            std::lock_guard<std::mutex> lock{ _chainMutex };
+            nl::json json;
+
+            if (request->path_match.size() > 1
+                && request->path_match[1].str().size() > 0)
+            {
+                
+                json = ash::GetUnspentTxOuts(*_blockchain, request->path_match[1].str());
+            }
+            else
+            {
+                json = ash::GetUnspentTxOuts(*_blockchain);
+            }
+
+            auto ident = ash::GetIdent(request->parse_query_string());
+            response->write(json.dump(ident));
+        };
+
+    // returns the ledger info for a particular address
+    _httpServer.resource[R"x(^/rest/address/([0-9a-zA-Z]+))x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            nl::json json;
+            const auto address = request->path_match[1].str();
+
+            auto ident = ash::GetIdent(request->parse_query_string());
+            response->write(json.dump(ident));
         };
 }
 
@@ -414,12 +448,12 @@ void MinerApp::initHttp()
                                 continue;
                             }
 
-                            ledger.emplace_back(LedgerInfo{tx.id(), block.index(), block.time(), txout.amount()});
+                            ledger.emplace_back(LedgerInfo{block.index(), tx.id(), block.time(), txout.amount()});
                         }
                     }
                 }
 
-                // now go through and conver the txins to negatives
+                // now go through and convert the txins to negatives
                 // (this is gonna be SLOW)
                 for (const auto& block : *(this->_blockchain))
                 {
@@ -438,7 +472,7 @@ void MinerApp::initHttp()
                             if (it != ledger.end())
                             {
                                 ledger.push_back(
-                                    LedgerInfo({tx.id(), block.index(), block.time(), it->amount * -1.0}));
+                                    LedgerInfo({block.index(), tx.id(), block.time(), it->amount * -1.0}));
                             }
                         }
                     }

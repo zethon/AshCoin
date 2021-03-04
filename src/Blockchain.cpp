@@ -32,6 +32,23 @@ void from_json(const nl::json& j, Blockchain& b)
     }
 }
 
+void to_json(nl::json& j, const LedgerInfo& li)
+{
+    j["txid"] = li.txid;
+    j["blockid"] = li.blockIdx;
+    j["amount"] = li.amount;
+    j["time"] =
+            static_cast<std::uint64_t>(li.time.time_since_epoch().count());
+}
+
+void to_json(nl::json& j, const AddressLedger& ledger)
+{
+    for (const auto& i : ledger)
+    {
+        j.push_back(i);
+    }
+}
+
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address)
 {
     auto cmp = 

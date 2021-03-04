@@ -23,10 +23,24 @@ constexpr auto BLOCK_INTERVAL   = 10u; // in blocks
 class Blockchain;
 using BlockChainPtr = std::unique_ptr<Blockchain>;
 
+struct LedgerInfo;
+using AddressLedger = std::vector<LedgerInfo>;
+
 void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
+void to_json(nl::json& j, const LedgerInfo& li);
+void to_json(nl::json& j, const AddressLedger& ledger);
+
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address = {});
+
+struct LedgerInfo
+{
+    std::uint64_t   blockIdx;
+    std::string     txid;
+    BlockTime       time;
+    double          amount;
+};
 
 //! This class is not thread safe and assumes that the
 //  client handles synchronization
