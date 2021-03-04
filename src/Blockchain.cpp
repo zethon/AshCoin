@@ -105,6 +105,18 @@ UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& addre
     return retval;
 }
 
+AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& address)
+{
+    ash::AddressLedger ledger;
+
+    for (const auto& block : chain)
+    {
+
+    }
+
+    return ledger;
+}
+
 //*** Blockchain
 Blockchain::Blockchain()
     : _logger(ash::initializeLogger("Blockchain"))

@@ -33,6 +33,7 @@ void to_json(nl::json& j, const LedgerInfo& li);
 void to_json(nl::json& j, const AddressLedger& ledger);
 
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address = {});
+AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& address);
 
 struct LedgerInfo
 {

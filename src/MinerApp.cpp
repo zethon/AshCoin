@@ -357,8 +357,10 @@ void MinerApp::initRestService()
     _httpServer.resource[R"x(^/rest/address/([0-9a-zA-Z]+))x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-            nl::json json;
             const auto address = request->path_match[1].str();
+
+            std::lock_guard<std::mutex> lock{ _chainMutex };
+            nl::json json = ash::GetAddressLedger(*_blockchain, address);
 
             auto ident = ash::GetIdent(request->parse_query_string());
             response->write(json.dump(ident));
