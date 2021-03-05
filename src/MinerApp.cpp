@@ -170,7 +170,7 @@ int GetIdent(const T& map)
 {
     if (auto identit = map.find("ident"); identit != map.end())
     {
-        std::size_t ident = 0;
+        int ident = 0;
         const auto& identstr = identit->second;
 
         auto result =

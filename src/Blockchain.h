@@ -59,6 +59,7 @@ class Blockchain final
     friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
+    using iterator = std::vector<Block>::iterator;
 
     Blockchain();
 

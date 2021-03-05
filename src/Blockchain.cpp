@@ -111,7 +111,20 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
 
     for (const auto& block : chain)
     {
-
+        for (const auto& tx : block.transactions())
+        {
+            bool debit = false;
+            assert(tx.txIns().size() > 0);
+            
+            for (const auto& txout : tx.txOuts())
+            {
+                if (txout.address() == address)
+                {
+                    ledger.push_back(
+                        LedgerInfo{ block.index(), tx.id(), block.time(), tx.txOuts().at(0).amount() });
+                }
+            }
+        }
     }
 
     return ledger;

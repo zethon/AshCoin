@@ -113,13 +113,15 @@ namespace ash
 
 class TxOut final
 {
-    std::string _address;   // public-key/address of receiver
-    double      _amount;
-
-    friend void read_data(std::istream& stream, TxOut& txout);
-    friend void from_json(const nl::json& j, TxOut& txout);
 
 public:
+    enum class Type : std::uint8_t
+    {
+        NONE = 0,
+        COINBASE,
+        LEFTOVER
+    };
+
     TxOut() = default;
     TxOut(std::string_view address, double amount)
         : _address{address}, _amount{amount}
@@ -129,6 +131,15 @@ public:
 
     std::string address() const { return _address; }
     double amount() const noexcept { return _amount; }
+
+private:
+    friend void read_data(std::istream& stream, TxOut& txout);
+    friend void from_json(const nl::json& j, TxOut& txout);
+
+    std::string _address;   // public-key/address of receiver
+    double      _amount;
+    Type        _type = Type::NONE;
+
 };
 
 } // ash
