@@ -166,9 +166,9 @@ void MinerApp::initWebService()
 }
 
 template<typename T>
-int GetIdent(const T& map)
+int GetIndent(const T& map)
 {
-    if (auto identit = map.find("ident"); identit != map.end())
+    if (auto identit = map.find("indent"); identit != map.end())
     {
         int ident = 0;
         const auto& identstr = identit->second;
@@ -349,7 +349,7 @@ void MinerApp::initRestService()
                 json = ash::GetUnspentTxOuts(*_blockchain);
             }
 
-            auto ident = ash::GetIdent(request->parse_query_string());
+            auto ident = ash::GetIndent(request->parse_query_string());
             response->write(json.dump(ident));
         };
 
@@ -362,7 +362,7 @@ void MinerApp::initRestService()
             std::lock_guard<std::mutex> lock{ _chainMutex };
             nl::json json = ash::GetAddressLedger(*_blockchain, address);
 
-            auto ident = ash::GetIdent(request->parse_query_string());
+            auto ident = ash::GetIndent(request->parse_query_string());
             response->write(json.dump(ident));
         };
 }
