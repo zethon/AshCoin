@@ -41,7 +41,8 @@ void from_json(const nl::json& j, UnspentTxOuts& txout);
 enum class TxResult
 {
     SUCCESS,
-    INSUFFICIENT_FUNDS
+    INSUFFICIENT_FUNDS,
+    TXOUTS_EMPTY
 };
 
 TxResult CreateTransaction(
@@ -52,7 +53,7 @@ Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view a
 struct TxOutPoint
 {
     std::uint64_t   blockIndex;    // the index of the block
-    std::string     txOutId;       // the transaction id inside the block
+    std::uint64_t   txIndex;       // the transaction id inside the block
     std::uint64_t   txOutIndex;    // the index of the TxOut inside the transaction
 
     std::optional<std::string>  address;
@@ -70,14 +71,14 @@ class TxIn final
 public:
     TxIn() = default;
 
-    TxIn(std::uint64_t blockindex, std::string_view outid, std::uint64_t outidx)
-        : TxIn(blockindex, outid, outidx, {})
+    TxIn(std::uint64_t blockindex, std::uint64_t txIndex, std::uint64_t outidx)
+        : TxIn(blockindex, txIndex, outidx, {})
     {
         // nothing to do
     }
 
-    TxIn(std::uint64_t blockindex, std::string_view outid, std::uint64_t outidx, std::string_view signature)
-        : _txOutPt{blockindex, outid.data(), outidx},
+    TxIn(std::uint64_t blockindex, std::uint64_t txIndex, std::uint64_t outidx, std::string_view signature)
+        : _txOutPt{blockindex, txIndex, outidx},
           _signature{signature}
     {
         // nothing to do
@@ -86,9 +87,6 @@ public:
     TxOutPoint& txOutPt() { return _txOutPt; }
     const TxOutPoint& txOutPt() const noexcept { return _txOutPt; }
 
-    // std::string txOutId() const noexcept { return _txOutPt.txOutId; }
-    // std::uint64_t txOutIndex() const noexcept { return _txOutPt.txOutIndex; }
-
     std::string signature() const { return _signature; }
 };
 
@@ -96,12 +94,24 @@ public:
 
 namespace std
 {
+    template<> struct hash<ash::TxOutPoint>
+    {
+        std::size_t operator()(const ash::TxOutPoint& txpt) const noexcept
+        {
+            std::size_t seed = 0;
+            boost::hash_combine(seed, std::hash<std::uint64_t>{}(txpt.blockIndex));
+            boost::hash_combine(seed, std::hash<std::uint64_t>{}(txpt.txIndex));
+            boost::hash_combine(seed, std::hash<std::uint64_t>{}(txpt.txOutIndex));
+            return seed;
+        }
+    };
+
     template<> struct hash<ash::TxIn>
     {
         std::size_t operator()(const ash::TxIn& txin) const noexcept
         {
             std::size_t seed = 0;
-            boost::hash_combine(seed, std::hash<std::string>{}(txin.txOutPt().txOutId));
+            boost::hash_combine(seed, std::hash<ash::TxOutPoint>{}(txin.txOutPt()));
             boost::hash_combine(seed, std::hash<std::uint64_t>{}(txin.txOutPt().txOutIndex));
             return seed;
         }
@@ -190,36 +200,15 @@ public:
             (static_cast<const Transaction*>(this))->txOuts());
     }
 
-    bool isCoinebase() const
+    bool isCoinbase() const
     {
-        return _txOuts.size() == 1
-            && _txIns.size() == 1
+        assert(_txIns.size() > 0);
+        assert(_txOuts.size() > 0);
+        const auto& pt = _txIns.at(0).txOutPt();
+        return pt.txIndex == 0
+            && pt.txOutIndex == 0
             && _txIns.front().signature().empty();
     }
 };
 
 } // namespace ash
-
-namespace std
-{
-    template<> struct hash<ash::UnspentTxOut>
-    {
-        std::size_t operator()(const ash::UnspentTxOut& unspent) const noexcept
-        {
-            std::size_t seed = 0;
-            boost::hash_combine(seed, std::hash<std::uint64_t>{}(unspent.blockIndex));
-            boost::hash_combine(seed, std::hash<std::string>{}(unspent.txOutId));
-            if (unspent.address.has_value())
-            {
-                boost::hash_combine(seed, std::hash<std::string>{}(*(unspent.address)));
-            }
-
-            if (unspent.amount.has_value())
-            {
-                boost::hash_combine(seed, std::hash<double>{}(*(unspent.amount)));
-            }
-            
-            return seed;
-        }
-    };
-}

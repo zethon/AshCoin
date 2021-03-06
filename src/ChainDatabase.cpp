@@ -8,7 +8,7 @@ namespace ash
 void write_data(std::ostream& stream, const TxOutPoint& pt)
 {
     ash::db::write_data(stream, pt.blockIndex);
-    ash::db::write_data(stream, pt.txOutId);
+    ash::db::write_data(stream, pt.txIndex);
     ash::db::write_data(stream, pt.txOutIndex);
 }
 
@@ -77,7 +77,7 @@ void write_block(std::ostream& stream, const Block& block)
 void read_data(std::istream& stream, TxOutPoint& pt)
 {
     ash::db::read_data(stream, pt.blockIndex);
-    ash::db::read_data(stream, pt.txOutId);
+    ash::db::read_data(stream, pt.txIndex);
     ash::db::read_data(stream, pt.txOutIndex);
 }
 

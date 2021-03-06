@@ -14,7 +14,7 @@ namespace ash
 void to_json(nl::json& j, const TxOutPoint& pt)
 {
     j["blockIndex"] = pt.blockIndex;
-    j["txOutId"] = pt.txOutId;
+    j["txIndex"] = pt.txIndex;
     j["txOutIndex"] = pt.txOutIndex;
 
     if (pt.address.has_value())
@@ -74,7 +74,7 @@ void to_json(nl::json& j, const Transactions& txs)
 void from_json(const nl::json& j, TxOutPoint& pt)
 {
     j["blockIndex"].get_to(pt.blockIndex);
-    j["txOutId"].get_to(pt.txOutId);
+    j["txIndex"].get_to(pt.txIndex);
     j["txOutIndex"].get_to(pt.txOutIndex);
 
     if (j.contains("address"))
@@ -171,7 +171,7 @@ std::string GetTransactionId(const Transaction& tx, std::uint64_t blockid)
     for (const auto& txin : tx.txIns())
     {
         ss << txin.txOutPt().blockIndex
-            << txin.txOutPt().txOutId
+            << txin.txOutPt().txIndex
             << txin.txOutPt().txOutIndex;
     }
 
@@ -203,7 +203,7 @@ TxResult CreateTransaction(
 Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address)
 {
     Transaction tx;
-    tx.txIns().emplace_back(blockIdx, "", 0, "");
+    tx.txIns().emplace_back(blockIdx, 0, 0);
     tx.txOuts().emplace_back(address, COINBASE_REWARD);
     tx._id = GetTransactionId(tx, blockIdx);
     return tx;

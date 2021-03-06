@@ -61,24 +61,34 @@ UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& addre
 
     for (const auto& block : chain)
     {
-        for (const auto& tx : block.transactions())
+        for (const auto& txitem : block.transactions() | boost::adaptors::indexed())
         {
-            for (const auto& item : tx.txOuts() | boost::adaptors::indexed())
+            const auto& tx = txitem.value();
+
+            assert(tx.txIns().size() > 0);
+            assert(tx.txOuts().size() > 0);
+
+            for (const auto& txoutitem : tx.txOuts() | boost::adaptors::indexed())
             {
-                const auto& txout = item.value();
+                const auto& txout = txoutitem.value();
                 if (address.size() > 0 && txout.address() != address)
                 {
                     continue;
                 }
 
-                const auto index = item.index();
-
                 outs.insert({
-                    block.index(), 
-                    tx.id(), 
-                    static_cast<std::uint64_t>(index), 
+                    block.index(),
+                    static_cast<std::uint64_t>(txitem.index()),
+                    static_cast<std::uint64_t>(txoutitem.index()),
                     txout.address(), 
                     txout.amount()});
+            }
+
+            // if this is a coinbase transaction then we do not need
+            // to process the TxIns
+            if (tx.isCoinbase())
+            {
+                continue;
             }
 
             for (const auto& txin : tx.txIns())
@@ -87,7 +97,7 @@ UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& addre
                    [txin = txin](const UnspentTxOut& utxout)
                    {
                         return (txin.txOutPt().blockIndex == utxout.blockIndex)
-                            && (txin.txOutPt().txOutId == utxout.txOutId)
+                            && (txin.txOutPt().txIndex == utxout.txIndex)
                             && (txin.txOutPt().txOutIndex == utxout.txOutIndex);
                    });
 
@@ -111,10 +121,12 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
 
     for (const auto& block : chain)
     {
-        for (const auto& tx : block.transactions())
+        const auto fullblock = chain.txDetails(block.index());
+
+        for (const auto& tx : fullblock.transactions())
         {
             bool debit = false;
-            assert(tx.txIns().size() > 0);
+            assert(tx.txOuts().size() > 0);
             
             for (const auto& txout : tx.txOuts())
             {
@@ -124,6 +136,26 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
                         LedgerInfo{ block.index(), tx.id(), block.time(), tx.txOuts().at(0).amount() });
                 }
             }
+
+            // this is a debit for the address so pop the last ledger entry, accumulate
+            // the total of all the TxIns and put it back to the ledger
+            assert(tx.txIns().size() > 0);
+            assert(tx.txIns().at(0).txOutPt().address.has_value());
+
+            if (*(tx.txIns().at(0).txOutPt().address) == address)
+            {
+                double totalOut = std::accumulate(
+                    tx.txIns().begin(), tx.txIns().end(), 0.0,
+                    [](auto accum, const ash::TxIn& txin)
+                    {
+                        return accum + *(txin.txOutPt().amount);
+                    });
+
+                ledger.pop_back();
+                ledger.push_back(
+                    LedgerInfo{ block.index(), tx.id(), block.time(), total * -1.0 });
+            }
+
         }
     }
 
@@ -150,27 +182,17 @@ Block Blockchain::txDetails(std::size_t index) const
         // some missing information
         for (auto& txin : tx.txIns())
         {
-            assert(txin.txOutPt().blockIndex < chainsize);
+            const auto& txpt = txin.txOutPt();
+            assert(txpt.blockIndex < chainsize);
 
-            // we know the corresponding TxOut's block, txid 
-            // and txout index
-            const auto& outblock = _blocks.at(txin.txOutPt().blockIndex);
-            const auto& txs = outblock.transactions();
+            const auto& txs = _blocks.at(txpt.blockIndex).transactions();
+            assert(txpt.txIndex < txs.size());
+            const auto& tx = txs.at(txpt.txIndex);
+            assert(txpt.txOutIndex < tx.txOuts().size());
+            const auto& txout = tx.txOuts().at(txpt.txOutIndex);
 
-            // find the transaction containing the TxOut from 
-            // which this TxIn was create
-            auto txoutit = std::find_if(txs.begin(), txs.end(),
-                [txid = txin.txOutPt().txOutId](const ash::Transaction& temptx)
-                {
-                    return txid == temptx.id();
-                });
-
-            if (txoutit == txs.end()) continue;
-            const auto& txout = *txoutit;
-
-            assert(txin.txOutPt().txOutIndex < txout.txIns().size());
-            txin.txOutPt().address = txout.txOuts().at(txin.txOutPt().txOutIndex).address();
-            txin.txOutPt().amount = txout.txOuts().at(txin.txOutPt().txOutIndex).amount();
+            txin.txOutPt().address = txout.address();
+            txin.txOutPt().amount = txout.amount();
         }
     }
 
@@ -325,6 +347,10 @@ TxResult Blockchain::createTransaction(std::string_view receiver, double amount,
 
     // now get all of the unspent txouts of the sender
     auto senderUnspentList = ash::GetUnspentTxOuts(*this, senderAddress);
+    if (senderUnspentList.size() == 0)
+    {
+        return TxResult::TXOUTS_EMPTY;
+    }
 
     double currentAmount = 0;
     double leftoverAmount = 0;
@@ -353,8 +379,9 @@ TxResult Blockchain::createTransaction(std::string_view receiver, double amount,
 
     for (const auto& uout : includedUnspentOuts)
     {
+        // TODO: Signature!!!
         txins.emplace_back(uout.blockIndex, 
-            uout.txOutId, uout.txOutIndex, "signature");
+            uout.txIndex, uout.txOutIndex, "signature");
     }
 
     auto& outs = tx.txOuts();
@@ -389,7 +416,7 @@ std::size_t Blockchain::reQueueTransactions(Block& block)
 
     for (const auto& tx : block.transactions())
     {
-        if (tx.isCoinebase()) continue;
+        if (tx.isCoinbase()) continue;
         _txQueue.push(tx); // copy!!
         count++;
     }

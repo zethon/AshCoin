@@ -17,9 +17,12 @@ function getTxElement(tx)
     var txInHtml = '';
     for (idx = 0; idx < tx.inputs.length; idx++)
     {
-        var sourceAddress = tx.inputs[idx].txOutPt.txOutId;
+        var isCoinbase = tx.inputs[0].txOutPt.txIndex == 0
+            && tx.inputs[0].txOutPt.txOutIndex == 0
+            && tx.inputs[0].signature.length == 0;
+
         // assume this is the generation tx
-        if (sourceAddress.length == 0) 
+        if (isCoinbase)
         {
             txInHtml += "<i>Mining Reward</i>: " + tx.outputs[0].amount + "<br/>";
             break;

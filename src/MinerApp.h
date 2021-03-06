@@ -111,7 +111,7 @@ private:
     Miner                   _miner;
     std::thread             _mineThread;
 
-    SpdLogPtr                _logger;
+    SpdLogPtr               _logger;
 };
 
 } // namespace
