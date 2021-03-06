@@ -114,7 +114,7 @@ public:
         _blocks.resize(size);
     }
 
-    auto at(std::size_t index) -> decltype(_blocks.at(index))
+    auto at(std::size_t index) const -> decltype(_blocks.at(index))
     {
         return _blocks.at(index);
     }
