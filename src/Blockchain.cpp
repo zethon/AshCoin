@@ -121,8 +121,7 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
 
     for (const auto& block : chain)
     {
-        const auto fullblock = chain.txDetails(block.index());
-
+        const auto fullblock = ash::GetBlockDetails(chain, block.index());
         for (const auto& tx : fullblock.transactions())
         {
             bool debit = false;
@@ -166,18 +165,30 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
     return ledger;
 }
 
-//*** Blockchain
-Blockchain::Blockchain()
-    : _logger(ash::initializeLogger("Blockchain"))
+// TODO: The implementation of this should be improved to be faster
+// perhaps with a persisted index or something
+std::optional<TxPoint> FindTransaction(const Blockchain& chain, std::string_view txid)
 {
-    // nothing to do
+    for (const auto& block: chain)
+    {
+        for (const auto& txitem : block.transactions() | boost::adaptors::indexed())
+        {
+            const auto& tx = txitem.value();
+            if (tx.id() == txid)
+            {
+                return TxPoint{ block.index(), txitem.index() };
+            }
+        }
+    }
+
+    return {};
 }
 
-Block Blockchain::txDetails(std::size_t index) const
-{ 
-    const auto chainsize = _blocks.size();
-    Block retblock = _blocks.at(index);
-    
+Block GetBlockDetails(const Blockchain& chain, std::size_t index)
+{
+    const auto chainsize = chain.size();
+    Block retblock = chain.at(index); // block copy!
+
     // loops through the transactions of the block we're
     // interested in
     for (auto& tx : retblock.transactions())
@@ -189,7 +200,7 @@ Block Blockchain::txDetails(std::size_t index) const
             const auto& txpt = txin.txOutPt();
             assert(txpt.blockIndex < chainsize);
 
-            const auto& txs = _blocks.at(txpt.blockIndex).transactions();
+            const auto& txs = chain.at(txpt.blockIndex).transactions();
             assert(txpt.txIndex < txs.size());
             const auto& tx = txs.at(txpt.txIndex);
             assert(txpt.txOutIndex < tx.txOuts().size());
@@ -201,6 +212,13 @@ Block Blockchain::txDetails(std::size_t index) const
     }
 
     return retblock;
+}
+
+//*** Blockchain
+Blockchain::Blockchain()
+    : _logger(ash::initializeLogger("Blockchain"))
+{
+    // nothing to do
 }
 
 bool Blockchain::addNewBlock(const Block& block)

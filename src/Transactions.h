@@ -32,6 +32,9 @@ using TxOuts = std::vector<TxOut>;
 using Transactions = std::vector<Transaction>;
 using UnspentTxOuts = std::vector<UnspentTxOut>;
 
+void to_json(nl::json& j, const Transaction& tx);
+void from_json(const nl::json& j, Transaction& tx);
+
 void to_json(nl::json& j, const Transactions& txs);
 void from_json(const nl::json& j, Transactions& txs);
 

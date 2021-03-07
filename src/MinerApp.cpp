@@ -323,11 +323,12 @@ void MinerApp::initRestService()
                 return;
             }
 
-            const auto& block = _blockchain->txDetails(blockIndex);
+            const auto& block = ash::GetBlockDetails(*_blockchain, blockIndex);
             assert(block.index() == blockIndex);
 
             nl::json json = block;
-            response->write(json.dump(4));
+            auto indent = ash::GetIndent(request->parse_query_string());
+            response->write(json.dump(indent));
             return;
         };
 
@@ -363,8 +364,27 @@ void MinerApp::initRestService()
             std::lock_guard<std::mutex> lock{ _chainMutex };
             nl::json json = ash::GetAddressLedger(*_blockchain, address);
 
-            auto ident = ash::GetIndent(request->parse_query_string());
-            response->write(json.dump(ident));
+            auto indent = ash::GetIndent(request->parse_query_string());
+            response->write(json.dump(indent));
+        };
+
+    // get details about a specific transaction
+    _httpServer.resource[R"x(^/rest/tx/([0-9a-zA-Z]+))x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            const auto transaction = request->path_match[1].str();
+
+            std::lock_guard<std::mutex> lock{ _chainMutex };
+            auto txpt = ash::FindTransaction(*_blockchain, transaction);
+            if (txpt.has_value())
+            {
+                auto [blockindex, txindex] = *txpt;
+                auto tempblock = ash::GetBlockDetails(*_blockchain, blockindex);
+                nl::json json = tempblock.transactions().at(txindex);
+                auto indent = ash::GetIndent(request->parse_query_string());
+                response->write(json.dump(indent));
+            }
+            response->write(SimpleWeb::StatusCode::client_error_not_found);
         };
 }
 
@@ -495,9 +515,12 @@ void MinerApp::initHttp()
         };
 
     _httpServer.resource[R"x(^/tx/([0-9a-zA-Z]+)$)x"]["GET"] =
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-            this->servePage(response, "tx.html", tx_html, {});
+            const auto tx = request->path_match[1].str();
+            utils::Dictionary dict;
+            dict["%transaction%"] = tx;
+            this->servePage(response, "tx.html", tx_html, dict);
         };
 }
 

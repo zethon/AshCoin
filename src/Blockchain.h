@@ -35,6 +35,13 @@ void to_json(nl::json& j, const AddressLedger& ledger);
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address = {});
 AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& address);
 
+// 0 - block index, 1 - tx index
+using TxPoint = std::tuple<std::uint64_t, std::uint64_t>;
+std::optional<TxPoint> FindTransaction(const Blockchain& chain, std::string_view txid);
+
+// fills in the TxIn TxPoint info for all the Transactions in the Block
+Block GetBlockDetails(const Blockchain& chain, std::size_t index);
+
 struct LedgerInfo
 {
     std::uint64_t   blockIdx;
@@ -118,8 +125,6 @@ public:
     {
         return _blocks.at(index);
     }
-
-    Block txDetails(std::size_t index) const;
 
     bool addNewBlock(const Block& block);
     bool addNewBlock(const Block& block, bool checkPreviousBlock);
