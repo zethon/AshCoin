@@ -2,25 +2,38 @@
 
 This document provides detailed information for:
 
-* All of the HTTP endpoints
-* All of the HTTP REST services implemented 
-* All of the WebSocket RPCs
+* HTTP endpoints
+* REST calls
+* WebSocket RPCs
+
+**NOTE**: This document is by no means complete. This is a **work in progress**.
 
 ## HTTP Endpoints
 
 HTTP endpoints are the user interface for the local instance of AshCoin. These endpoints allow users to interact with the service. 
 
-#### `/index`
+The main entrypoint of the service is the default URL with no path (e.g. `http://localhost:27182`). This page shows information about the service and the chain. It also shows the last 10 blocks added to the chain.
 
-This is the main entry point for the application. T
+### `/address/<address>`
 
-#### `/createtx`
+Detailed information about the `address` passed in. Provides balance and transaction history.
 
-This page provides a means to create a transaction in the current node. 
+### `/block/<block-id>`
+
+Shows information about the block at the given `block-id` including the list of included transactions.
+
+### `/createtx`
+
+This page provides a means to create a transaction in the current node.
+
+### `/tx/<transaction-id>`
+
+Shows information about the given `transaction-id`, including the inputs and outputs.
+
 
 ## REST Services
 
-REST services are under the `/rest` path and accept JSON payloads as POST HTTP calls. All REST endpoints are prepended with `/rest`.
+REST services are under the `/rest` path. These services can be appended with a parameter `?indent=X` where the returned JSON will be formatted with `X` spacing. The default is `0` such that all JSON is returns on the same line.
 
 #### `/rest/createtx`
 

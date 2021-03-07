@@ -188,6 +188,63 @@ int GetIndent(const T& map)
 
 void MinerApp::initRestService()
 {
+    // TODO: needs to be moved to /rest/block-idx
+    // TODO: maybe this can be removed entirely?
+    _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            const auto indexStr = request->path_match[1].str();
+            int index = 0;
+            auto result =
+                    std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), index);
+
+            std::stringstream ss;
+            if (result.ec != std::errc() || index >= _blockchain->size())
+            {
+                ss << R"xx(<html><body><h2 stye="color:red">Invalid Block</h2></body></html>)xx";
+            }
+            else
+            {
+                nl::json json = _blockchain->at(index);
+                ss << "<pre>" << json.dump(4) << "</pre>";
+                ss << "<br/>";
+                if (index > 0) ss << "<a href='/block-idx/" << (index - 1) << "'>prev</a>&nbsp;";
+                ss << "current: " << index;
+                if (index < _blockchain->size()) ss << "&nbsp;<a href='/block-idx/" << (index + 1) << "'>next</a>&nbsp;";
+            }
+
+            response->write(ss);
+        };
+
+    // TODO: needs to be moved to /rest/blocks/last
+    // TODO: maybe this can be removed entirely? Or maybe it should instead be /rest/last
+    _httpServer.resource["^/blocks/last/([0-9]+)$"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            const auto indexStr = request->path_match[1].str();
+            std::uint64_t startingIdx = 0;
+            auto result =
+                    std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), startingIdx);
+
+            if (result.ec == std::errc::invalid_argument)
+            {
+                return;
+            }
+
+            nl::json json;
+
+            if (startingIdx >= _blockchain->size())
+            {
+                startingIdx = 0;
+            }
+
+            for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
+            {
+                json["blocks"].push_back(_blockchain->at(idx));
+            }
+            response->write(json.dump());
+        };
+
     _httpServer.resource[R"x(^/rest/createAddress)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
@@ -398,59 +455,6 @@ void MinerApp::initHttp()
     _httpServer.config.port = _settings->value("rest.port", HTTPServerPortDefault);
     initWebService();
     initRestService();
-
-    _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
-        {
-            const auto indexStr = request->path_match[1].str();
-            int index = 0;
-            auto result = 
-                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), index);
-
-            std::stringstream ss;
-            if (result.ec != std::errc() || index >= _blockchain->size())
-            {
-                ss << R"xx(<html><body><h2 stye="color:red">Invalid Block</h2></body></html>)xx";
-            }
-            else
-            {
-                nl::json json = _blockchain->at(index);
-                ss << "<pre>" << json.dump(4) << "</pre>";
-                ss << "<br/>";
-                if (index > 0) ss << "<a href='/block-idx/" << (index - 1) << "'>prev</a>&nbsp;";
-                ss << "current: " << index;
-                if (index < _blockchain->size()) ss << "&nbsp;<a href='/block-idx/" << (index + 1) << "'>next</a>&nbsp;";
-            }
-            
-            response->write(ss);
-        };
-
-    _httpServer.resource["^/blocks/last/([0-9]+)$"]["GET"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
-        {
-            const auto indexStr = request->path_match[1].str();
-            std::uint64_t startingIdx = 0;
-            auto result = 
-                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), startingIdx);
-
-            if (result.ec == std::errc::invalid_argument)
-            {
-                return;
-            }
-
-            nl::json json;
-
-            if (startingIdx >= _blockchain->size())
-            {
-                startingIdx = 0;
-            }
-
-            for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
-            {
-                json["blocks"].push_back(_blockchain->at(idx));
-            }
-            response->write(json.dump());
-        };
 
     // get the transaction history and balance of a given address
     _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)$)x"]["GET"] =
