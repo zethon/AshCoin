@@ -12,7 +12,8 @@ function getTxElement(tx)
 {
     let d = document;
     let tr = d.createElement('tr');
-    tr.appendChild(d.createElement('td')).innerHTML = tx.id;
+    tr.appendChild(d.createElement('td')).innerHTML =
+        `<a href="${restUrl}/tx/${tx.id}">${tx.id}</a>`;
 
     var txInHtml = '';
     for (idx = 0; idx < tx.inputs.length; idx++)
