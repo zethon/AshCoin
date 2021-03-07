@@ -381,6 +381,11 @@ void MinerApp::initRestService()
                 auto [blockindex, txindex] = *txpt;
                 auto tempblock = ash::GetBlockDetails(*_blockchain, blockindex);
                 nl::json json = tempblock.transactions().at(txindex);
+
+                // add some more info about the block itself so we don't have to look it up
+                json["blockindex"] = tempblock.index();
+                json["time"] = static_cast<std::uint64_t>(tempblock.time().time_since_epoch().count());
+
                 auto indent = ash::GetIndent(request->parse_query_string());
                 response->write(json.dump(indent));
             }

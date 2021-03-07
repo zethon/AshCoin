@@ -13,7 +13,7 @@ function getInputTableRow(txin, index)
     let tr = d.createElement('tr');
 
     tr.appendChild(d.createElement('td')).innerHTML = index;
-    tr.appendChild(d.createElement('td')).innerHTML = "<font color='red'>NOT IMPLEMENTED</font>";
+    // tr.appendChild(d.createElement('td')).innerHTML = "<font color='red'>NOT IMPLEMENTED</font>";
     tr.appendChild(d.createElement('td')).innerHTML = parseFloat(txin.txOutPt.amount).toFixed(4);
     tr.appendChild(d.createElement('td')).innerHTML =
         `<a href="${ServerUrl}/address/${txin.txOutPt.address}">${txin.txOutPt.address}</a>`;
@@ -27,7 +27,7 @@ function getOutputTableRow(txout, index)
     let tr = d.createElement('tr');
 
     tr.appendChild(d.createElement('td')).innerHTML = index;
-    tr.appendChild(d.createElement('td')).innerHTML = "<font color='red'>NOT IMPLEMENTED</font>";
+    // tr.appendChild(d.createElement('td')).innerHTML = "<font color='red'>NOT IMPLEMENTED</font>";
     tr.appendChild(d.createElement('td')).innerHTML = parseFloat(txout.amount).toFixed(4);
     tr.appendChild(d.createElement('td')).innerHTML =
         `<a href="${ServerUrl}/address/${txout.address}">${txout.address}</a>`;
@@ -46,6 +46,12 @@ function onLoad()
             success: function(datastr)
             {
                 var tx = JSON.parse(datastr);
+
+                $('#blockindex').html(
+                    `<a href="${ServerUrl + '/block/' + tx.blockindex}">${tx.blockindex}</a>`);
+
+                var dt = moment.unix(tx.time/1000).utc();
+                $('#blocktime').text(dt.format("YYYY-MM-DD HH:mm:ss"));
 
                 $('#inputs-count').text(parseFloat(tx.inputs.length));
                 $('#outputs-count').text(parseFloat(tx.outputs.length));
@@ -92,6 +98,7 @@ function onLoad()
     text-overflow: ellipsis;
     max-width: 300px;
 }
+
 </style>
 </head>
 <body onload="javascript:onLoad();">
@@ -106,6 +113,8 @@ function onLoad()
     </tr>
 
     <tr><td>Hash</td><td>%transaction%</td></tr>
+    <tr><td>Block #</td><td id="blockindex"></td></tr>
+    <tr><td>Block Time</td><td id="blocktime"></td></tr>
     <tr><td>Number of Inputs</td><td id="inputs-count"></td></tr>
     <tr><td>Total In</td><td id="inputs-sum"></td></tr>
     <tr><td>Number of Outputs</td><td id="outputs-count"></td></tr>
@@ -118,7 +127,7 @@ function onLoad()
 <table class="data-table">
     <tr>
         <th>Index</th>
-        <th>Previous Output</th>
+<!--        <th>Previous Output</th>-->
         <th>Amount</th>
         <th>From Address</th>
     </tr>
@@ -131,7 +140,7 @@ function onLoad()
 <table class="data-table">
     <tr>
         <th>Index</th>
-        <th>Redeemed at Input</th>
+<!--        <th>Redeemed at Input</th>-->
         <th>Amount</th>
         <th>From Address</th>
     </tr>
