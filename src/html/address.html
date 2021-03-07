@@ -30,7 +30,7 @@ function getDataElement(info)
 
 function onLoad()
 {
-    var dataJsonPath = ServerUrl + location.pathname + "/json";
+    var dataJsonPath = ServerUrl + "/rest/address/%address%";
     $.ajax(
     {
         url: dataJsonPath,
@@ -102,7 +102,6 @@ function onLoad()
                             <option selected="true" disabled="disabled">-</option>
                             <option value="createAddress">Create Address</option>
                             <option value="createtx">Create Transaction</option>
-                            <option value="unspentTxOuts">Unspent TxOuts</option>
                             <option value="mining">Start Mining</option>
                             <option value="shutdown">Shutdown</option>
                         </select>

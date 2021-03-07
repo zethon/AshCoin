@@ -54,6 +54,7 @@ z_compile_resources(RESOURCE_FILES
     html/block.html
     html/createtx.html
     html/index.html
+    html/tx.html
     html/style.css
     html/common.js
 )

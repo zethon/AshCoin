@@ -11,7 +11,6 @@ function onMainMenuAction()
         break;
         case 'createtx':
         case 'createAddress':
-        case 'unspentTxOuts':
             window.location.assign(ServerUrl + '/' + selected);
         break;
     }

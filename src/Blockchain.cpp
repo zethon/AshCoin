@@ -133,7 +133,9 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
                 if (txout.address() == address)
                 {
                     ledger.push_back(
-                        LedgerInfo{ block.index(), tx.id(), block.time(), tx.txOuts().at(0).amount() });
+                        LedgerInfo{ block.index(), tx.id(), block.time(), txout.amount() });
+
+                    break;
                 }
             }
 
@@ -142,18 +144,20 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
             assert(tx.txIns().size() > 0);
             assert(tx.txIns().at(0).txOutPt().address.has_value());
 
-            if (*(tx.txIns().at(0).txOutPt().address) == address)
+            if (!tx.isCoinbase()
+                && *(tx.txIns().at(0).txOutPt().address) == address)
             {
-                double totalOut = std::accumulate(
+                double txInTotal = std::accumulate(
                     tx.txIns().begin(), tx.txIns().end(), 0.0,
                     [](auto accum, const ash::TxIn& txin)
                     {
                         return accum + *(txin.txOutPt().amount);
                     });
 
+                auto amount = txInTotal - ledger.back().amount;
                 ledger.pop_back();
                 ledger.push_back(
-                    LedgerInfo{ block.index(), tx.id(), block.time(), total * -1.0 });
+                    LedgerInfo{ block.index(), tx.id(), block.time(), amount * -1.0 });
             }
 
         }

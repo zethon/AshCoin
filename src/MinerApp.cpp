@@ -13,6 +13,7 @@
 #include "block_html.h"
 #include "createtx_html.h"
 #include "common_js.h"
+#include "tx_html.h"
 
 #include "CryptoUtils.h"
 #include "utils.h"
@@ -427,99 +428,14 @@ void MinerApp::initHttp()
         };
 
     // get the transaction history and balance of a given address
-//    _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)(?:\/(json)){0,1})x"]["GET"] =
-//            [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
-//        {
-//            const auto address = request->path_match[1].str();
-//
-//            if (request->path_match.size() == 3
-//                && request->path_match[2] == "json")
-//            {
-//                std::lock_guard<std::mutex> lock{_chainMutex};
-//
-//                AddressLedger ledger;
-//
-//                // gather up all the txouts of this address
-//                for (const auto& block : *(this->_blockchain))
-//                {
-//                    for (const auto& tx : block.transactions())
-//                    {
-//                        for (const auto& txout : tx.txOuts())
-//                        {
-//                            if (txout.address() != address)
-//                            {
-//                                continue;
-//                            }
-//
-//                            ledger.emplace_back(LedgerInfo{block.index(), tx.id(), block.time(), txout.amount()});
-//                        }
-//                    }
-//                }
-//
-//                // now go through and convert the txins to negatives
-//                // (this is gonna be SLOW)
-//                for (const auto& block : *(this->_blockchain))
-//                {
-//                    for (const auto& tx : block.transactions())
-//                    {
-//                        for (const auto& txin : tx.txIns())
-//                        {
-//                            auto it = std::find_if(ledger.begin(), ledger.end(),
-//                                [index = txin.txOutPt().txOutIndex, txid = txin.txOutPt().txOutId]
-//                                (const LedgerInfo& info)
-//                                {
-//                                    return info.txid == txid
-//                                        && info.blockIdx == index;
-//                                });
-//
-//                            if (it != ledger.end())
-//                            {
-//                                ledger.push_back(
-//                                    LedgerInfo({block.index(), tx.id(), block.time(), it->amount * -1.0}));
-//                            }
-//                        }
-//                    }
-//                }
-//
-//                std::sort(ledger.begin(), ledger.end(),
-//                    [](auto x, auto y)
-//                    {
-//                        if (x.time == y.time)
-//                        {
-//                            return x.amount < y.amount;
-//                        }
-//
-//                        return x.time < y.time;
-//                    });
-//
-//                nl::json json = ledger;
-//                response->write(json.dump());
-//                return;
-//            }
-//
-//            std::lock_guard<std::mutex> lock{_chainMutex};
-//            const auto& unspent = this->_blockchain->unspentTransactionOuts();
-//
-//            auto results = unspent | ranges::views::filter(
-//                [address](const UnspentTxOut& txout)
-//                {
-//                    return txout.address == address;
-//                });
-//
-//            double total = std::accumulate(
-//                std::begin(results), std::end(results), 0.0,
-//                [](const auto& x, const auto& y)
-//                {
-//                    assert(y.amount.has_value());
-//                    return x + *(y.amount);
-//                });
-//
-//            utils::Dictionary dict;
-//            dict["%address%"] = address;
-//            dict["%balance%"] = std::to_string(total);
-//
-//            this->servePage(response, "address.html", address_html, dict);
-//        };
+    _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)$)x"]["GET"] =
+            [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            const auto address = request->path_match[1].str();
+            utils::Dictionary dict;
+            dict["%address%"] = address;
+            this->servePage(response, "address.html", address_html, dict);
+        };
 
     _httpServer.resource[R"x(^/block/([0-9,]+)(?:\/(json)){0,1})x"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
@@ -578,12 +494,10 @@ void MinerApp::initHttp()
             this->servePage(response, "createtx.html", createtx_html, {});
         };
 
-    _httpServer.resource[R"x(^/unspentTxOuts)x"]["GET"] =
+    _httpServer.resource[R"x(^/tx/([0-9a-zA-Z]+)$)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
         {
-            std::lock_guard<std::mutex> lock{_chainMutex};
-            nl::json j = this->_blockchain->unspentTransactionOuts();
-            response->write(j.dump(4));
+            this->servePage(response, "tx.html", tx_html, {});
         };
 }
 
