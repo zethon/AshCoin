@@ -11,10 +11,26 @@ namespace nl = nlohmann;
 namespace ash
 {
 
+void to_json(nl::json& j, const TxOutPoint& pt)
+{
+    j["blockIndex"] = pt.blockIndex;
+    j["txIndex"] = pt.txIndex;
+    j["txOutIndex"] = pt.txOutIndex;
+
+    if (pt.address.has_value())
+    {
+        j["address"] = *(pt.address);
+    }
+
+    if (pt.amount.has_value())
+    {
+        j["amount"] = *(pt.amount);
+    }
+}
+
 void to_json(nl::json& j, const TxIn& tx)
 {
-    j["txOutId"] = tx.txOutId();
-    j["txOutIndex"] = tx.txOutIndex();
+    j["txOutPt"] = tx.txOutPt();
     j["signature"] = tx.signature();
 }
 
@@ -55,10 +71,26 @@ void to_json(nl::json& j, const Transactions& txs)
     }
 }
 
+void from_json(const nl::json& j, TxOutPoint& pt)
+{
+    j["blockIndex"].get_to(pt.blockIndex);
+    j["txIndex"].get_to(pt.txIndex);
+    j["txOutIndex"].get_to(pt.txOutIndex);
+
+    if (j.contains("address"))
+    {
+        pt.address = j["address"].get<std::string>();
+    }
+
+    if (j.contains("amount"))
+    {
+        pt.amount = j["amount"].get<double>();
+    }
+}
+
 void from_json(const nl::json& j, TxIn& txin)
 {
-    j["txOutId"].get_to(txin._txOutId);
-    j["txOutIndex"].get_to(txin._txOutIndex);
+    txin._txOutPt = j["txOutPt"].get<TxOutPoint>();
     j["signature"].get_to(txin._signature);
 }
 
@@ -105,21 +137,15 @@ void from_json(const nl::json& j, Transactions& txs)
     }
 }
 
-void to_json(nl::json& j, const UnspentTxOut& unspent)
-{
-    j["txOutId"] = unspent.txOutId;
-    j["txOutIndex"] = unspent.txOutIndex;
-    j["address"] = unspent.address;
-    j["amount"] = unspent.amount;
-}
+// void to_json(nl::json& j, const UnspentTxOut& unspent)
+// {
+//     to_json(j, static_cast<const TxOutPoint&>(unspent));
+// }
 
-void from_json(const nl::json& j, UnspentTxOut& unspent)
-{
-    j["txOutId"].get_to(unspent.txOutId);
-    j["txOutIndex"].get_to(unspent.txOutIndex);
-    j["address"].get_to(unspent.address);
-    j["amount"].get_to(unspent.amount);
-}
+// void from_json(const nl::json& j, UnspentTxOut& unspent)
+// {
+//     from_json(j, static_cast<TxOutPoint&>(unspent));
+// }
 
 void to_json(nl::json& j, const UnspentTxOuts& outs)
 {
@@ -139,18 +165,22 @@ void from_json(const nl::json& j, UnspentTxOuts& outs)
     }
 }
 
-std::string GetTransactionId(const Transaction& tx)
+std::string GetTransactionId(const Transaction& tx, std::uint64_t blockid)
 {
     std::stringstream ss;
     for (const auto& txin : tx.txIns())
     {
-        ss << txin.txOutId() << txin.txOutIndex();
+        ss << txin.txOutPt().blockIndex
+            << txin.txOutPt().txIndex
+            << txin.txOutPt().txOutIndex;
     }
 
     for (const auto& txout : tx.txOuts())
     {
         ss << txout.address() << txout.amount();
     }
+
+    ss << blockid;
 
     std::string digest;
     CryptoPP::SHA256 hash;
@@ -163,26 +193,25 @@ std::string GetTransactionId(const Transaction& tx)
     return digest;
 }
 
-Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address)
-{
-    Transaction tx;
-    tx.txIns().emplace_back("", blockIdx, "");
-    tx.txOuts().emplace_back(address, COINBASE_REWARD);
-    tx._id = GetTransactionId(tx);
-    return tx;
-}
-
-Transaction CreateTransaction(std::string_view receiver, 
-    double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts)
+TxResult CreateTransaction(
+        std::string_view receiver, double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts)
 {
     //const std::string sender
     return {};
 }
 
-
-void Transaction::calcuateId()
+Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address)
 {
-    _id = ash::GetTransactionId(*this);
+    Transaction tx;
+    tx.txIns().emplace_back(blockIdx, 0, 0);
+    tx.txOuts().emplace_back(address, COINBASE_REWARD);
+    tx._id = GetTransactionId(tx, blockIdx);
+    return tx;
+}
+
+void Transaction::calcuateId(std::uint64_t blockid)
+{
+    _id = ash::GetTransactionId(*this, blockid);
 }
 
 } // namespace ash

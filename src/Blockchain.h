@@ -23,10 +23,32 @@ constexpr auto BLOCK_INTERVAL   = 10u; // in blocks
 class Blockchain;
 using BlockChainPtr = std::unique_ptr<Blockchain>;
 
+struct LedgerInfo;
+using AddressLedger = std::vector<LedgerInfo>;
+
 void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
-UnspentTxOuts GetUnspentTxOuts(const Block& block);
+void to_json(nl::json& j, const LedgerInfo& li);
+void to_json(nl::json& j, const AddressLedger& ledger);
+
+UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address = {});
+AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& address);
+
+// 0 - block index, 1 - tx index
+using TxPoint = std::tuple<std::uint64_t, std::uint64_t>;
+std::optional<TxPoint> FindTransaction(const Blockchain& chain, std::string_view txid);
+
+// fills in the TxIn TxPoint info for all the Transactions in the Block
+Block GetBlockDetails(const Blockchain& chain, std::size_t index);
+
+struct LedgerInfo
+{
+    std::uint64_t   blockIdx;
+    std::string     txid;
+    BlockTime       time;
+    double          amount;
+};
 
 //! This class is not thread safe and assumes that the
 //  client handles synchronization
@@ -44,8 +66,16 @@ class Blockchain final
     friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
+    using iterator = std::vector<Block>::iterator;
+
     Blockchain();
 
+    Blockchain(Blockchain&&) = default;
+    Blockchain& operator=(const Blockchain&) = default;
+
+    // Blockchain(const Blockchain&) = delete;
+    // Blockchain& operator=(Blockchain&&) = delete;
+    
     auto begin() const -> decltype(_blocks.begin())
     {
         return _blocks.begin();
@@ -54,6 +84,16 @@ public:
     auto end() const -> decltype(_blocks.end())
     {
         return _blocks.end();
+    }
+
+    auto rbegin() const -> decltype(_blocks.rbegin())
+    {
+        return _blocks.rbegin();
+    }
+
+    auto rend() const -> decltype(_blocks.rend())
+    {
+        return _blocks.rend();
     }
 
     auto front() const -> decltype(_blocks.front())
@@ -81,7 +121,7 @@ public:
         _blocks.resize(size);
     }
 
-    auto at(std::size_t index) -> decltype(_blocks.at(index))
+    auto at(std::size_t index) const -> decltype(_blocks.at(index))
     {
         return _blocks.at(index);
     }
@@ -133,8 +173,9 @@ public:
     void updateUnspentTxOuts();
     
     const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
+    UnspentTxOuts getUnspentTxOuts(std::string_view address);
 
-    bool createTransaction(std::string_view receiver, double amount, std::string_view privateKey);
+    TxResult createTransaction(std::string_view receiver, double amount, std::string_view privateKey);
 
     void getTransactionsToBeMined(Block& block);
     std::size_t reQueueTransactions(Block& block);

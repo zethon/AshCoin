@@ -63,7 +63,10 @@ public:
     }
 
 private:
-    void initRest();
+    void initHttp();
+    void initWebService();
+    void initRestService();
+
     void initWebSocket();
     void initPeers();
 
@@ -108,7 +111,7 @@ private:
     Miner                   _miner;
     std::thread             _mineThread;
 
-    SpdLogPtr                _logger;
+    SpdLogPtr               _logger;
 };
 
 } // namespace

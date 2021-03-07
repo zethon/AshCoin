@@ -52,9 +52,11 @@ endif()
 z_compile_resources(RESOURCE_FILES
     html/address.html
     html/block.html
-    html/createTx.html
+    html/createtx.html
     html/index.html
+    html/tx.html
     html/style.css
+    html/common.js
 )
 
 add_executable(ash

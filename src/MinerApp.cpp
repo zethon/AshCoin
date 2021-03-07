@@ -11,7 +11,9 @@
 #include "address_html.h"
 #include "style_css.h"
 #include "block_html.h"
-#include "createTx_html.h"
+#include "createtx_html.h"
+#include "common_js.h"
+#include "tx_html.h"
 
 #include "CryptoUtils.h"
 #include "utils.h"
@@ -26,8 +28,6 @@ namespace bfs = boost::filesystem;
 
 namespace ash
 {
-
-constexpr std::string_view GENESIS_BLOCK = "HenryCoin Genesis";
 
 MinerApp::MinerApp(SettingsPtr settings)
     : _settings{ std::move(settings) },
@@ -66,6 +66,31 @@ MinerApp::~MinerApp()
     }
 }
 
+// looks in the given folder for the file in an `html` folder and
+// returns it if it exists, otherwise returns the passed in content
+std::string GetRawHtmlContent(std::string_view datafolder, std::string_view filename, std::string_view content)
+{
+    bfs::path file{ datafolder.data() };
+    file /= "html"; 
+    file /= filename.data();
+
+    if (bfs::is_symlink(file))
+    {
+        file = bfs::read_symlink(file);
+    }
+
+    if (bfs::exists(file))
+    {
+        std::ifstream t(file.string());
+        std::string data((std::istreambuf_iterator<char>(t)),
+            std::istreambuf_iterator<char>());
+
+        return data;
+    }
+
+    return std::string{ content };
+}
+
 void MinerApp::servePage(HttpResponsePtr response, 
     std::string_view filename, const std::string& content, const utils::Dictionary& dict)
 {
@@ -80,28 +105,9 @@ void MinerApp::servePage(HttpResponsePtr response,
     std::stringstream out;
     const std::string datafolder = _settings->value("database.folder", "");
     assert(!datafolder.empty());
-    
-    bfs::path file{ datafolder };
-    file /= "html"; 
-    file /= filename.data();
 
-    if (bfs::is_symlink(file))
-    {
-        file = bfs::read_symlink(file);
-    }
-    
-    if (bfs::exists(file))
-    {
-        std::ifstream t(file.string());
-        std::string data((std::istreambuf_iterator<char>(t)),
-            std::istreambuf_iterator<char>());
-
-        out << utils::DoDictionary(data, tempDict);
-    }
-    else
-    {
-        out << utils::DoDictionary(content.data(), tempDict);
-    }
+    auto data = GetRawHtmlContent(datafolder, filename, content);
+    out << utils::DoDictionary(data, tempDict);
 
     response->write(out);
 }
@@ -118,9 +124,32 @@ void MinerApp::getStandardDictionary(utils::Dictionary& dict)
         = std::to_string(_settings->value("rest.port", HTTPServerPortDefault));
 }
 
-void MinerApp::initRest()
+void MinerApp::initWebService()
 {
-    _httpServer.config.port = _settings->value("rest.port", HTTPServerPortDefault);
+    _httpServer.resource[R"x(^/.*?style.css$)x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+    {
+        // special handling for stylesheet
+        std::stringstream out;
+        const std::string datafolder = _settings->value("database.folder", "");
+        assert(!datafolder.empty());
+        
+        const auto data = GetRawHtmlContent(datafolder, "style.css", style_css);
+        response->write(data, {{"Content-Type", "text/css"}});
+    };
+
+    _httpServer.resource[R"x(^/.*?common.js$)x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+    {
+        // special handling for stylesheet
+        std::stringstream out;
+        const std::string datafolder = _settings->value("database.folder", "");
+        assert(!datafolder.empty());
+        
+        const auto data = GetRawHtmlContent(datafolder, "common.js", common_js);
+        response->write(data, {{"Content-Type", "text/javascript"}});
+    };
+    
     _httpServer.resource["^/$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
@@ -135,20 +164,39 @@ void MinerApp::initRest()
 
             this->servePage(response, "index.html", index_html, dict);
         };
+}
 
-    _httpServer.resource[R"x(^/.*?style.css$)x"]["GET"] =
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
+template<typename T>
+int GetIndent(const T& map)
+{
+    if (auto identit = map.find("indent"); identit != map.end())
     {
-        this->servePage(response, "style.css", style_css, {});
-    };
+        int ident = 0;
+        const auto& identstr = identit->second;
 
-    _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] = 
+        auto result =
+                std::from_chars(identstr.data(), identstr.data() + identstr.size(), ident);
+
+        if (result.ec != std::errc::invalid_argument)
+        {
+            return ident;
+        }
+    }
+
+    return -1;
+}
+
+void MinerApp::initRestService()
+{
+    // TODO: needs to be moved to /rest/block-idx
+    // TODO: maybe this can be removed entirely?
+    _httpServer.resource["^/block-idx/([0-9]+)$"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
             const auto indexStr = request->path_match[1].str();
             int index = 0;
-            auto result = 
-                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), index);
+            auto result =
+                    std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), index);
 
             std::stringstream ss;
             if (result.ec != std::errc() || index >= _blockchain->size())
@@ -164,24 +212,77 @@ void MinerApp::initRest()
                 ss << "current: " << index;
                 if (index < _blockchain->size()) ss << "&nbsp;<a href='/block-idx/" << (index + 1) << "'>next</a>&nbsp;";
             }
-            
+
             response->write(ss);
         };
 
-    _httpServer.resource["^/shutdown$"]["POST"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+    // TODO: needs to be moved to /rest/blocks/last
+    // TODO: maybe this can be removed entirely? Or maybe it should instead be /rest/last
+    _httpServer.resource["^/blocks/last/([0-9]+)$"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-            _logger->debug("shutdown request from {}", 
-                request->remote_endpoint().address().to_string());
+            const auto indexStr = request->path_match[1].str();
+            std::uint64_t startingIdx = 0;
+            auto result =
+                    std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), startingIdx);
 
-            response->write(SimpleWeb::StatusCode::success_ok, "OK");
-            this->signalExit();
+            if (result.ec == std::errc::invalid_argument)
+            {
+                return;
+            }
+
+            nl::json json;
+
+            if (startingIdx >= _blockchain->size())
+            {
+                startingIdx = 0;
+            }
+
+            for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
+            {
+                json["blocks"].push_back(_blockchain->at(idx));
+            }
+            response->write(json.dump());
         };
 
-    _httpServer.resource["^/stopMining$"]["POST"] = 
+    _httpServer.resource[R"x(^/rest/createAddress)x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            _logger->trace("/rest/createAddress request from {}", 
+                request->remote_endpoint().address().to_string());
+
+            const auto privateKey = ash::crypto::GeneratePrivateKey();
+            
+            nl::json json;
+            json["private-key"] = privateKey;
+            json["public-key"] = ash::crypto::GetPublicKey(privateKey);
+            json["address"] = ash::crypto::GetAddressFromPrivateKey(privateKey);
+
+            response->write(json.dump(4));
+        };
+
+    _httpServer.resource["^/rest/startMining$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
-            _logger->debug("stopMining request from {}", 
+            _logger->trace("/rest/startMining request from {}", 
+                request->remote_endpoint().address().to_string());
+
+            if (this->_miningDone)
+            {
+                this->_miningDone = false;
+                this->_mineThread = std::thread(&MinerApp::runMineThread, this);
+                response->write(SimpleWeb::StatusCode::success_ok, "OK");
+            }
+            else
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+            }
+        };
+
+    _httpServer.resource["^/rest/stopMining$"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            _logger->debug("/rest/stopMining request from {}", 
                 request->remote_endpoint().address().to_string());
 
             if (!this->_miningDone)
@@ -199,101 +300,169 @@ void MinerApp::initRest()
             }
         };
 
-    _httpServer.resource["^/startMining$"]["POST"] = 
+    _httpServer.resource["^/rest/shutdown$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
-            _logger->trace("startMining request from {}", 
+            _logger->debug("shutdown request from {}", 
                 request->remote_endpoint().address().to_string());
 
-            if (this->_miningDone)
+            response->write(SimpleWeb::StatusCode::success_ok, "OK");
+            this->signalExit();
+        };
+
+    _httpServer.resource[R"x(^/rest/createtx)x"]["POST"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            const nl::json json = 
+                nl::json::parse(request->content.string(), nullptr, false);
+                
+            if (json.is_discarded() 
+                || !json.contains("toaddress")
+                || !json.contains("privatekey")
+                || !json.contains("amount")
+                || !json["amount"].is_number())
             {
-                this->_miningDone = false;
-                this->_mineThread = std::thread(&MinerApp::runMineThread, this);
-                response->write(SimpleWeb::StatusCode::success_ok, "OK");
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+                return;
+            }
+            
+            const auto toaddress = json["toaddress"].get<std::string>();
+            const auto privateKey = json["privatekey"].get<std::string>();
+            const auto amount = json["amount"].get<double>();
+
+            std::lock_guard<std::mutex> lock{_chainMutex};
+            if (auto status = _blockchain->createTransaction(toaddress, amount, privateKey);
+                status == ash::TxResult::SUCCESS)
+            {
+                response->write(SimpleWeb::StatusCode::success_created);
+                return;
             }
             else
             {
-                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+                _logger->error("could not create new transaction"); 
+                response->write(SimpleWeb::StatusCode::client_error_bad_request,"BAD");
+                return;
             }
         };
 
-    _httpServer.resource["^/summary$"]["GET"] = 
+    _httpServer.resource["^/rest/summary$"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
             nl::json jresponse;
             jresponse["blocks"].push_back(_blockchain->back());
             jresponse["cumdiff"] = _blockchain->cumDifficulty();
             jresponse["difficulty"] = _miner.difficulty();
-
-            if (!this->_miningDone)
-            {
-                jresponse["status"] = "mining #" + std::to_string(_blockchain->back().index() + 1);
-            }
-            else
-            {
-                jresponse["status"] = "stopped";
-            }
-
+            jresponse["mining"] = !this->_miningDone;
             response->write(jresponse.dump());
         };
 
-    _httpServer.resource["^/blocks/last/([0-9]+)$"]["GET"] = 
+    _httpServer.resource[R"x(^/rest/block/([0-9,]+))x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
+            std::uint64_t blockIndex = 0u;
             const auto indexStr = request->path_match[1].str();
-            std::uint64_t startingIdx = 0;
+            
             auto result = 
-                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), startingIdx);
+                std::from_chars(indexStr.data(), indexStr.data() + indexStr.size(), blockIndex);
 
             if (result.ec == std::errc::invalid_argument)
             {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
                 return;
             }
 
+            // ok NOW let's lock
+            std::lock_guard<std::mutex> lock{_chainMutex};
+
+            if (blockIndex >= _blockchain->size())
+            {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
+                return;
+            }
+
+            const auto& block = ash::GetBlockDetails(*_blockchain, blockIndex);
+            assert(block.index() == blockIndex);
+
+            nl::json json = block;
+            auto indent = ash::GetIndent(request->parse_query_string());
+            response->write(json.dump(indent));
+            return;
+        };
+
+    // returns a list of unspent txouts for either the entire chain or
+    // a specific address
+    _httpServer.resource[R"x(^/rest/unspent(?:/+|(?:/([0-9a-zA-Z]+)))?$)x"]["GET"] = 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        {
+            std::lock_guard<std::mutex> lock{ _chainMutex };
             nl::json json;
 
-            startingIdx = std::max(
-		        static_cast<std::uint64_t>(0), 
-                static_cast<std::uint64_t>(_blockchain->size() - startingIdx));
-
-            for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
+            if (request->path_match.size() > 1
+                && request->path_match[1].str().size() > 0)
             {
-                json["blocks"].push_back(_blockchain->at(idx));
+                
+                json = ash::GetUnspentTxOuts(*_blockchain, request->path_match[1].str());
             }
-            response->write(json.dump());
+            else
+            {
+                json = ash::GetUnspentTxOuts(*_blockchain);
+            }
+
+            auto ident = ash::GetIndent(request->parse_query_string());
+            response->write(json.dump(ident));
         };
 
-    _httpServer.resource["^/addPeer/((?:[0-9]{1,3}\\.){3}[0-9]{1,3})$"]["GET"] = 
+    // returns the ledger info for a particular address
+    _httpServer.resource[R"x(^/rest/address/([0-9a-zA-Z]+))x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-            response->write("<h1>peer added</h1>");
+            const auto address = request->path_match[1].str();
+
+            std::lock_guard<std::mutex> lock{ _chainMutex };
+            nl::json json = ash::GetAddressLedger(*_blockchain, address);
+
+            auto indent = ash::GetIndent(request->parse_query_string());
+            response->write(json.dump(indent));
         };
 
-    _httpServer.resource["^/address/(.*?)$"]["GET"] =
-    _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)(?:\/(json)){0,1})x"]["GET"] =
+    // get details about a specific transaction
+    _httpServer.resource[R"x(^/rest/tx/([0-9a-zA-Z]+))x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            const auto transaction = request->path_match[1].str();
+
+            std::lock_guard<std::mutex> lock{ _chainMutex };
+            auto txpt = ash::FindTransaction(*_blockchain, transaction);
+            if (txpt.has_value())
+            {
+                auto [blockindex, txindex] = *txpt;
+                auto tempblock = ash::GetBlockDetails(*_blockchain, blockindex);
+                nl::json json = tempblock.transactions().at(txindex);
+
+                // add some more info about the block itself so we don't have to look it up
+                json["blockindex"] = tempblock.index();
+                json["time"] = static_cast<std::uint64_t>(tempblock.time().time_since_epoch().count());
+
+                auto indent = ash::GetIndent(request->parse_query_string());
+                response->write(json.dump(indent));
+            }
+            response->write(SimpleWeb::StatusCode::client_error_not_found);
+        };
+}
+
+void MinerApp::initHttp()
+{
+    _httpServer.config.port = _settings->value("rest.port", HTTPServerPortDefault);
+    initWebService();
+    initRestService();
+
+    // get the transaction history and balance of a given address
+    _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)$)x"]["GET"] =
             [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-            std::lock_guard<std::mutex> lock{_chainMutex};
-            const auto& unspent = this->_blockchain->unspentTransactionOuts();
-
             const auto address = request->path_match[1].str();
-            auto results = unspent | ranges::views::filter(
-                [address](const UnspentTxOut& txout) 
-                { 
-                    return txout.address == address; 
-                });
-
-            double total = std::accumulate(
-                std::begin(results), std::end(results), 0.0,
-                [](const auto& x, const auto& y)
-                {
-                    return x + y.amount;
-                });
-
             utils::Dictionary dict;
             dict["%address%"] = address;
-            dict["%balance%"] = std::to_string(total);
-
             this->servePage(response, "address.html", address_html, dict);
         };
 
@@ -348,64 +517,19 @@ void MinerApp::initRest()
             this->servePage(response, "block.html", block_html, dict);
         };
 
-    _httpServer.resource[R"x(^/createTx)x"]["GET"] =
+    _httpServer.resource[R"x(^/createtx)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-            this->servePage(response, "createTx.html", createTx_html, {});
+            this->servePage(response, "createtx.html", createtx_html, {});
         };
 
-    _httpServer.resource[R"x(^/createTx)x"]["POST"] =
+    _httpServer.resource[R"x(^/tx/([0-9a-zA-Z]+)$)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-            const nl::json json = 
-                nl::json::parse(request->content.string(), nullptr, false);
-            if (json.is_discarded() 
-                || !json.contains("toaddress")
-                || !json.contains("privatekey")
-                || !json.contains("amount")
-                || !json["amount"].is_number())
-            {
-                response->write(SimpleWeb::StatusCode::client_error_bad_request);
-                return;
-            }
-            
-            const auto toaddress = json["toaddress"].get<std::string>();
-            const auto privateKey = json["privatekey"].get<std::string>();
-            const auto amount = json["amount"].get<double>();
-
-            std::lock_guard<std::mutex> lock{_chainMutex};
-            if (_blockchain->createTransaction(toaddress, amount, privateKey))
-            {
-                response->write("Ok");
-                return;
-            }
-            else
-            {
-                _logger->error("could not create new transaction"); 
-                response->write(SimpleWeb::StatusCode::client_error_bad_request);
-                return;
-            }
-        };
-
-    _httpServer.resource[R"x(^/createAddress)x"]["GET"] =
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
-        {
-            const auto privateKey = ash::crypto::GeneratePrivateKey();
-            
-            nl::json json;
-            json["private-key"] = privateKey;
-            json["public-key"] = ash::crypto::GetPublicKey(privateKey);
-            json["address"] = ash::crypto::GetAddressFromPrivateKey(privateKey);
-
-            response->write(json.dump(4));
-        };
-
-    _httpServer.resource[R"x(^/unspentTxOuts)x"]["GET"] =
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
-        {
-            std::lock_guard<std::mutex> lock{_chainMutex};
-            nl::json j = this->_blockchain->unspentTransactionOuts();
-            response->write(j.dump(4));
+            const auto tx = request->path_match[1].str();
+            utils::Dictionary dict;
+            dict["%transaction%"] = tx;
+            this->servePage(response, "tx.html", tx_html, dict);
         };
 }
 
@@ -466,7 +590,7 @@ void MinerApp::initPeers()
     _peers.connectAll(
         [](WsClientConnPtr conn)
         {
-            // when connecting to a peer, ask if for its peer
+            // when connecting to a peer, ask if for its chain
             conn->send(R"({"message":"summary", "message-type":"request"})");
         });
 }
@@ -480,7 +604,7 @@ void MinerApp::run()
         return;
     }
 
-    initRest();
+    initHttp();
     initWebSocket();
     initPeers();
 
@@ -490,9 +614,12 @@ void MinerApp::run()
             Transactions txs;
             txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
             Block gen{ 0, "", std::move(txs) };
+            gen.setMiner(this->_uuid);
 
             std::time_t t = std::time(nullptr);
-            const auto gendata = fmt::format("{} {:%Y-%m-%d %H:%M:%S %Z}.", GENESIS_BLOCK, *std::localtime(&t));
+            const auto gendata = 
+                fmt::format("Gensis Block created {:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&t));
+
             gen.setData(gendata);
             _logger->debug("creating gensis block with data '{}'", gendata);
 
@@ -505,7 +632,7 @@ void MinerApp::run()
     _httpThread = std::thread(
         [this]()
         {
-            _logger->debug("http server listening on port {}", _httpServer.config.port);
+            _logger->info("http server listening on port {}", _httpServer.config.port);
             _httpServer.start();
         });
 
@@ -569,13 +696,13 @@ void MinerApp::runMineThread()
 
             newblock = std::make_unique<Block>(index, prevHash, std::move(txs));
             newblock->setMiner(_uuid);
-            newblock->setData(fmt::format("coinbase block#{}", index));
+            newblock->setData(fmt::format("coinbase block #{}", index));
 
             // grab everything from the tx queue
             this->_blockchain->getTransactionsToBeMined(*newblock);
         }
     
-        _logger->debug("mining block #{}, difficulty={}, tx-count={}", 
+        _logger->debug("mining block #{}, difficulty={}, transactions={}",
             index, _miner.difficulty(), newblock->transactions().size());
 
         auto result = _miner.mineBlock(*newblock, keepMiningCallback);
