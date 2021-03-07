@@ -193,13 +193,6 @@ std::string GetTransactionId(const Transaction& tx, std::uint64_t blockid)
     return digest;
 }
 
-TxResult CreateTransaction(
-        std::string_view receiver, double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts)
-{
-    //const std::string sender
-    return {};
-}
-
 Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address)
 {
     Transaction tx;

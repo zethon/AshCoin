@@ -43,13 +43,10 @@ void from_json(const nl::json& j, UnspentTxOuts& txout);
 
 enum class TxResult
 {
-    SUCCESS,
+    SUCCESS = 0,
     INSUFFICIENT_FUNDS,
     TXOUTS_EMPTY
 };
-
-TxResult CreateTransaction(
-        std::string_view receiver, double amount, std::string_view privateKey, const UnspentTxOuts& unspentTxOuts);
 
 Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address);
 
@@ -128,12 +125,6 @@ class TxOut final
 {
 
 public:
-    enum class Type : std::uint8_t
-    {
-        NONE = 0,
-        COINBASE,
-        LEFTOVER
-    };
 
     TxOut() = default;
     TxOut(std::string_view address, double amount)
@@ -151,7 +142,6 @@ private:
 
     std::string _address;   // public-key/address of receiver
     double      _amount;
-    Type        _type = Type::NONE;
 
 };
 

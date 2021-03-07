@@ -3,26 +3,19 @@
 <link rel="shortcut icon" href="#" />
 <link rel="stylesheet" href="/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="/common.js"></script>
 <script src="https://rawgit.com/moment/moment/2.2.1/min/moment.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript">
-var restUrl = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
 
 function onSendComplete()
 {
     console.log("onSendComplete()");
 }
 
-function onSendError(error)
+function onSendError()
 {
-    if (error !== undefined && error.length > 0)
-    {
-        $('#status').text(error);
-    }
-    else
-    {
-        $('#status').text("There was an error!");
-    }
+    $('#status').text("There was an error!");
 }
 
 function clearMessages()
@@ -42,7 +35,7 @@ function clearInputs()
 
 function onSendClick()
 {
-    console.log("submitting request to: " + restUrl + "/rest/createtx");
+    console.log("submitting request to: " + ServerUrl + "/rest/createtx");
     
     clearMessages();
     // clearInputs();
@@ -73,7 +66,6 @@ function onSendClick()
     {
         $("#confirm-msg").text("You must confirm this!");
         return;
-
     }
 
     var requestStr = JSON.stringify({
@@ -82,9 +74,9 @@ function onSendClick()
         amount : Number($("#amount").val()),
     });
 
-    console.log("submitting request to: " + restUrl + "/rest/createtx");
+    console.log("submitting request to: " + ServerUrl + "/rest/createtx");
     $.ajax({
-        url: restUrl + "/rest/createtx",
+        url: ServerUrl + "/rest/createtx",
         type: 'POST',
         data: requestStr,
         success: onSendComplete(),
