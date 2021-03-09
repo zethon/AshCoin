@@ -24,6 +24,7 @@ set(HEADER_FILES
     Miner.h
     MinerApp.h
     PeerManager.h
+    ProblemDetails.h
     Settings.h
     Transactions.h
     utils.h
@@ -57,6 +58,7 @@ z_compile_resources(RESOURCE_FILES
     html/tx.html
     html/style.css
     html/common.js
+    html/header.html
 )
 
 add_executable(ash

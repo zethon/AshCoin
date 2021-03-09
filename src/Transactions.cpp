@@ -137,16 +137,6 @@ void from_json(const nl::json& j, Transactions& txs)
     }
 }
 
-// void to_json(nl::json& j, const UnspentTxOut& unspent)
-// {
-//     to_json(j, static_cast<const TxOutPoint&>(unspent));
-// }
-
-// void from_json(const nl::json& j, UnspentTxOut& unspent)
-// {
-//     from_json(j, static_cast<TxOutPoint&>(unspent));
-// }
-
 void to_json(nl::json& j, const UnspentTxOuts& outs)
 {
     for (const auto& tx : outs)
