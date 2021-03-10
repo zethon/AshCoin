@@ -35,6 +35,8 @@ void to_json(nl::json& j, const AddressLedger& ledger);
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address = {});
 AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& address);
 
+TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount);
+
 // 0 - block index, 1 - tx index
 using TxPoint = std::tuple<std::uint64_t, std::uint64_t>;
 std::optional<TxPoint> FindTransaction(const Blockchain& chain, std::string_view txid);
@@ -54,12 +56,10 @@ struct LedgerInfo
 //  client handles synchronization
 class Blockchain final
 {
-    std::vector<Block>  _blocks;
-    
+    std::vector<Block>          _blocks;
     UnspentTxOuts               _unspentTxOuts;
     std::queue<Transaction>     _txQueue; // transactions waiting to be mined by this miner
-    
-    SpdLogPtr           _logger;
+    SpdLogPtr                   _logger;
 
     friend class ChainDatabase;
     friend void to_json(nl::json& j, const Blockchain& b);
@@ -72,9 +72,6 @@ public:
 
     Blockchain(Blockchain&&) = default;
     Blockchain& operator=(const Blockchain&) = default;
-
-    // Blockchain(const Blockchain&) = delete;
-    // Blockchain& operator=(Blockchain&&) = delete;
     
     auto begin() const -> decltype(_blocks.begin())
     {
@@ -175,7 +172,10 @@ public:
     const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
     UnspentTxOuts getUnspentTxOuts(std::string_view address);
 
-    TxResult createTransaction(std::string_view receiver, double amount, std::string_view privateKey);
+    void queueTransaction(Transaction&& tx)
+    {
+        _txQueue.push(std::move(tx));
+    }
 
     void getTransactionsToBeMined(Block& block);
     std::size_t reQueueTransactions(Block& block);

@@ -341,7 +341,7 @@ void MinerApp::initRestService()
             const auto amount = json["amount"].get<double>();
 
             std::lock_guard<std::mutex> lock{_chainMutex};
-            if (auto status = _blockchain->createTransaction(toaddress, amount, privateKey);
+            if (auto status = ash::CreateTransaction(*_blockchain, privateKey, toaddress, amount);
                 status == ash::TxResult::SUCCESS)
             {
                 response->write(SimpleWeb::StatusCode::success_created);
