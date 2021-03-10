@@ -30,7 +30,7 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{github.workspace}}/build
       
-    -name: Configure Conan
+    - name: Configure Conan
       shell: bash
       working-directory: ${{github.workspace}}/build
       run: conan $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE --build missing
