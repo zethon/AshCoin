@@ -40,20 +40,16 @@ function getTxElement(tx)
     }
 
     tr.appendChild(d.createElement('td')).innerHTML = txInHtml;
-    
-    var totalamount = 0.0;
+
     var outputHtml = '';
     for (x = 0; x < tx.outputs.length; x++)
     {
         var amount = tx.outputs[x].amount;
         var address = tx.outputs[x].address;
-
-        totalamount += tx.outputs[x].amount;
         outputHtml += `<a href='${restUrl}/address/${address}'>${address}</a>: ${amount}<br/>`;
     }
 
     tr.appendChild(d.createElement('td')).innerHTML = outputHtml;
-    tr.appendChild(d.createElement('td')).innerHTML = totalamount;
     return tr;
 }
 
@@ -102,41 +98,13 @@ function onLoad()
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 300px;
+    max-width: 200px;
 }
 
 </style>
 </head>
 <body onload="javascript:onLoad();">
-
-<!-- HEADER -->
-<table cellspacing="0" cellpadding="0" class="header-table">
-<tr>
-    <td><h2>%app-title% (%app-domain%)</h2></td>
-    <td>
-        <table class="header-table">
-            <tr>
-                <td align="right">
-                    <a href="/"><i class="fa fa-home"></i></a>&nbsp;
-                </td>
-                <td style="width: 1%; white-space: nowrap;">
-                    <!-- <div style="text-align:right;"> -->
-                        <select id="mainmenu">
-                            <option selected="true" disabled="disabled">-</option>
-                            <option value="createAddress">Create Address</option>
-                            <option value="createtx">Create Transaction</option>
-                            <option value="mining">Start Mining</option>
-                            <option value="shutdown">Shutdown</option>
-                        </select>
-                        <button onclick="javascript:onMainMenuAction();">Go</button>
-                    <!-- </div> -->
-                </td>
-            </tr>
-        </table>
-    </td>
-</tr>
-</table>
-<!-- /HEADER -->
+%header_html%
 
 <table class="info-table">
     <tr>
@@ -161,18 +129,12 @@ function onLoad()
         <th>Transaction ID</th>
         <th>From (amount)</th>
         <th>To (amount)</th>
-        <th>Amount</th>
     </tr>
 
     <tbody id="data-list">
     </tbody>
 </table>
 
-<!-- FOOTER -->
-<br/>
-<hr/>
-<small>%app-copyright% (<a href="%app-github%" target="_blank">%app-github%</a>)</small>
-<!-- /FOOTER -->
-
+%footer_html%
 </body>
 </html>

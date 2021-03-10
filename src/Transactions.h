@@ -6,6 +6,8 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <fmt/core.h>
+
 #include <nlohmann/json.hpp>
 
 namespace nl = nlohmann;
@@ -46,6 +48,70 @@ enum class TxResult
     SUCCESS = 0,
     INSUFFICIENT_FUNDS,
     TXOUTS_EMPTY
+};
+
+class TxResultValue
+{
+    const TxResult  _value;
+public:
+    static std::string ToString(TxResult v)
+    {
+        switch (v)
+        {
+            default:
+                throw std::runtime_error("unknown TxResult");
+
+            case TxResult::SUCCESS:
+                return "success";
+
+            case TxResult::INSUFFICIENT_FUNDS:
+                return "insufficient_fund";
+
+            case TxResult::TXOUTS_EMPTY:
+                return "txouts_empty";
+        }
+
+        assert(false);
+        return {}; // should never happen
+    }
+
+    static TxResult FromString(std::string_view str)
+    {
+        if (str == "success")
+        {
+            return TxResult::SUCCESS;
+        }
+        else if (str == "insufficient_funds")
+        {
+            return TxResult::INSUFFICIENT_FUNDS;
+        }
+        else if (str == "txouts_empty")
+        {
+            return TxResult::TXOUTS_EMPTY;
+        }
+
+        throw std::runtime_error(fmt::format("unknown TxResult '{}'", str));
+    }
+
+    explicit TxResultValue(TxResult v)
+        : _value { v }
+    {
+    }
+
+    explicit TxResultValue(std::string_view str)
+        : _value { FromString(str) }
+    {
+    }
+
+    operator std::string() const
+    {
+        return TxResultValue::ToString(_value);
+    }
+
+    operator TxResult() const
+    {
+        return _value;
+    }
 };
 
 Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address);

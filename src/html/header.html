@@ -1,0 +1,53 @@
+<!-- HEADER -->
+<script type="text/javascript">
+function onMainMenuAction()
+{
+    var selected = $('#mainmenu').val();
+    console.log("MainMenu: " + selected);
+    switch (selected)
+    {
+        default:
+            if (onLocalCallback) onLocalCallback(selected);
+        break;
+
+        case 'createAddress':
+            window.location.assign(ServerUrl + '/rest/' + selected);
+        break;
+
+        case 'createtx':
+            window.location.assign(ServerUrl + '/' + selected);
+        break;
+
+        case 'shutdown':
+
+    }
+}
+</script>
+
+<table cellspacing="0" cellpadding="0" class="header-table">
+    <tr>
+        <td><h2>%app-title% (%app-domain%)</h2></td>
+        <td>
+            <table class="header-table">
+                <tr>
+                    <td align="right">
+                        <a href="/"><i class="fa fa-home"></i></a>&nbsp;
+                    </td>
+                    <td style="width: 1%; white-space: nowrap;">
+                        <!-- <div style="text-align:right;"> -->
+                        <select id="mainmenu">
+                            <option selected="true" disabled="disabled">-</option>
+                            <option value="createAddress">Create Address</option>
+                            <option value="createtx">Create Transaction</option>
+                            <option value="mining">Start Mining</option>
+                            <option value="shutdown">Shutdown</option>
+                        </select>
+                        <button onclick="javascript:onMainMenuAction();">Go</button>
+                        <!-- </div> -->
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+<!-- /HEADER -->

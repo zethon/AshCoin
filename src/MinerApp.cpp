@@ -14,12 +14,15 @@
 #include "createtx_html.h"
 #include "common_js.h"
 #include "tx_html.h"
+#include "header_html.h"
+#include "footer_html.h"
 
 #include "CryptoUtils.h"
 #include "utils.h"
 #include "core.h"
 #include "ComputerUUID.h"
 #include "Transactions.h"
+#include "ProblemDetails.h"
 
 #include "MinerApp.h"
 
@@ -102,10 +105,17 @@ void MinerApp::servePage(HttpResponsePtr response,
     tempDict["%build-date%"] = BUILDTIMESTAMP;
     tempDict["%build-version%"] = VERSION;
 
-    std::stringstream out;
     const std::string datafolder = _settings->value("database.folder", "");
     assert(!datafolder.empty());
 
+    // process the header and footer
+    auto header_text = GetRawHtmlContent(datafolder, "header.html", header_html);
+    tempDict["%header_html%"] = utils::DoDictionary(header_text, tempDict);
+
+    auto footer_text = GetRawHtmlContent(datafolder, "footer.html", footer_html);
+    tempDict["%footer_html%"] = utils::DoDictionary(footer_text, tempDict);
+
+    std::stringstream out;
     auto data = GetRawHtmlContent(datafolder, filename, content);
     out << utils::DoDictionary(data, tempDict);
 
@@ -331,7 +341,7 @@ void MinerApp::initRestService()
             const auto amount = json["amount"].get<double>();
 
             std::lock_guard<std::mutex> lock{_chainMutex};
-            if (auto status = _blockchain->createTransaction(toaddress, amount, privateKey);
+            if (auto status = ash::CreateTransaction(*_blockchain, privateKey, toaddress, amount);
                 status == ash::TxResult::SUCCESS)
             {
                 response->write(SimpleWeb::StatusCode::success_created);
@@ -339,8 +349,15 @@ void MinerApp::initRestService()
             }
             else
             {
-                _logger->error("could not create new transaction"); 
-                response->write(SimpleWeb::StatusCode::client_error_bad_request,"BAD");
+                ProblemDetail details;
+                details.type = fmt::format("/createx/{}", TxResultValue::ToString(status));
+                details.title = TxResultValue::ToString(status);
+                details.status = static_cast<std::uint32_t>(SimpleWeb::StatusCode::server_error_internal_server_error);
+                details.instance = request->path;
+
+                nl::json error = details;
+                _logger->error("could not create new transaction: {}", details.title);
+                response->write(SimpleWeb::StatusCode::server_error_internal_server_error, error.dump());
                 return;
             }
         };
@@ -456,6 +473,7 @@ void MinerApp::initHttp()
     initWebService();
     initRestService();
 
+    // TODO: needs to be refactored/revisited
     // get the transaction history and balance of a given address
     _httpServer.resource[R"x(^/address/([0-9a-zA-Z]+)$)x"]["GET"] =
             [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
@@ -466,6 +484,7 @@ void MinerApp::initHttp()
             this->servePage(response, "address.html", address_html, dict);
         };
 
+    // TODO: needs to be refactored/revisited
     _httpServer.resource[R"x(^/block/([0-9,]+)(?:\/(json)){0,1})x"]["GET"] = 
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
         {
@@ -517,12 +536,7 @@ void MinerApp::initHttp()
             this->servePage(response, "block.html", block_html, dict);
         };
 
-    _httpServer.resource[R"x(^/createtx)x"]["GET"] =
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
-        {
-            this->servePage(response, "createtx.html", createtx_html, {});
-        };
-
+    // information to view details of a specific transaction
     _httpServer.resource[R"x(^/tx/([0-9a-zA-Z]+)$)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
@@ -530,6 +544,13 @@ void MinerApp::initHttp()
             utils::Dictionary dict;
             dict["%transaction%"] = tx;
             this->servePage(response, "tx.html", tx_html, dict);
+        };
+
+    // basic webpage to create a transaction
+    _httpServer.resource[R"x(^/createtx)x"]["GET"] =
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
+        {
+            this->servePage(response, "createtx.html", createtx_html, {});
         };
 }
 

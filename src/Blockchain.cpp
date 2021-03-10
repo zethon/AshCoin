@@ -165,6 +165,62 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
     return ledger;
 }
 
+TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount)
+{
+    // first get the address of the sender from the privateKey
+    const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(senderPK);
+
+    // now get all of the unspent txouts of the sender
+    auto senderUnspentList = ash::GetUnspentTxOuts(chain, senderAddress);
+    if (senderUnspentList.size() == 0)
+    {
+        return TxResult::TXOUTS_EMPTY;
+    }
+
+    double currentAmount = 0;
+    double leftoverAmount = 0;
+    ash::UnspentTxOuts includedUnspentOuts;
+
+    for (const auto& unspent : senderUnspentList)
+    {
+        assert(unspent.amount.has_value());
+
+        includedUnspentOuts.push_back(unspent);
+        currentAmount += *(unspent.amount);
+        if (currentAmount >= amount)
+        {
+            leftoverAmount = currentAmount - amount;
+            break;
+        }
+    }
+
+    if (currentAmount < amount)
+    {
+        return TxResult::INSUFFICIENT_FUNDS;
+    }
+
+    ash::Transaction tx;
+    auto& txins = tx.txIns();
+
+    for (const auto& uout : includedUnspentOuts)
+    {
+        // TODO: Signature!!!
+        txins.emplace_back(uout.blockIndex,
+                           uout.txIndex, uout.txOutIndex, "signature");
+    }
+
+    auto& outs = tx.txOuts();
+    outs.emplace_back(receiver, amount);
+    if (leftoverAmount > 0)
+    {
+        outs.emplace_back(senderAddress, leftoverAmount);
+    }
+
+    chain.queueTransaction(std::move(tx));
+
+    return TxResult::SUCCESS;
+}
+
 // TODO: The implementation of this should be improved to be faster
 // perhaps with a persisted index or something
 std::optional<TxPoint> FindTransaction(const Blockchain& chain, std::string_view txid)
@@ -360,62 +416,6 @@ void Blockchain::updateUnspentTxOuts()
     // }
     
     _logger->debug("blockchain contains {} unspent transactions", _unspentTxOuts.size());
-}
-
-TxResult Blockchain::createTransaction(std::string_view receiver, double amount, std::string_view privateKey)
-{
-    // first get the address of the sender from the privateKey
-    const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(privateKey);
-
-    // now get all of the unspent txouts of the sender
-    auto senderUnspentList = ash::GetUnspentTxOuts(*this, senderAddress);
-    if (senderUnspentList.size() == 0)
-    {
-        return TxResult::TXOUTS_EMPTY;
-    }
-
-    double currentAmount = 0;
-    double leftoverAmount = 0;
-    ash::UnspentTxOuts includedUnspentOuts;
-    
-    for (const auto& unspent : senderUnspentList)
-    {
-        assert(unspent.amount.has_value());
-
-        includedUnspentOuts.push_back(unspent);
-        currentAmount += *(unspent.amount);
-        if (currentAmount >= amount) 
-        {
-            leftoverAmount = currentAmount - amount;
-            break;
-        }
-    }
-
-    if (currentAmount < amount)
-    {
-        return TxResult::INSUFFICIENT_FUNDS;
-    }
-
-    ash::Transaction tx;
-    auto& txins = tx.txIns();
-
-    for (const auto& uout : includedUnspentOuts)
-    {
-        // TODO: Signature!!!
-        txins.emplace_back(uout.blockIndex, 
-            uout.txIndex, uout.txOutIndex, "signature");
-    }
-
-    auto& outs = tx.txOuts();
-    outs.emplace_back(receiver, amount);
-    if (leftoverAmount > 0)
-    {
-        outs.emplace_back(senderAddress, leftoverAmount);
-    }
-
-    _txQueue.push(std::move(tx));
-
-    return TxResult::SUCCESS;
 }
 
 void Blockchain::getTransactionsToBeMined(Block& block)
