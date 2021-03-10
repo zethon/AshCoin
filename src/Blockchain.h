@@ -14,7 +14,7 @@ namespace ash
 
 #ifdef _RELEASE
 constexpr auto TARGET_TIMESPAN = 10u * 60u; // in seconds
-constexpr auto TARGET_SPACING = 25u; // in blocks
+constexpr auto BLOCK_INTERVAL = 25u; // in blocks
 #else
 constexpr auto TARGET_TIMESPAN  = 60u; // in seconds
 constexpr auto BLOCK_INTERVAL   = 10u; // in blocks
