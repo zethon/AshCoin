@@ -10,12 +10,39 @@
 
 function onSendComplete()
 {
-    console.log("onSendComplete()");
+    clearMessages();
+    clearInputs();
+
+    $("#status").css("color", "green");
+    $("#status").css("visibility", "visible");
+    $("#status").text("The transaction was successfully queued");
 }
 
-function onSendError()
+function onSendError(data)
 {
-    $('#status').text("There was an error!");
+    clearMessages();
+    clearInputs();
+
+    var errorText = "There was an unspecified error creating the transaction";
+    var info = JSON.parse(data);
+    switch (info.title)
+    {
+        default:
+        break;
+
+        case "insufficient_fund":
+            errorText = "The sender did not have sufficient funds";
+        break;
+
+        case "txouts_empty":
+            errorText = "There were no funds in the sender's wallet";
+        break;
+    }
+
+
+    $("#status").css("color", "red");
+    $("#status").css("visibility", "visible");
+    $("#status").text(errorText);
 }
 
 function clearMessages()
@@ -64,7 +91,7 @@ function onSendClick()
 
     if (!($('#confirmation').is(":checked")))
     {
-        $("#confirm-msg").text("You must confirm this!");
+        $("#confirm-msg").text("You must confirm that you know what you are doing!");
         return;
     }
 
@@ -80,7 +107,10 @@ function onSendClick()
         type: 'POST',
         data: requestStr,
         success: onSendComplete(),
-        error: onSendError()
+        error: function(jqxhr)
+        {
+            onSendError(jqxhr.responseText);
+        }
     });
 }
 </script>
@@ -123,7 +153,8 @@ input[type=text]
 .address-table tr td:nth-child(1)
 {
     font-weight: bold;
-    width: 33%;
+    width: 200px;
+    max-width: 200px;
 }
 .address-table td { padding: 4px; }
 .private-key
@@ -142,23 +173,39 @@ input[type=text]
     font-weight: bold;
     color: red;
 }
+#status
+{
+    padding: 5px;
+    font-weight: bold;
+    word-wrap: anywhere;
+}
 </style>
 </head>
 
 <body>
 %header_html%
-<br/>
 
-<div class="warning"><center><b><big>WARNING!</big></b></center>This page does not ask for a confirmation! Once you click "Send" the funds are sent! Be sure all information is correct!</div>
-<br/>
-<span id="status"></span>
 <table class="address-table">
     <tr>
         <th colspan="100%">Create Transaction</th>
     </tr>
 
     <tr>
-        <td><div class="private-key">Private Key</div><small>Using this page exposes your private key over the Internet. You have been warned! - Henry</small></small></td>
+        <td colspan="100%">
+            <div class="warning">
+                <center>
+                    <b>WARNING!!!</b>
+                </center>
+                <ul>
+                    <li>This page does not ask for a confirmation! Once you click "Send" the funds are sent! Be sure all information is correct!</li>
+                    <li>Using this page exposes your <b>Private Key</b> over the Internet. You have been warned!</li>
+                </ul>
+            </div>
+        </td>
+    </tr>
+
+    <tr>
+        <td><div class="private-key">Private Key</div></td>
         <td><textarea id="privatekey"></textarea><span id="privatekey-msg"></span></td>
     </tr>
     <tr>
@@ -169,24 +216,24 @@ input[type=text]
         <td>Amount</td>
         <td><input type="text" id="amount"/><br/><span id="amount-msg"></span></td>
     </tr>
+
     <tr>
-        <td>Confirmation</td>
-        <td>
-            <input type="checkbox" id="confirmation"/><label for="confirmation">I confirm that I know what I am doing</label>
-            <br/>
-            <span id="confirm-msg"></span>
-        </td>
+        <td>Status</td>
+        <td id="status"></td>
     </tr>
+
     <tr>
-        <td colspan="100%">
+        <td colspan="100%" style="padding-left:20%; padding-right:20%;">
             <center>
+                <input type="checkbox" id="confirmation"/><label for="confirmation">&nbsp;I confirm that I know what I am doing</label>
+                <br/>
+                <div id="confirm-msg"></div>
+                <br/>
                 <button onclick="javascript:onSendClick();">Send Coins</button>
             </center>
         </td>
     </tr>
 </table>
-
-<br/>
 
 <!-- FOOTER -->
 <br/>

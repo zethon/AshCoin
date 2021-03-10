@@ -1,3 +1,24 @@
+<script type="text/javascript">
+function onMainMenuAction()
+{
+    var selected = $('#mainmenu').val();
+    console.log("MainMenu: " + selected);
+    switch (selected)
+    {
+        default:
+            if (onLocalCallback) onLocalCallback(selected);
+        break;
+
+        case 'createAddress':
+            window.location.assign(ServerUrl + '/rest/' + selected);
+        break;
+
+        case 'createtx':
+            window.location.assign(ServerUrl + '/' + selected);
+        break;
+    }
+}
+</script>
 <!-- HEADER -->
 <table cellspacing="0" cellpadding="0" class="header-table">
     <tr>
