@@ -1,10 +1,6 @@
 name: CMake
 
-# Can't get Ubuntu to work right now so we'll disable it while
-# I work on macos and windows
-on:
-  push:
-    branches: [ DISABLED ]
+on: [push]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -12,7 +8,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -22,12 +18,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-
-    - name: Install GCC10
-      shell: bash
-      run:  |
-            sudo apt update
-            sudo apt install gcc-10 g++-10
 
     - name: Get Conan
       uses: turtlebrowser/get-conan@v1.0
@@ -41,15 +31,12 @@ jobs:
     - name: Configure Conan
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE -s compiler=gcc -s compiler.version=10 --build missing
+      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE --build missing
 
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-      env:
-        CC:   gcc-10
-        CXX:  g++-10
 
     - name: Build
       working-directory: ${{github.workspace}}/build
