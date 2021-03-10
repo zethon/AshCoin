@@ -59,6 +59,7 @@ z_compile_resources(RESOURCE_FILES
     html/style.css
     html/common.js
     html/header.html
+    html/footer.html
 )
 
 add_executable(ash

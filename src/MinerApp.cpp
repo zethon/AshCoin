@@ -15,6 +15,7 @@
 #include "common_js.h"
 #include "tx_html.h"
 #include "header_html.h"
+#include "footer_html.h"
 
 #include "CryptoUtils.h"
 #include "utils.h"
@@ -107,9 +108,12 @@ void MinerApp::servePage(HttpResponsePtr response,
     const std::string datafolder = _settings->value("database.folder", "");
     assert(!datafolder.empty());
 
-    // process the header first
+    // process the header and footer
     auto header_text = GetRawHtmlContent(datafolder, "header.html", header_html);
     tempDict["%header_html%"] = utils::DoDictionary(header_text, tempDict);
+
+    auto footer_text = GetRawHtmlContent(datafolder, "footer.html", footer_html);
+    tempDict["%footer_html%"] = utils::DoDictionary(footer_text, tempDict);
 
     std::stringstream out;
     auto data = GetRawHtmlContent(datafolder, filename, content);
