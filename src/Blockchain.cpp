@@ -57,7 +57,7 @@ UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& addre
             return std::hash<UnspentTxOut>{}(a) < std::hash<UnspentTxOut>{}(b);
         };
 
-    std::set<UnspentTxOut, decltype(cmp)> outs;
+    std::set<UnspentTxOut, decltype(cmp)> outs(cmp);
 
     for (const auto& block : chain)
     {
