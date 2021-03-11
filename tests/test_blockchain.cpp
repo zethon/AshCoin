@@ -90,16 +90,16 @@ BOOST_DATA_TEST_CASE(getBlockUnspentTxOuts, data::make(unspentDataBlockTest), bl
     // BOOST_TEST(expectedCopy == actualUnspent, boost::test_tools::per_element());
 }
 
-using UnspentTestChainData = std::tuple<std::string, std::string, ash::UnspentTxOuts>;
-const UnspentTestChainData unspentDataChainTest[]
-{
-//    UnspentTestChainData
-//    {
-//        R"json([{"data":"B57","difficulty":0,"hash":"","index":57,"miner":"","nonce":0,"prev":"","time":1608950722344,"transactions":[{"id":"tx0","inputs":[{"txOutId":"","txOutIndex":0,"signature":""}],"outputs":[{"address":"Stefan","amount":10}]}]},{"data":"B58","difficulty":0,"hash":"","index":58,"miner":"","nonce":0,"prev":"","time":1608950722344,"transactions":[{"id":"tx1","inputs":[{"txOutId":"tx0","txOutIndex":57,"signature":""}],"outputs":[{"address":"Henry","amount":5},{"address":"Addy","amount":3},{"address":"Stefan","amount":2}]}]}])json"s,
-//        "Stefan",
-//        ash::UnspentTxOuts{ ash::UnspentTxOut{"tx1", 1, "Stefan", 1} }
-//    },
-};
+//using UnspentTestChainData = std::tuple<std::string, std::string, ash::UnspentTxOuts>;
+//const UnspentTestChainData unspentDataChainTest[]
+//{
+////    UnspentTestChainData
+////    {
+////        R"json([{"data":"B57","difficulty":0,"hash":"","index":57,"miner":"","nonce":0,"prev":"","time":1608950722344,"transactions":[{"id":"tx0","inputs":[{"txOutId":"","txOutIndex":0,"signature":""}],"outputs":[{"address":"Stefan","amount":10}]}]},{"data":"B58","difficulty":0,"hash":"","index":58,"miner":"","nonce":0,"prev":"","time":1608950722344,"transactions":[{"id":"tx1","inputs":[{"txOutId":"tx0","txOutIndex":57,"signature":""}],"outputs":[{"address":"Henry","amount":5},{"address":"Addy","amount":3},{"address":"Stefan","amount":2}]}]}])json"s,
+////        "Stefan",
+////        ash::UnspentTxOuts{ ash::UnspentTxOut{"tx1", 1, "Stefan", 1} }
+////    },
+//};
 
 //// --run_test=block/getChainUnspentTxOuts
 //BOOST_DATA_TEST_CASE(getChainUnspentTxOuts, data::make(unspentDataChainTest), chainjson, wallet, expectedouts)
