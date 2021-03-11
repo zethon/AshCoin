@@ -1,29 +1,24 @@
-name: Ubuntu-Build
+name: Windows-Build
 
-# Disable Ubuntu builds for now
 on:
   push:
-    branches: [ DISBALED ]
-
-# on:
-#   push:
-#     branches:
-#       - master
-#     paths:
-#       - CMakeLists.txt
-#       - CMake/**
-#       - src/**
-#       - tests/**     
-#   pull_request:
-#     paths:
-#       - CMakeLists.txt
-#       - CMake/**
-#       - src/**
-#       - tests/**
+    branches:
+      - master
+    paths:
+      - CMakeLists.txt
+      - CMake/**
+      - src/**
+      - tests/**     
+  pull_request:
+    paths:
+      - CMakeLists.txt
+      - CMake/**
+      - src/**
+      - tests/**
 
 jobs:
-  build-ubuntu:
-    runs-on: ubuntu-latest
+  build-windows:
+    runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
@@ -33,12 +28,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-
-    - name: Install GCC9
-      shell: bash
-      run:  |
-            sudo apt update
-            sudo apt install gcc-9 g++-9
 
     - name: Get Conan
       uses: turtlebrowser/get-conan@v1.0
@@ -52,15 +41,12 @@ jobs:
     - name: Configure Conan
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE -s compiler=gcc -s compiler.version=9 --build missing
+      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE --build missing
 
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-      env:
-        CC:   gcc-9
-        CXX:  g++-9
+      run: cmake $GITHUB_WORKSPACE -G "Visual Studio 16 2019" -A x64 -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_ASH_TESTS=ON
 
     - name: Build
       working-directory: ${{github.workspace}}/build
