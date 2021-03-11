@@ -1,5 +1,10 @@
 # Ash
 
+![example workflow](https://github.com/zethon/AshCoin/actions/workflows/windows.yml/badge.svg)
+![example workflow](https://github.com/zethon/AshCoin/actions/workflows/macos.yml/badge.svg)
+![example workflow](https://github.com/zethon/AshCoin/actions/workflows/ubuntu.yml/badge.svg)
+
+
 Ash is a crypto-currency built from scratch.
 
 The goals with this project are:
