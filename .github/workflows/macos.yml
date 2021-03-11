@@ -1,6 +1,20 @@
-name: CMake
+name: MacOS-Build
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - CMakeLists.txt
+      - CMake/**
+      - src/**
+      - tests/**
+  pull_request:
+    paths:
+      - CMakeLists.txt
+      - CMake/**
+      - src/**
+      - tests/**
 
 jobs:
   build-macos:

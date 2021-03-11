@@ -1,17 +1,23 @@
-name: CMake
+name: Windows-Build
 
-# Can't get Ubuntu to work right now so we'll disable it while
-# I work on macos and windows
 on:
   push:
-    branches: [ DISABLED ]
-
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
+    branches:
+      - master
+    paths:
+      - CMakeLists.txt
+      - CMake/**
+      - src/**
+      - tests/**     
+  pull_request:
+    paths:
+      - CMakeLists.txt
+      - CMake/**
+      - src/**
+      - tests/**
 
 jobs:
-  build:
+  build-ubuntu:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -23,11 +29,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install GCC10
+    - name: Install GCC9
       shell: bash
       run:  |
             sudo apt update
-            sudo apt install gcc-10 g++-10
+            sudo apt install gcc-9 g++-9
 
     - name: Get Conan
       uses: turtlebrowser/get-conan@v1.0
@@ -41,15 +47,15 @@ jobs:
     - name: Configure Conan
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE -s compiler=gcc -s compiler.version=10 --build missing
+      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE -s compiler=gcc -s compiler.version=9 --build missing
 
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
       env:
-        CC:   gcc-10
-        CXX:  g++-10
+        CC:   gcc-9
+        CXX:  g++-9
 
     - name: Build
       working-directory: ${{github.workspace}}/build
