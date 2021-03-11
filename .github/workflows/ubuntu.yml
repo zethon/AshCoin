@@ -1,5 +1,6 @@
 name: Ubuntu
 
+on: [push]
 # # Disable Ubuntu builds for now
 # on:
 #   push:
