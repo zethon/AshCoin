@@ -158,11 +158,21 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
                 ledger.push_back(
                     LedgerInfo{ block.index(), tx.id(), block.time(), amount * -1.0 });
             }
-
         }
     }
 
     return ledger;
+}
+
+double GetAddressBalance(const Blockchain& chain, const std::string& address)
+{
+    const auto ledger = ash::GetAddressLedger(chain, address);
+    return std::accumulate(
+        ledger.begin(), ledger.end(), 0.0,
+        [](auto accum, const auto& entry)
+        {
+            return accum + entry.amount;
+        });
 }
 
 TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount)
@@ -346,8 +356,9 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
     return total;
 }
 
-void Blockchain::getTransactionsToBeMined(Block& block)
+std::size_t Blockchain::getTransactionsToBeMined(Block& block)
 {
+    std::size_t retval = 0;
     auto& txs = block.transactions();
 
     // we assume someone else is making sure we're thread safe!
@@ -357,7 +368,10 @@ void Blockchain::getTransactionsToBeMined(Block& block)
         tx.calcuateId(block.index());
         txs.push_back(std::move(tx));
         _txQueue.pop();
+        retval++;
     }
+
+    return retval;
 }
 
 std::size_t Blockchain::reQueueTransactions(Block& block)
