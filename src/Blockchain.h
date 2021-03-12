@@ -36,7 +36,7 @@ UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& addre
 AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& address);
 double GetAddressBalance(const Blockchain& chain, const std::string& address);
 
-TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount);
+TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount);
 
 // 0 - block index, 1 - tx index
 using TxPoint = std::tuple<std::uint64_t, std::uint64_t>;
