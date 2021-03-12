@@ -47,7 +47,8 @@ enum class TxResult
 {
     SUCCESS = 0,
     INSUFFICIENT_FUNDS,
-    TXOUTS_EMPTY
+    TXOUTS_EMPTY,
+    NOOP_TRANSACTION
 };
 
 class TxResultValue
