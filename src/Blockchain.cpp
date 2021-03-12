@@ -295,7 +295,6 @@ bool Blockchain::addNewBlock(const Block& block, bool checkPreviousBlock)
     }
 
     _blocks.push_back(block);
-    updateUnspentTxOuts();
 
     return true;
 }
@@ -345,77 +344,6 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
     }
 
     return total;
-}
-
-UnspentTxOuts Blockchain::getUnspentTxOuts(std::string_view address)
-{
-    UnspentTxOuts retval;
-
-    for (const auto& block : _blocks)
-    {
-        for (const auto& tx : block.transactions())
-        {
-            // collect the txouts first
-            for (const auto& txout : tx.txOuts())
-            {
-                if (txout.address() == address)
-                {
-                    //retval.emplace_back(UnspentTxOut{block.index(), tx.id(), address.data(), txout.amount()});
-                }
-            }
-
-            // now scrub out the txins
-            for (const auto& txin : tx.txIns())
-            {
-                //auto it = std::find_if(retval.begin(), retval.end(),
-                //    [txin = txin](const unspenttxout& utxout)
-                //    {
-                //        return (utxout.blockindex == txin.txoutpt().txoutindex
-                //            && utxout.txoutid == txin.txoutpt().txoutid);
-                //    });
-
-                //if (it != retval.end()) retval.erase(it);
-            }
-        }
-    }
-
-    return retval;
-}
-
-// TODO: THIS IS PROBABLY TRASH
-void Blockchain::updateUnspentTxOuts()
-{
-    _logger->trace("updated unspent transactions");
-    
-    _unspentTxOuts.clear();
-    
-    // // gather up all the outs
-    // for (const auto& block : _blocks)
-    // {
-    //     const auto temp = GetUnspentTxOuts(block);
-    //     std::move(temp.begin(), temp.end(), std::back_inserter(_unspentTxOuts));
-    // }
-
-    // // now go through the txins and remove the textouts
-    // for (const auto& block : _blocks)
-    // {
-    //     for (const auto& tx : block.transactions())
-    //     {
-    //         for (const auto& txin : tx.txIns())
-    //         {
-    //             // auto it = std::find_if(_unspentTxOuts.begin(), _unspentTxOuts.end()
-    //             // [](){ });
-    //         }
-    //     }
-    // }
-
-    // _txInHashes.clear();
-    // for (const auto& block : _blocks)
-    // {
-    //     updateUnspentTxOuts(block);
-    // }
-    
-    _logger->debug("blockchain contains {} unspent transactions", _unspentTxOuts.size());
 }
 
 void Blockchain::getTransactionsToBeMined(Block& block)

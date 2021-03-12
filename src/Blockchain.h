@@ -164,14 +164,6 @@ public:
         return lastBlock.difficulty();
     }
 
-    // TODO: this is called in at least one place in MinerApp, 
-    // but ideally this should be a private function that is 
-    // called internally when needed
-    void updateUnspentTxOuts();
-    
-    const UnspentTxOuts& unspentTransactionOuts() const { return _unspentTxOuts; }
-    UnspentTxOuts getUnspentTxOuts(std::string_view address);
-
     void queueTransaction(Transaction&& tx)
     {
         _txQueue.push(std::move(tx));

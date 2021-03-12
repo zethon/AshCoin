@@ -647,8 +647,9 @@ void MinerApp::run()
             return gen;
         };
 
+    // maybe it's ok if the blockchain has some concept of
+    // a persistence object?
     _database->initialize(*_blockchain, genesisBlockCallback);
-    _blockchain->updateUnspentTxOuts();
 
     _httpThread = std::thread(
         [this]()
