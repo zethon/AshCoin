@@ -1,4 +1,6 @@
 #include <iterator>
+#include <fstream>
+#include <streambuf>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
@@ -7,6 +9,8 @@
 #include <range/v3/all.hpp>
 
 #include <nlohmann/json.hpp>
+
+#include <test-config.h>
 
 #include "../src/Block.h"
 #include "../src/Blockchain.h"
@@ -29,13 +33,20 @@ namespace std
         return out;
     }
 
-    std::ostream& operator<<(std::ostream& out, const ash::UnspentTxOut& utxout)
+    std::ostream& operator<<(std::ostream& out, const ash::TxOutPoint& v)
     {
+        const std::string address =
+                (v.address.has_value() ? *(v.address) : "null"s);
+
+        const std::string amount =
+                (v.amount.has_value() ? std::to_string(*(v.amount)) : "null"s);
+
         out << '{';
-//        out << utxout.blockIndex
-//            << ',' << utxout.txOutId
-//            << ',' << utxout.address
-//            << ',' << utxout.amount;
+        out << v.blockIndex
+            << ',' << v.txIndex
+            << ',' << v.txOutIndex
+            << ',' << address
+            << ',' << amount;
         out << '}';
         return out;
     }
@@ -48,6 +59,14 @@ namespace std
         out << '}';
         return out;
     }
+}
+
+std::string LoadFile(std::string_view filename)
+{
+    std::ifstream t(filename.data());
+    std::string str((std::istreambuf_iterator<char>(t)),
+                    std::istreambuf_iterator<char>());
+    return str;
 }
 
 BOOST_AUTO_TEST_SUITE(block)
@@ -65,29 +84,29 @@ const UnspentTestData unspentDataBlockTest[]
 
 BOOST_DATA_TEST_CASE(getBlockUnspentTxOuts, data::make(unspentDataBlockTest), blockjson, expectedIds)
 {
-    // nl::json json = nl::json::parse(blockjson, nullptr, false);
-    // BOOST_TEST(!json.is_discarded());
-
-    // auto block = json.get<ash::Block>();
-    // BOOST_TEST(block.transactions().size() > 0);
-
-    // const auto& tx = block.transactions().at(0);
-    // BOOST_TEST(tx.txIns().size() > 0);
-    // BOOST_TEST(tx.txOuts().size() > 0);
-    
-    // auto unspent = ash::GetUnspentTxOuts(block);
-    // BOOST_TEST(unspent.size() > 0);
-    // BOOST_TEST(unspent.size() == expectedIds.size());
-
-    // auto expectedCopy = expectedIds; // container copy!
-    // ranges::sort(expectedCopy);
-    
-    // auto actualUnspent = unspent 
-    //     | ranges::views::transform([](const ash::UnspentTxOut& txout) { return txout.address; })
-    //     | ranges::to<std::vector>()
-    //     | ranges::actions::sort;
-
-    // BOOST_TEST(expectedCopy == actualUnspent, boost::test_tools::per_element());
+//     nl::json json = nl::json::parse(blockjson, nullptr, false);
+//     BOOST_TEST(!json.is_discarded());
+//
+//     auto block = json.get<ash::Block>();
+//     BOOST_TEST(block.transactions().size() > 0);
+//
+//     const auto& tx = block.transactions().at(0);
+//     BOOST_TEST(tx.txIns().size() > 0);
+//     BOOST_TEST(tx.txOuts().size() > 0);
+//
+//     auto unspent = ash::GetUnspentTxOuts(block);
+//     BOOST_TEST(unspent.size() > 0);
+//     BOOST_TEST(unspent.size() == expectedIds.size());
+//
+//     auto expectedCopy = expectedIds; // container copy!
+//     ranges::sort(expectedCopy);
+//
+//     auto actualUnspent = unspent
+//         | ranges::views::transform([](const ash::UnspentTxOut& txout) { return txout.address; })
+//         | ranges::to<std::vector>()
+//         | ranges::actions::sort;
+//
+//     BOOST_TEST(expectedCopy == actualUnspent, boost::test_tools::per_element());
 }
 
 //using UnspentTestChainData = std::tuple<std::string, std::string, ash::UnspentTxOuts>;
@@ -119,8 +138,10 @@ constexpr std::string_view blockjson =
 
 BOOST_AUTO_TEST_CASE(jsonLoading)
 {
-//    nl::json json = nl::json::parse(blockjson, nullptr, false);
-//    BOOST_TEST(!json.is_discarded());
+    const std::string filename = fmt::format("{}/tests/data/blockchain1.json", ASH_SRC_DIRECTORY);
+    const std::string rawjson = LoadFile(filename);
+    nl::json json = nl::json::parse(rawjson, nullptr, false);
+    BOOST_TEST(!json.is_discarded());
 //    auto block = json.get<ash::Block>();
 //    BOOST_TEST(ash::ValidHash(block));
 //    BOOST_TEST(block.data() == "coinbase block#13");

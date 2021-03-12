@@ -13,6 +13,9 @@ include(ZCompileResource)
 
 option(BUILD_ASH_TESTS "Build unit tests (default OFF)" OFF)
 
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
 # Add a RELEASE definition that we can count on regardless
 # of platform
 string(APPEND CMAKE_CXX_FLAGS_RELEASE " -D_RELEASE")
@@ -66,4 +69,5 @@ add_subdirectory(src)
 if (BUILD_ASH_TESTS)
     enable_testing()
     add_subdirectory(tests)
+    configure_file(test-config.h.in test-config.h)
 endif (BUILD_ASH_TESTS)
