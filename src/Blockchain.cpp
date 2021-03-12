@@ -180,6 +180,11 @@ TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::str
     // first get the address of the sender from the privateKey
     const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(senderPK);
 
+    if (boost::iequals(receiver, senderAddress))
+    {
+        return TxResult::NOOP_TRANSACTION;
+    }
+
     // now get all of the unspent txouts of the sender
     auto senderUnspentList = ash::GetUnspentTxOuts(chain, senderAddress);
     if (senderUnspentList.size() == 0)
