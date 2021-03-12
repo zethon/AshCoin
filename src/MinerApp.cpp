@@ -138,30 +138,30 @@ void MinerApp::initWebService()
 {
     _httpServer.resource[R"x(^/.*?style.css$)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
-    {
-        // special handling for stylesheet
-        std::stringstream out;
-        const std::string datafolder = _settings->value("database.folder", "");
-        assert(!datafolder.empty());
-        
-        const auto data = GetRawHtmlContent(datafolder, "style.css", style_css);
-        response->write(data, {{"Content-Type", "text/css"}});
-    };
+        {
+            // special handling for stylesheet
+            std::stringstream out;
+            const std::string datafolder = _settings->value("database.folder", "");
+            assert(!datafolder.empty());
+
+            const auto data = GetRawHtmlContent(datafolder, "style.css", style_css);
+            response->write(data, {{"Content-Type", "text/css"}});
+        };
 
     _httpServer.resource[R"x(^/.*?common.js$)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest>)
-    {
-        // special handling for stylesheet
-        std::stringstream out;
-        const std::string datafolder = _settings->value("database.folder", "");
-        assert(!datafolder.empty());
-        
-        const auto data = GetRawHtmlContent(datafolder, "common.js", common_js);
-        response->write(data, {{"Content-Type", "text/javascript"}});
-    };
-    
+        {
+            // special handling for stylesheet
+            std::stringstream out;
+            const auto datafolder = _settings->value("database.folder", "");
+            assert(!datafolder.empty());
+
+            const auto data = GetRawHtmlContent(datafolder, "common.js", common_js);
+            response->write(data, {{"Content-Type", "text/javascript"}});
+        };
+
     _httpServer.resource["^/$"]["GET"] = 
-        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request) 
+        [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
             utils::Dictionary dict;
             getStandardDictionary(dict);

@@ -175,47 +175,35 @@ function onLoad()
 
 function clickMiningButton()
 {
-    Http = new XMLHttpRequest();
+    let Http;
     if (ismining)
     {
         $("#mining-status").text('stopping');
-        Http.open("GET", ServerUrl+"/rest/stopMining");
+        Http = RequestMiningStop(function(e)
+        {
+            if (Http.responseText == "OK")
+            {
+                ismining = false;
+                $("#mining-status").text('stopped');
+                $("#miningbtn").text("Start Mining");
+            }
+        });
     }
     else
     {
         $("#mining-status").text('starting');
-        Http.open("GET", ServerUrl+"/rest/startMining");
-    }
-    
-    Http.onreadystatechange = (e) => 
+        Http = RequestMiningStart(function(e)
         {
             if (Http.responseText == "OK")
             {
-                if (ismining)
-                {
-                    ismining = false;
-                    $("#mining-status").text('stopped');
-                    $("#miningbtn").text("Start Mining");
-                }
-                else
-                {
-                    ismining = true;
-                    $("#mining-status").text('started');
-                    $("#miningbtn").text("Stop Mining");
-                }
+                ismining = true;
+                $("#mining-status").text('started');
+                $("#miningbtn").text("Stop Mining");
             }
-        };
-
-    Http.send();
+        });
+    }
 }
 
-function clickShutdown()
-{
-    var shutdownHttp = new XMLHttpRequest();
-    shutdownHttp.open("POST", `${ServerUrl}/rest/shutdown`);
-    shutdownHttp.send();
-    shutdownHttp.onreadystatechange = (e) => { };
-}
 </script>
 <style>
 #blocklist tr td
@@ -297,7 +285,7 @@ function clickShutdown()
 
 <div style="text-align:center;">
 <button id="miningbtn" onclick="javascript:clickMiningButton();">Start Mining</button>
-&nbsp;&nbsp;<button id="shutdownbtn" onclick="javascript:clickShutdown();">Shutdown</button>
+&nbsp;&nbsp;<button id="shutdownbtn" onclick="javascript:RequestShutdown();">Shutdown</button>
 </div>
 
 <hr/>
