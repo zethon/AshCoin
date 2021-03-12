@@ -39,6 +39,7 @@ public:
         _keepTrying.store(false, std::memory_order_release);
     }
 
+    // TODO: move this to a CPP file
     ResultType mineBlock(Block& block,
         std::function<bool(std::uint64_t)> keepGoingFunc = nullptr)
     {
@@ -94,6 +95,7 @@ public:
         _logger->info("successfully mined bock {}", block.index());
         return ResultType::SUCCESS;
     }
+
 };
 
 } // namespace ash

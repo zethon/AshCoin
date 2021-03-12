@@ -34,6 +34,7 @@ void to_json(nl::json& j, const AddressLedger& ledger);
 
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address = {});
 AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& address);
+double GetAddressBalance(const Blockchain& chain, const std::string& address);
 
 TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount);
 
@@ -169,8 +170,14 @@ public:
         _txQueue.push(std::move(tx));
     }
 
-    void getTransactionsToBeMined(Block& block);
+    [[maybe_unused]] std::size_t getTransactionsToBeMined(Block& block);
+
     std::size_t reQueueTransactions(Block& block);
+
+    std::size_t transactionQueueSize() const noexcept
+    {
+        return _txQueue.size();
+    }
 };
 
 }
