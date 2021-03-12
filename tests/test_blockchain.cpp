@@ -165,7 +165,9 @@ BOOST_AUTO_TEST_CASE(singleTransaction)
 
     auto addyBalance = ash::GetAddressBalance(chain, "1LahaosvBaCG4EbDamyvuRmcrqc5P2iv7t");
     BOOST_TEST(addyBalance == 57.00, boost::test_tools::tolerance(0.001));
-    auto result = ash::CreateTransaction(chain, "1b3f78b45456dcfc3a2421da1d9961abd944b7e8a7c2ccc809a7ea92e200eeb1h", "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 10.0);
+
+    auto result = ash::QueueTransaction(chain, "1b3f78b45456dcfc3a2421da1d9961abd944b7e8a7c2ccc809a7ea92e200eeb1h",
+                                        "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 10.0);
     BOOST_TEST((result == ash::TxResult::SUCCESS));
     BOOST_TEST(chain.transactionQueueSize() == 1);
 
@@ -177,6 +179,7 @@ BOOST_AUTO_TEST_CASE(singleTransaction)
     txs.push_back(ash::CreateCoinbaseTransaction(chain.size(), "1LahaosvBaCG4EbDamyvuRmcrqc5P2iv7t"));
 
     ash::Block newblock{ chain.size(), chain.back().hash(), std::move(txs) };
+    BOOST_TEST(newblock.transactions().size() == 1);
 
     BOOST_TEST(chain.getTransactionsToBeMined(newblock) == 1);
     BOOST_TEST(chain.transactionQueueSize() == 0);
@@ -193,7 +196,6 @@ BOOST_AUTO_TEST_CASE(singleTransaction)
 
     auto stefanBalance = ash::GetAddressBalance(chain, "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8");
     BOOST_TEST(stefanBalance == 10.00, boost::test_tools::tolerance(0.001));
-
 }
 
 BOOST_AUTO_TEST_SUITE_END() // block

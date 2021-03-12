@@ -175,7 +175,7 @@ double GetAddressBalance(const Blockchain& chain, const std::string& address)
         });
 }
 
-TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount)
+TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount)
 {
     // first get the address of the sender from the privateKey
     const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(senderPK);
