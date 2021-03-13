@@ -72,16 +72,20 @@ std::string LoadFile(std::string_view filename)
     return str;
 }
 
+ash::Blockchain LoadBlockchain(std::string_view chainfile)
+{
+    const std::string filename = fmt::format("{}/tests/data/{}", ASH_SRC_DIRECTORY, chainfile);
+    const std::string rawjson = LoadFile(filename);
+    nl::json json = nl::json::parse(rawjson, nullptr, false);
+    BOOST_TEST(!json.is_discarded());
+    return json["blocks"].get<ash::Blockchain>();
+}
+
 BOOST_AUTO_TEST_SUITE(block)
 
 BOOST_AUTO_TEST_CASE(loadChainFromJson)
 {
-    const std::string filename = fmt::format("{}/tests/data/blockchain2.json", ASH_SRC_DIRECTORY);
-    const std::string rawjson = LoadFile(filename);
-    nl::json json = nl::json::parse(rawjson, nullptr, false);
-    BOOST_TEST(!json.is_discarded());
-
-    const auto chain = json["blocks"].get<ash::Blockchain>();
+    const auto chain = LoadBlockchain("blockchain2.json");
     BOOST_TEST(chain.size() == 2);
 
     BOOST_TEST(chain.at(0).transactions().size() == 1);
@@ -90,12 +94,7 @@ BOOST_AUTO_TEST_CASE(loadChainFromJson)
 
 BOOST_AUTO_TEST_CASE(singleTransaction)
 {
-    const std::string filename = fmt::format("{}/tests/data/blockchain1.json", ASH_SRC_DIRECTORY);
-    const std::string rawjson = LoadFile(filename);
-    nl::json json = nl::json::parse(rawjson, nullptr, false);
-    BOOST_TEST(!json.is_discarded());
-
-    auto chain = json["blocks"].get<ash::Blockchain>();
+    auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
 
     auto addyBalance = ash::GetAddressBalance(chain, "1LahaosvBaCG4EbDamyvuRmcrqc5P2iv7t");
@@ -135,12 +134,7 @@ BOOST_AUTO_TEST_CASE(singleTransaction)
 
 BOOST_AUTO_TEST_CASE(insufficientFundsTest)
 {
-    const std::string filename = fmt::format("{}/tests/data/blockchain1.json", ASH_SRC_DIRECTORY);
-    const std::string rawjson = LoadFile(filename);
-    nl::json json = nl::json::parse(rawjson, nullptr, false);
-    BOOST_TEST(!json.is_discarded());
-
-    auto chain = json["blocks"].get<ash::Blockchain>();
+    auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
 
     auto result = ash::QueueTransaction(chain, "1b3f78b45456dcfc3a2421da1d9961abd944b7e8a7c2ccc809a7ea92e200eeb1h",
@@ -151,12 +145,7 @@ BOOST_AUTO_TEST_CASE(insufficientFundsTest)
 
 BOOST_AUTO_TEST_CASE(txOutsEmptyTest)
 {
-    const std::string filename = fmt::format("{}/tests/data/blockchain1.json", ASH_SRC_DIRECTORY);
-    const std::string rawjson = LoadFile(filename);
-    nl::json json = nl::json::parse(rawjson, nullptr, false);
-    BOOST_TEST(!json.is_discarded());
-
-    auto chain = json["blocks"].get<ash::Blockchain>();
+    auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
 
     auto result = ash::QueueTransaction(chain, "362116d38976078659ae158f6c21bcda40f75d4a8aa7f0a4ffbe56a48cacb93h",
@@ -167,18 +156,39 @@ BOOST_AUTO_TEST_CASE(txOutsEmptyTest)
 
 BOOST_AUTO_TEST_CASE(noOpTransactionTest)
 {
-    const std::string filename = fmt::format("{}/tests/data/blockchain1.json", ASH_SRC_DIRECTORY);
-    const std::string rawjson = LoadFile(filename);
-    nl::json json = nl::json::parse(rawjson, nullptr, false);
-    BOOST_TEST(!json.is_discarded());
-
-    auto chain = json["blocks"].get<ash::Blockchain>();
+    auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
 
     auto result = ash::QueueTransaction(chain, "b2dfbfd974bcf876ac64a21aadab1cbb0b0350fb41115a3f61de3bd76c6485eah",
                                         "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 1000000.0);
     BOOST_TEST((result == ash::TxResult::NOOP_TRANSACTION));
     BOOST_TEST(chain.transactionQueueSize() == 0);
+}
+
+BOOST_AUTO_TEST_CASE(findTransactionTest)
+{
+    const auto chain = LoadBlockchain("blockchain4.json");
+    BOOST_TEST(chain.size() == 4);
+
+    auto tx1 = ash::FindTransaction(chain, "78348ae3273195a3b1d0fb974f608be165d8498cf6b333594a7b761e3e51f86d");
+    BOOST_TEST(tx1.has_value());
+    auto [blockIndex, txIndex] = *tx1;
+    BOOST_TEST(chain.size() > blockIndex);
+    BOOST_TEST(chain.at(blockIndex).transactions().size() > txIndex);
+    const auto& tx = chain.at(blockIndex).transactions().at(txIndex);
+    const auto& txoutpt = tx.txIns().at(0).txOutPt();
+    BOOST_TEST(txoutpt.blockIndex == 2);
+    BOOST_TEST(txoutpt.txIndex == 5);
+    BOOST_TEST(txoutpt.txOutIndex == 0);
+}
+
+BOOST_AUTO_TEST_CASE(notFindTransactionTest)
+{
+    const auto chain = LoadBlockchain("blockchain4.json");
+    BOOST_TEST(chain.size() == 4);
+
+    auto tx2 = ash::FindTransaction(chain, "THISTRANSACTIONDOESNOTEXIST");
+    BOOST_TEST(!tx2.has_value());
 }
 
 BOOST_AUTO_TEST_SUITE_END() // block
