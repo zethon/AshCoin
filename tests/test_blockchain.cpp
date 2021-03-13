@@ -175,7 +175,7 @@ BOOST_AUTO_TEST_CASE(noOpTransactionTest)
     auto chain = json["blocks"].get<ash::Blockchain>();
     BOOST_TEST(chain.size() == 1);
 
-    auto result = ash::QueueTransaction(chain, "1KHEXSmHaLtz4v8XrHegLzyVuU6SLg7Atw",
+    auto result = ash::QueueTransaction(chain, "b2dfbfd974bcf876ac64a21aadab1cbb0b0350fb41115a3f61de3bd76c6485eah",
                                         "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 1000000.0);
     BOOST_TEST((result == ash::TxResult::NOOP_TRANSACTION));
     BOOST_TEST(chain.transactionQueueSize() == 0);
