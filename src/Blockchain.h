@@ -30,10 +30,15 @@ void to_json(nl::json& j, const Blockchain& b);
 void from_json(const nl::json& j, Blockchain& b);
 
 void to_json(nl::json& j, const LedgerInfo& li);
+void from_json(const nl::json& j, LedgerInfo& li);
 void to_json(nl::json& j, const AddressLedger& ledger);
+void from_json(const nl::json& j, AddressLedger& ledger);
 
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address = {});
+
 AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& address);
+
+// TODO: should this return an optional?
 double GetAddressBalance(const Blockchain& chain, const std::string& address);
 
 TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount);
@@ -42,6 +47,7 @@ TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::str
 using TxPoint = std::tuple<std::uint64_t, std::uint64_t>;
 std::optional<TxPoint> FindTransaction(const Blockchain& chain, std::string_view txid);
 
+// TODO: should this return an optional?
 // fills in the TxIn TxPoint info for all the Transactions in the Block
 Block GetBlockDetails(const Blockchain& chain, std::size_t index);
 
@@ -51,6 +57,17 @@ struct LedgerInfo
     std::string     txid;
     BlockTime       time;
     double          amount;
+
+    bool operator==(const LedgerInfo& rhs) const
+    {
+        return blockIdx == rhs.blockIdx
+            && txid == rhs.txid;
+    }
+
+    bool operator!=(const LedgerInfo& rhs) const
+    {
+        return !operator==(rhs);
+    }
 };
 
 //! This class is not thread safe and assumes that the
@@ -122,6 +139,19 @@ public:
     auto at(std::size_t index) const -> decltype(_blocks.at(index))
     {
         return _blocks.at(index);
+    }
+
+    const auto& txAt(std::size_t blockIndex, std::size_t txIndex) const
+    {
+        assert(blockIndex < size());
+        assert(txIndex < at(blockIndex).transactions().size());
+        return at(blockIndex).transactions().at(txIndex);
+    }
+
+    auto& txAt(std::size_t blockIndex, std::size_t txIndex)
+    {
+        return const_cast<Transaction&>(
+                static_cast<const Blockchain&>(*this).txAt(blockIndex,txIndex));
     }
 
     bool addNewBlock(const Block& block);
