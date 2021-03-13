@@ -110,6 +110,27 @@ BOOST_AUTO_TEST_CASE(LoadChainFromJson)
     BOOST_TEST(chain.at(1).transactions().size() == 2);
 }
 
+BOOST_AUTO_TEST_CASE(GetAllUnspentTxOutsTest)
+{
+    auto chain = LoadBlockchain("blockchain2.json");
+    BOOST_TEST(chain.size() == 2);
+
+    const auto unspent = ash::GetUnspentTxOuts(chain);
+    BOOST_TEST(unspent.size() == 3);
+}
+
+BOOST_AUTO_TEST_CASE(GetAddressUnspentTxOutsTest)
+{
+    auto chain = LoadBlockchain("blockchain2.json");
+    BOOST_TEST(chain.size() == 2);
+
+    const auto addyUnspent = ash::GetUnspentTxOuts(chain, "1LahaosvBaCG4EbDamyvuRmcrqc5P2iv7t");
+    BOOST_TEST(addyUnspent.size() == 2);
+
+    const auto stefanUnspent = ash::GetUnspentTxOuts(chain, "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8");
+    BOOST_TEST(stefanUnspent.size() == 1);
+}
+
 BOOST_AUTO_TEST_CASE(GetAddressLedgerTest)
 {
     auto ledgerSort = [](const ash::LedgerInfo& x, const ash::LedgerInfo& y)
