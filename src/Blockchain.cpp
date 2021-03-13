@@ -41,11 +41,30 @@ void to_json(nl::json& j, const LedgerInfo& li)
             static_cast<std::uint64_t>(li.time.time_since_epoch().count());
 }
 
+void from_json(const nlohmann::json& j, LedgerInfo& li)
+{
+    j["blockid"].get_to(li.blockIdx);
+    j["txid"].get_to(li.txid);
+    j["amount"].get_to(li.amount);
+    li.time =
+            BlockTime{std::chrono::milliseconds{j["time"].get<std::uint64_t>()}};
+}
+
 void to_json(nl::json& j, const AddressLedger& ledger)
 {
     for (const auto& i : ledger)
     {
         j.push_back(i);
+    }
+}
+
+void from_json(const nlohmann::json& j, AddressLedger& ledger)
+{
+    ledger.clear();
+
+    for (const auto& j : j.items())
+    {
+        ledger.push_back(j.value().get<ash::LedgerInfo>());
     }
 }
 
