@@ -83,7 +83,7 @@ ash::Blockchain LoadBlockchain(std::string_view chainfile)
 
 BOOST_AUTO_TEST_SUITE(block)
 
-BOOST_AUTO_TEST_CASE(loadChainFromJson)
+BOOST_AUTO_TEST_CASE(LoadChainFromJson)
 {
     const auto chain = LoadBlockchain("blockchain2.json");
     BOOST_TEST(chain.size() == 2);
@@ -92,7 +92,22 @@ BOOST_AUTO_TEST_CASE(loadChainFromJson)
     BOOST_TEST(chain.at(1).transactions().size() == 2);
 }
 
-BOOST_AUTO_TEST_CASE(singleTransaction)
+BOOST_AUTO_TEST_CASE(GetAddressBalanceTest)
+{
+    auto chain = LoadBlockchain("blockchain4.json");
+    BOOST_TEST(chain.size() == 4);
+
+    auto addyBalance = ash::GetAddressBalance(chain, "1LahaosvBaCG4EbDamyvuRmcrqc5P2iv7t");
+    BOOST_TEST(addyBalance == 185.594, boost::test_tools::tolerance(0.0001));
+
+    auto stefanBalance = ash::GetAddressBalance(chain, "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8");
+    BOOST_TEST(stefanBalance == 39.954, boost::test_tools::tolerance(0.0001));
+
+    auto henryBalance = ash::GetAddressBalance(chain, "1KHEXSmHaLtz4v8XrHegLzyVuU6SLg7Atw");
+    BOOST_TEST(henryBalance == 2.452, boost::test_tools::tolerance(0.0001));
+}
+
+BOOST_AUTO_TEST_CASE(SingleQueueTransactionTest)
 {
     auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
@@ -132,7 +147,7 @@ BOOST_AUTO_TEST_CASE(singleTransaction)
     BOOST_TEST(stefanBalance == 10.00, boost::test_tools::tolerance(0.001));
 }
 
-BOOST_AUTO_TEST_CASE(insufficientFundsTest)
+BOOST_AUTO_TEST_CASE(InsufficientFundsQueueTransactionTest)
 {
     auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
@@ -143,7 +158,7 @@ BOOST_AUTO_TEST_CASE(insufficientFundsTest)
     BOOST_TEST(chain.transactionQueueSize() == 0);
 }
 
-BOOST_AUTO_TEST_CASE(txOutsEmptyTest)
+BOOST_AUTO_TEST_CASE(YxOutsEmptyQueueTransactionTest)
 {
     auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
@@ -154,7 +169,7 @@ BOOST_AUTO_TEST_CASE(txOutsEmptyTest)
     BOOST_TEST(chain.transactionQueueSize() == 0);
 }
 
-BOOST_AUTO_TEST_CASE(noOpTransactionTest)
+BOOST_AUTO_TEST_CASE(NOOPQueueTransactionTest)
 {
     auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
@@ -165,7 +180,7 @@ BOOST_AUTO_TEST_CASE(noOpTransactionTest)
     BOOST_TEST(chain.transactionQueueSize() == 0);
 }
 
-BOOST_AUTO_TEST_CASE(findTransactionTest)
+BOOST_AUTO_TEST_CASE(FindTransactionTest)
 {
     const auto chain = LoadBlockchain("blockchain4.json");
     BOOST_TEST(chain.size() == 4);
@@ -182,7 +197,7 @@ BOOST_AUTO_TEST_CASE(findTransactionTest)
     BOOST_TEST(txoutpt.txOutIndex == 0);
 }
 
-BOOST_AUTO_TEST_CASE(notFindTransactionTest)
+BOOST_AUTO_TEST_CASE(NotFindTransactionTest)
 {
     const auto chain = LoadBlockchain("blockchain4.json");
     BOOST_TEST(chain.size() == 4);
