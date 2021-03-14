@@ -160,54 +160,15 @@ public:
     bool isValidBlockPair(std::size_t idx) const;
     bool isValidChain() const;
 
-    std::uint64_t cumDifficulty() const
-    {
-        return cumDifficulty(_blocks.size() - 1);
-    }
-
+    std::uint64_t cumDifficulty() const;
     std::uint64_t cumDifficulty(std::size_t idx) const;
+    std::uint64_t getAdjustedDifficulty();
 
-    std::uint64_t getAdjustedDifficulty()
-    {
-        const auto chainsize = size();
-        assert(chainsize > 0);
-
-        if (((back().index() + 1) % BLOCK_INTERVAL) != 0)
-        {
-            return back().difficulty();
-        }
-
-        const auto& firstBlock = at(size() - BLOCK_INTERVAL);
-        const auto& lastBlock = back();
-        const auto timespan = 
-            std::chrono::duration_cast<std::chrono::seconds>
-                (lastBlock.time() - firstBlock.time());
-
-        if (timespan.count() < (TARGET_TIMESPAN / 2))
-        {
-            return lastBlock.difficulty() + 1;
-        }
-        else if (timespan.count() > (TARGET_TIMESPAN * 2))
-        {
-            return lastBlock.difficulty() - 1;
-        }
-
-        return lastBlock.difficulty();
-    }
-
-    void queueTransaction(Transaction&& tx)
-    {
-        _txQueue.push(std::move(tx));
-    }
-
+    // TODO: this is a mess
     [[maybe_unused]] std::size_t getTransactionsToBeMined(Block& block);
-
+    std::size_t transactionQueueSize() const noexcept;
     std::size_t reQueueTransactions(Block& block);
-
-    std::size_t transactionQueueSize() const noexcept
-    {
-        return _txQueue.size();
-    }
+    void queueTransaction(Transaction&& tx);
 };
 
 }
