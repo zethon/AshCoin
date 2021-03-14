@@ -711,7 +711,7 @@ void MinerApp::runMineThread()
 
             newblock = _blockchain->createUnminedBlock(_rewardAddress);
             newblock->setMiner(_uuid);
-            newblock->setData(fmt::format("coinbase block #{}", index));
+            newblock->setData(fmt::format("coinbase block #{}", newblock->index()));
         }
     
         _logger->debug("mining block #{}, difficulty={}, transactions={}",
