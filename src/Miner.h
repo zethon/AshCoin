@@ -3,6 +3,8 @@
 #include "AshLogger.h"
 #include "CryptoUtils.h"
 
+using namespace std::chrono_literals;
+
 namespace ash
 {
 
@@ -75,8 +77,8 @@ public:
                     return ResultType::ABORT;
                 }
 
-                time = 
-                    std::chrono::time_point_cast<std::chrono::milliseconds>
+                // update the block time
+                time = std::chrono::time_point_cast<std::chrono::milliseconds>
                         (std::chrono::system_clock::now());
             }
 

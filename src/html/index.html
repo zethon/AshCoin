@@ -40,7 +40,6 @@ var updateStatsWorker =
                 success: function(datastr) 
                 {
                     var data = JSON.parse(datastr);
-                    console.log(data);
                     $("#cumdiff").text(data.cumdiff);
                     $("#chainsize").text(data.blocks[0].index);
                     $("#currentdiff").text(data.difficulty);
@@ -112,13 +111,12 @@ function onLoadBlocks()
     $.ajax(
     {
         url: ServerUrl + '/blocks/last/10',
-        type: 'GET', 
-        success: function(datastr) 
+        type: 'GET',
+        success: function(datastr)
         {
-            console.log("onloadblocks()....");
             var table = $("#blocklist");
             var data = JSON.parse(datastr);
-            data.blocks.slice().reverse().forEach(block => 
+            data.blocks.slice().reverse().forEach(block =>
                 {
                     table.append(getBlockTableRow(block));
                 });
@@ -139,7 +137,7 @@ var updateChainWorker =
     {
         $.ajax(
             {
-                url: ServerUrl + '/block/' + (lastChainIndex + 1),
+                url: ServerUrl + '/rest/block/' + (lastChainIndex + 1),
                 type: 'GET', 
                 success: function(datastr) 
                 {

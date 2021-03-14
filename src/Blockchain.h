@@ -41,7 +41,7 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
 // TODO: should this return an optional?
 double GetAddressBalance(const Blockchain& chain, const std::string& address);
 
-TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount);
+std::tuple<TxResult, ash::Transaction> CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount);
 
 // 0 - block index, 1 - tx index
 using TxPoint = std::tuple<std::uint64_t, std::uint64_t>;
@@ -156,6 +156,7 @@ public:
 
     bool addNewBlock(const Block& block);
     bool addNewBlock(const Block& block, bool checkPreviousBlock);
+    BlockUniquePtr createUnminedBlock(const std::string& coinbasewallet);
 
     bool isValidBlockPair(std::size_t idx) const;
     bool isValidChain() const;
@@ -164,11 +165,9 @@ public:
     std::uint64_t cumDifficulty(std::size_t idx) const;
     std::uint64_t getAdjustedDifficulty();
 
-    // TODO: this is a mess
-    [[maybe_unused]] std::size_t getTransactionsToBeMined(Block& block);
+    void queueTransaction(Transaction&& tx);
     std::size_t transactionQueueSize() const noexcept;
     std::size_t reQueueTransactions(Block& block);
-    void queueTransaction(Transaction&& tx);
 };
 
 }
