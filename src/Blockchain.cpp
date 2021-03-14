@@ -194,21 +194,21 @@ double GetAddressBalance(const Blockchain& chain, const std::string& address)
         });
 }
 
-TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount)
+std::tuple<TxResult, ash::Transaction> CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount)
 {
     // first get the address of the sender from the privateKey
     const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(senderPK);
 
     if (boost::iequals(receiver, senderAddress))
     {
-        return TxResult::NOOP_TRANSACTION;
+        return { TxResult::NOOP_TRANSACTION, {} };
     }
 
     // now get all of the unspent txouts of the sender
     auto senderUnspentList = ash::GetUnspentTxOuts(chain, senderAddress);
     if (senderUnspentList.size() == 0)
     {
-        return TxResult::TXOUTS_EMPTY;
+        return { TxResult::TXOUTS_EMPTY, {} };
     }
 
     double currentAmount = 0;
@@ -230,7 +230,7 @@ TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::str
 
     if (currentAmount < amount)
     {
-        return TxResult::INSUFFICIENT_FUNDS;
+        return { TxResult::INSUFFICIENT_FUNDS, {} };
     }
 
     ash::Transaction tx;
@@ -240,7 +240,7 @@ TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::str
     {
         // TODO: Signature!!!
         txins.emplace_back(uout.blockIndex,
-                           uout.txIndex, uout.txOutIndex, "signature");
+            uout.txIndex, uout.txOutIndex, "signature");
     }
 
     auto& outs = tx.txOuts();
@@ -250,9 +250,7 @@ TxResult QueueTransaction(Blockchain& chain, std::string_view senderPK, std::str
         outs.emplace_back(senderAddress, leftoverAmount);
     }
 
-    chain.queueTransaction(std::move(tx));
-
-    return TxResult::SUCCESS;
+    return { TxResult::SUCCESS, tx };
 }
 
 // TODO: The implementation of this should be improved to be faster
@@ -385,24 +383,6 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
     return total;
 }
 
-std::size_t Blockchain::getTransactionsToBeMined(Block& block)
-{
-    std::size_t retval = 0;
-    auto& txs = block.transactions();
-
-    // we assume someone else is making sure we're thread safe!
-    while (!_txQueue.empty())
-    {
-        auto& tx = _txQueue.front();
-        tx.calcuateId(block.index());
-        txs.push_back(std::move(tx));
-        _txQueue.pop();
-        retval++;
-    }
-
-    return retval;
-}
-
 std::size_t Blockchain::reQueueTransactions(Block& block)
 {
     std::size_t count = 0;
@@ -445,7 +425,6 @@ std::uint64_t Blockchain::getAdjustedDifficulty()
     return lastBlock.difficulty();
 }
 
-
 std::size_t Blockchain::transactionQueueSize() const noexcept
 {
     return _txQueue.size();
@@ -454,6 +433,24 @@ std::size_t Blockchain::transactionQueueSize() const noexcept
 void Blockchain::queueTransaction(Transaction&& tx)
 {
     _txQueue.push(std::move(tx));
+}
+
+BlockUniquePtr Blockchain::createUnminedBlock(const std::string& coinbasewallet)
+{
+    const auto newblockidx = this->size();
+
+    ash::Transactions txs;
+    txs.push_back(ash::CreateCoinbaseTransaction(newblockidx, coinbasewallet));
+
+    while (!_txQueue.empty())
+    {
+        auto& tx = _txQueue.front();
+        tx.calcuateId(newblockidx);
+        txs.push_back(std::move(tx));
+        _txQueue.pop();
+    }
+
+    return std::make_unique<Block>(newblockidx, this->back().hash(), std::move(txs));
 }
 
 } // namespace

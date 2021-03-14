@@ -182,29 +182,27 @@ BOOST_AUTO_TEST_CASE(SingleQueueTransactionTest)
     auto addyBalance = ash::GetAddressBalance(chain, "1LahaosvBaCG4EbDamyvuRmcrqc5P2iv7t");
     BOOST_TEST(addyBalance == 57.00, boost::test_tools::tolerance(0.001));
 
-    auto result = ash::QueueTransaction(chain, "1b3f78b45456dcfc3a2421da1d9961abd944b7e8a7c2ccc809a7ea92e200eeb1h",
-                                        "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 10.0);
+    auto [result, newtx] = ash::CreateTransaction(chain, "1b3f78b45456dcfc3a2421da1d9961abd944b7e8a7c2ccc809a7ea92e200eeb1h",
+                                    "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 10.0);
     BOOST_TEST((result == ash::TxResult::SUCCESS));
+    BOOST_TEST(newtx.txIns().size() == 1);
+    BOOST_TEST(newtx.txOuts().size() == 2);
+
+    chain.queueTransaction(std::move(newtx));
     BOOST_TEST(chain.transactionQueueSize() == 1);
 
     ash::Miner miner;
     miner.setDifficulty(0);
     BOOST_TEST(miner.difficulty() == 0);
 
-    ash::Transactions txs;
-    txs.push_back(ash::CreateCoinbaseTransaction(chain.size(), "1LahaosvBaCG4EbDamyvuRmcrqc5P2iv7t"));
-
-    ash::Block newblock{ chain.size(), chain.back().hash(), std::move(txs) };
-    BOOST_TEST(newblock.transactions().size() == 1);
-
-    BOOST_TEST(chain.getTransactionsToBeMined(newblock) == 1);
+    auto newblock = chain.createUnminedBlock("1LahaosvBaCG4EbDamyvuRmcrqc5P2iv7t");
     BOOST_TEST(chain.transactionQueueSize() == 0);
-    BOOST_TEST(newblock.transactions().size() == 2);
+    BOOST_TEST(newblock->transactions().size() == 2);
 
-    auto mineResult = miner.mineBlock(newblock, [](std::uint64_t) { return true; });
+    auto mineResult = miner.mineBlock(*newblock, [](std::uint64_t) { return true; });
     BOOST_TEST(mineResult == ash::Miner::SUCCESS);
 
-    chain.addNewBlock(newblock);
+    chain.addNewBlock(*newblock);
     BOOST_TEST(chain.size() == 2);
 
     addyBalance = ash::GetAddressBalance(chain, "1LahaosvBaCG4EbDamyvuRmcrqc5P2iv7t");
@@ -219,9 +217,11 @@ BOOST_AUTO_TEST_CASE(InsufficientFundsQueueTransactionTest)
     auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
 
-    auto result = ash::QueueTransaction(chain, "1b3f78b45456dcfc3a2421da1d9961abd944b7e8a7c2ccc809a7ea92e200eeb1h",
-                                        "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 1000000.0);
+    auto [result, tx] = ash::CreateTransaction(chain, "1b3f78b45456dcfc3a2421da1d9961abd944b7e8a7c2ccc809a7ea92e200eeb1h",
+                                         "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 1000000.0);
     BOOST_TEST((result == ash::TxResult::INSUFFICIENT_FUNDS));
+    BOOST_TEST(tx.txIns().size() == 0);
+    BOOST_TEST(tx.txOuts().size() == 0);
     BOOST_TEST(chain.transactionQueueSize() == 0);
 }
 
@@ -230,9 +230,11 @@ BOOST_AUTO_TEST_CASE(YxOutsEmptyQueueTransactionTest)
     auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
 
-    auto result = ash::QueueTransaction(chain, "362116d38976078659ae158f6c21bcda40f75d4a8aa7f0a4ffbe56a48cacb93h",
-                                        "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 1000000.0);
+    auto [result, tx] = ash::CreateTransaction(chain, "362116d38976078659ae158f6c21bcda40f75d4a8aa7f0a4ffbe56a48cacb93h",
+                                         "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 1000000.0);
     BOOST_TEST((result == ash::TxResult::TXOUTS_EMPTY));
+    BOOST_TEST(tx.txIns().size() == 0);
+    BOOST_TEST(tx.txOuts().size() == 0);
     BOOST_TEST(chain.transactionQueueSize() == 0);
 }
 
@@ -241,9 +243,11 @@ BOOST_AUTO_TEST_CASE(NOOPQueueTransactionTest)
     auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
 
-    auto result = ash::QueueTransaction(chain, "b2dfbfd974bcf876ac64a21aadab1cbb0b0350fb41115a3f61de3bd76c6485eah",
-                                        "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 1000000.0);
+    auto [result, tx] = ash::CreateTransaction(chain, "b2dfbfd974bcf876ac64a21aadab1cbb0b0350fb41115a3f61de3bd76c6485eah",
+                                         "1Cus7TLessdAvkzN2BhK3WD3Ymru48X3z8", 1000000.0);
     BOOST_TEST((result == ash::TxResult::NOOP_TRANSACTION));
+    BOOST_TEST(tx.txIns().size() == 0);
+    BOOST_TEST(tx.txOuts().size() == 0);
     BOOST_TEST(chain.transactionQueueSize() == 0);
 }
 
