@@ -713,7 +713,8 @@ void MinerApp::runMineThread()
             newblock->setMiner(_uuid);
             newblock->setData(fmt::format("coinbase block #{}", newblock->index()));
         }
-    
+
+        assert(newblock);
         _logger->debug("mining block #{}, difficulty={}, transactions={}",
             newblock->index(), _miner.difficulty(), newblock->transactions().size());
 
