@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(InsufficientFundsQueueTransactionTest)
     BOOST_TEST(chain.transactionQueueSize() == 0);
 }
 
-BOOST_AUTO_TEST_CASE(YxOutsEmptyQueueTransactionTest)
+BOOST_AUTO_TEST_CASE(TxOutsEmptyQueueTransactionTest)
 {
     auto chain = LoadBlockchain("blockchain1.json");
     BOOST_TEST(chain.size() == 1);
