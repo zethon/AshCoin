@@ -23,6 +23,8 @@ std::string SHA256(std::string data)
     return digest;
 }
 
+ComputerID::ComputerID() = default;
+
 // eventually this should get the mac address and do 
 // some other cool stuff, but for now we'll just use
 // a hash of the computer's hostname and a pointer
