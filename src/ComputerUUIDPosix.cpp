@@ -26,7 +26,7 @@ std::string SHA256(std::string data)
 // eventually this should get the mac address and do 
 // some other cool stuff, but for now we'll just use
 // a hash of the computer's hostname and a pointer
-// to *this, so that ht
+// to *this
 std::string ComputerUUID::getUUID()
 {
     namespace ip = boost::asio::ip;
