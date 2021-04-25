@@ -5,7 +5,7 @@
 #include <cryptopp/filters.h>
 #include <cryptopp/hex.h>
 
-#include "ComputerUUID.h"
+#include "ComputerID.h"
 
 namespace utils
 {
@@ -27,7 +27,7 @@ std::string SHA256(std::string data)
 // some other cool stuff, but for now we'll just use
 // a hash of the computer's hostname and a pointer
 // to *this
-std::string ComputerUUID::getUUID()
+std::string ComputerID::getUUID()
 {
     namespace ip = boost::asio::ip;
     boost::asio::io_service io_service;

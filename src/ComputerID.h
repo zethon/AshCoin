@@ -4,13 +4,13 @@
 namespace utils
 {
 
-class ComputerUUID
+class ComputerID
 {
     bool        _uniquePerProcess = false;
     std::string _customData;
 
 public:
-    ComputerUUID() = default;
+    ComputerID() = default;
 
     std::string getUUID();
 

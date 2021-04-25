@@ -20,7 +20,7 @@
 #include "CryptoUtils.h"
 #include "utils.h"
 #include "core.h"
-#include "ComputerUUID.h"
+#include "ComputerID.h"
 #include "Transactions.h"
 #include "ProblemDetails.h"
 
@@ -40,7 +40,7 @@ MinerApp::MinerApp(SettingsPtr settings)
 {
     const std::string dbfolder = _settings->value("database.folder", "");
 
-    utils::ComputerUUID uuid;
+    utils::ComputerID uuid;
     uuid.setCustomData(dbfolder);
     _uuid = uuid.getUUID();
     

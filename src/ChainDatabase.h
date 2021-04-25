@@ -88,7 +88,7 @@ private:
     boost::filesystem::path     _path;
     boost::filesystem::path     _dbfile;
     // ash::db::LevelDBPtr         _txInIndex;
-    leveldb::DB*                _txIndex;
+    leveldb::DB*                _txIndex = nullptr;
     
     SpdLogPtr                   _logger;
 };

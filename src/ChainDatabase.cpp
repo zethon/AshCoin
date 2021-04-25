@@ -162,7 +162,10 @@ ChainDatabase::ChainDatabase(std::string_view folder)
 
 ChainDatabase::~ChainDatabase()
 {
-    delete _txIndex;
+    if (_txIndex)
+    {
+        delete _txIndex;
+    }
 }
 
 void ChainDatabase::initialize(Blockchain& blockchain, GenesisCallback gcb)

@@ -18,7 +18,7 @@ set(HEADER_FILES
     Block.h
     Blockchain.h
     ChainDatabase.h
-    ComputerUUID.h
+    ComputerID.h
     CryptoUtils.h
     core.h
     Miner.h
@@ -33,7 +33,7 @@ set(HEADER_FILES
 if(WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "/NODEFAULTLIB:library")
     list(APPEND SOURCE_FILES
-        ComputerUUIDWindows.cpp
+        ComputerIDWindows.cpp
     )
 endif()
 
@@ -46,7 +46,7 @@ endif()
 
 if (APPLE OR UNIX)
     list(APPEND SOURCE_FILES
-        ComputerUUIDPosix.cpp
+        ComputerIDPosix.cpp
     )
 endif()
 
