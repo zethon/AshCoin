@@ -48,7 +48,9 @@ jobs:
     - name: Configure Conan
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE -s compiler=gcc -s compiler.version=11.1 --build missing
+      run:  |
+        conan --version
+        conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE -s compiler=gcc -s compiler.version=10.1 --build missing
 
     - name: Configure CMake
       shell: bash
