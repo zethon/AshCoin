@@ -11,8 +11,7 @@ class AshConan(ConanFile):
         "nlohmann_json/3.7.0",
         "cryptopp/8.2.0",
         "range-v3/0.10.0",
-        "leveldb/1.22",
-        "Simple-Web-Server/v3.1.1@owl/stable"
+        "leveldb/1.22"
     )
 
     generators = "cmake"
@@ -20,16 +19,19 @@ class AshConan(ConanFile):
     default_options = {
         "boost:shared": False,
         "boost:without_test": False,
-        "boost:without_thread": True,
+        "boost:without_thread": False,
         "boost:without_filesystem": False,
         "boost:without_system": False,
         "boost:without_stacktrace": False,
         "boost:without_program_options": False,
         "boost:without_serialization": False,
         "boost:without_exception": False,
+        "boost:without_container": False,
+        "boost:without_chrono": False,
+        "boost:without_date_time": False,
+        "boost:without_atomic": False,
         "boost:without_math": True,
         "boost:without_wave": True,
-        "boost:without_container": True,
         "boost:without_contract": True,
         "boost:without_graph": True,
         "boost:without_iostreams": True,
@@ -42,9 +44,6 @@ class AshConan(ConanFile):
         "boost:without_fiber": True,
         "boost:without_context": True,
         "boost:without_timer": True,
-        "boost:without_chrono": True,
-        "boost:without_date_time": True,
-        "boost:without_atomic": True,
         "boost:without_graph_parallel": True,
         "boost:without_python": True,
         "boost:without_type_erasure": True

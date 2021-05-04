@@ -61,6 +61,9 @@ if (UNIX)
     endif(CMAKE_COMPILER_IS_GNUCC)
 endif()
 
+add_subdirectory(Simple-Web-Server)
+include_directories(Simple-Web-Server)
+
 add_subdirectory(src)
 
 if (BUILD_ASH_TESTS)

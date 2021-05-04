@@ -31,9 +31,13 @@ jobs:
 
     - name: Get Conan
       uses: turtlebrowser/get-conan@v1.0
-      
-    - name: Add custom conan repo
-      run: conan remote add owl https://api.bintray.com/conan/zethon/owl
+
+    - name: Create Build Environment
+      shell: bash
+      working-directory: ${{github.workspace}}
+      run:  |
+        git submodule update --init --recursive
+        cmake -E make_directory ${{github.workspace}}/build
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build
