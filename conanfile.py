@@ -4,6 +4,7 @@ class AshConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     requires = (
+        "cmake_findboost_modular/1.69.0@bincrafters/stable", # allows find_package() to work on Windows
         "boost/1.73.0",
         "spdlog/1.8.1",
         "simple-websocket-server/2.0.2",

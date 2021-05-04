@@ -39,9 +39,6 @@ jobs:
         git submodule update --init --recursive
         cmake -E make_directory ${{github.workspace}}/build
 
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
-      
     - name: Configure Conan
       shell: bash
       working-directory: ${{github.workspace}}/build
