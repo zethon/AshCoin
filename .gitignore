@@ -2,5 +2,4 @@ build
 .vscode
 bin/
 .DS_Store
-CMakeLists.txt
 bin2/
