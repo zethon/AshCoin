@@ -48,7 +48,7 @@ if(APPLE)
     )
 endif()
 
-if (APPLE AND NOT UNIX)
+if (UNIX AND NOT APPLE)
     list(APPEND SOURCE_FILES
         ComputerIDPosix.cpp
     )
