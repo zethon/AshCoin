@@ -2,17 +2,14 @@ project(Ash)
 cmake_minimum_required(VERSION 3.1)
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-if(CMAKE_VERSION VERSION_LESS "3.7.0")
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-endif()
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake)
-include(ZCompileResource)
-
 # initialize conan libs
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(NO_OUTPUT_DIRS KEEP_RPATHS)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake)
+include(ZCompileResource)
 
 option(BUILD_ASH_TESTS "Build unit tests (default OFF)" OFF)
 
@@ -60,6 +57,9 @@ if (UNIX)
         add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
     endif(CMAKE_COMPILER_IS_GNUCC)
 endif()
+
+add_subdirectory(Simple-Web-Server)
+include_directories(Simple-Web-Server)
 
 add_subdirectory(src)
 

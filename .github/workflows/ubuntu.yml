@@ -29,33 +29,42 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install GCC11
+    - name: Install GCC9
       shell: bash
       run:  |
             sudo apt update
-            sudo apt install gcc-11 g++-11
+            sudo apt install gcc-9 g++-9
 
     - name: Get Conan
       uses: turtlebrowser/get-conan@v1.0
-      
+
     - name: Add custom conan repo
-      run: conan remote add owl https://api.bintray.com/conan/zethon/owl
+      run: conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
     - name: Create Build Environment
+      shell: bash
+      working-directory: ${{github.workspace}}
       run: cmake -E make_directory ${{github.workspace}}/build
-      
+
+    - name: Init Git Submodules
+      shell: bash
+      working-directory: ${{github.workspace}}/build
+      run: git submodule update --init --recursive
+
     - name: Configure Conan
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE -s compiler=gcc -s compiler.version=9 --build missing
+      run:  |
+        conan --version
+        conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE -s compiler=gcc -s compiler.version=9 --build missing
 
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_ASH_TESTS=ON
       env:
-        CC:   gcc-11
-        CXX:  g++-11
+        CC:   gcc-9
+        CXX:  g++-9
 
     - name: Build
       working-directory: ${{github.workspace}}/build

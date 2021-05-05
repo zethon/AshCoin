@@ -2,3 +2,4 @@ build
 .vscode
 bin/
 .DS_Store
+bin2/

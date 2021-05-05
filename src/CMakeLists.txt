@@ -69,6 +69,7 @@ add_executable(ash
 
 target_link_libraries(ash
     PUBLIC
+        simple-web-server
         ${CONAN_LIBS}
         ${COREFOUNDATION_LIBRARY}
         ${CARBON_LIBRARY}
