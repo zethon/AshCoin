@@ -44,8 +44,9 @@ jobs:
       run: cmake -E make_directory ${{github.workspace}}/build
 
     - name: Configure Conan
+      shell: bash
       working-directory: ${{github.workspace}}/build
-      run: conan install ${{github.workspace}} -s build_type=$env:BUILD_TYPE --build missing
+      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE --build missing
 
     - name: Configure CMake
       working-directory: ${{github.workspace}}/build
