@@ -10,10 +10,10 @@
 namespace utils
 {
 
-std::string SHA256(std::string data)
+std::string SHA1(const std::string& data)
 {
     std::string digest;
-    CryptoPP::SHA256 hash;
+    CryptoPP::SHA1 hash;
 
     CryptoPP::StringSource foo(data, true,
         new CryptoPP::HashFilter(hash,
@@ -46,7 +46,7 @@ std::string ComputerID::getUUID()
         ss << _customData;
     }
 
-    return SHA256(ss.str());
+    return SHA1(ss.str());
 }
 
 } // namespace utils
