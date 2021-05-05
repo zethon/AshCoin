@@ -10,7 +10,7 @@ class ComputerID
     std::string _customData;
 
 public:
-    ComputerID() = default;
+    ComputerID();
 
     std::string getUUID();
 

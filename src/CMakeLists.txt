@@ -42,9 +42,13 @@ if(APPLE)
     # is not included
     find_library(COREFOUNDATION_LIBRARY CoreFoundation)
     find_library(CARBON_LIBRARY Carbon)
+
+    list(APPEND SOURCE_FILES
+        ComputerIDMac.cpp
+    )
 endif()
 
-if (APPLE OR UNIX)
+if (UNIX AND NOT APPLE)
     list(APPEND SOURCE_FILES
         ComputerIDPosix.cpp
     )

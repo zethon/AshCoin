@@ -1,3 +1,5 @@
+
+
 #include <boost/asio.hpp>
 #include <iostream>
 
@@ -10,10 +12,10 @@
 namespace utils
 {
 
-std::string SHA256(std::string data)
+std::string SHA1(const std::string& data)
 {
     std::string digest;
-    CryptoPP::SHA256 hash;
+    CryptoPP::SHA1 hash;
 
     CryptoPP::StringSource foo(data, true,
         new CryptoPP::HashFilter(hash,
@@ -23,10 +25,12 @@ std::string SHA256(std::string data)
     return digest;
 }
 
+ComputerID::ComputerID() = default;
+
 // eventually this should get the mac address and do 
 // some other cool stuff, but for now we'll just use
 // a hash of the computer's hostname and a pointer
-// to *this
+// to *this, so that ht
 std::string ComputerID::getUUID()
 {
     namespace ip = boost::asio::ip;
@@ -44,7 +48,7 @@ std::string ComputerID::getUUID()
         ss << _customData;
     }
 
-    return SHA256(ss.str());
+    return SHA1(ss.str());
 }
 
 } // namespace utils
