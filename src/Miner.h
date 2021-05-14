@@ -3,6 +3,8 @@
 #include "AshLogger.h"
 #include "CryptoUtils.h"
 
+using namespace std::chrono_literals;
+
 namespace ash
 {
 
@@ -39,6 +41,7 @@ public:
         _keepTrying.store(false, std::memory_order_release);
     }
 
+    // TODO: move this to a CPP file
     ResultType mineBlock(Block& block,
         std::function<bool(std::uint64_t)> keepGoingFunc = nullptr)
     {
@@ -74,8 +77,8 @@ public:
                     return ResultType::ABORT;
                 }
 
-                time = 
-                    std::chrono::time_point_cast<std::chrono::milliseconds>
+                // update the block time
+                time = std::chrono::time_point_cast<std::chrono::milliseconds>
                         (std::chrono::system_clock::now());
             }
 
@@ -94,6 +97,7 @@ public:
         _logger->info("successfully mined bock {}", block.index());
         return ResultType::SUCCESS;
     }
+
 };
 
 } // namespace ash

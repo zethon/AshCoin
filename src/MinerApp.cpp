@@ -238,6 +238,7 @@ void MinerApp::initRestService()
 
             if (result.ec == std::errc::invalid_argument)
             {
+                response->write(SimpleWeb::StatusCode::client_error_bad_request);
                 return;
             }
 
@@ -246,6 +247,10 @@ void MinerApp::initRestService()
             if (startingIdx >= _blockchain->size())
             {
                 startingIdx = 0;
+            }
+            else
+            {
+                startingIdx = _blockchain->size() - startingIdx;
             }
 
             for (auto idx = startingIdx; idx < _blockchain->size(); idx++)
@@ -341,17 +346,18 @@ void MinerApp::initRestService()
             const auto amount = json["amount"].get<double>();
 
             std::lock_guard<std::mutex> lock{_chainMutex};
-            if (auto status = ash::CreateTransaction(*_blockchain, privateKey, toaddress, amount);
-                status == ash::TxResult::SUCCESS)
+            if (auto [result, newtx] = ash::CreateTransaction(*_blockchain, privateKey, toaddress, amount);
+                    result == ash::TxResult::SUCCESS)
             {
+                _blockchain->queueTransaction(std::move(newtx));
                 response->write(SimpleWeb::StatusCode::success_created);
                 return;
             }
             else
             {
                 ProblemDetail details;
-                details.type = fmt::format("/createx/{}", TxResultValue::ToString(status));
-                details.title = TxResultValue::ToString(status);
+                details.type = fmt::format("/createx/{}", TxResultValue::ToString(result));
+                details.title = TxResultValue::ToString(result);
                 details.status = static_cast<std::uint32_t>(SimpleWeb::StatusCode::server_error_internal_server_error);
                 details.instance = request->path;
 
@@ -684,9 +690,7 @@ void MinerApp::run()
 
 void MinerApp::runMineThread()
 {
-    std::uint64_t index = 0;
-
-    auto keepMiningCallback = 
+    auto keepMiningCallback =
         [this](std::uint64_t index) -> bool
         {
             std::lock_guard<std::mutex> lock{_chainMutex};
@@ -699,43 +703,28 @@ void MinerApp::runMineThread()
     {
         std::unique_ptr<Block> newblock;
 
-        std::string prevHash;
-        std::string data;
-
         {
             std::lock_guard<std::mutex> lock{_chainMutex};
 
             auto newDifficulty = _blockchain->getAdjustedDifficulty();
             _miner.setDifficulty(newDifficulty);
 
-            index = _blockchain->size();
-
-            const auto& lastBlock = _blockchain->back();
-            prevHash = lastBlock.hash();
-
-            Transactions txs;
-            txs.push_back(ash::CreateCoinbaseTransaction(index, _rewardAddress));
-
-            newblock = std::make_unique<Block>(index, prevHash, std::move(txs));
+            newblock = _blockchain->createUnminedBlock(_rewardAddress);
             newblock->setMiner(_uuid);
-            newblock->setData(fmt::format("coinbase block #{}", index));
-
-            // grab everything from the tx queue
-            this->_blockchain->getTransactionsToBeMined(*newblock);
+            newblock->setData(fmt::format("coinbase block #{}", newblock->index()));
         }
-    
+
+        assert(newblock);
         _logger->debug("mining block #{}, difficulty={}, transactions={}",
-            index, _miner.difficulty(), newblock->transactions().size());
+            newblock->index(), _miner.difficulty(), newblock->transactions().size());
 
-        auto result = _miner.mineBlock(*newblock, keepMiningCallback);
-
-        if (result == Miner::ABORT)
+        if (auto result = _miner.mineBlock(*newblock, keepMiningCallback);
+                result != Miner::SUCCESS)
         {
-            {
-                std::lock_guard<std::mutex> lock{_chainMutex};
-                auto count = _blockchain->reQueueTransactions(*newblock);
-                _logger->debug("mining block #{} was aborted, requeueing {} transaction", index, count);
-            }
+            std::lock_guard<std::mutex> lock{_chainMutex};
+
+            auto count = _blockchain->reQueueTransactions(*newblock);
+            _logger->debug("mining block #{} was aborted, requeueing {} transaction", newblock->index(), count);
 
             syncBlockchain();
             continue;

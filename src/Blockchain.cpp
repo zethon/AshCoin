@@ -41,11 +41,30 @@ void to_json(nl::json& j, const LedgerInfo& li)
             static_cast<std::uint64_t>(li.time.time_since_epoch().count());
 }
 
+void from_json(const nlohmann::json& j, LedgerInfo& li)
+{
+    j["blockid"].get_to(li.blockIdx);
+    j["txid"].get_to(li.txid);
+    j["amount"].get_to(li.amount);
+    li.time =
+            BlockTime{std::chrono::milliseconds{j["time"].get<std::uint64_t>()}};
+}
+
 void to_json(nl::json& j, const AddressLedger& ledger)
 {
     for (const auto& i : ledger)
     {
         j.push_back(i);
+    }
+}
+
+void from_json(const nlohmann::json& j, AddressLedger& ledger)
+{
+    ledger.clear();
+
+    for (const auto& j : j.items())
+    {
+        ledger.push_back(j.value().get<ash::LedgerInfo>());
     }
 }
 
@@ -158,23 +177,38 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
                 ledger.push_back(
                     LedgerInfo{ block.index(), tx.id(), block.time(), amount * -1.0 });
             }
-
         }
     }
 
     return ledger;
 }
 
-TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount)
+double GetAddressBalance(const Blockchain& chain, const std::string& address)
+{
+    const auto ledger = ash::GetAddressLedger(chain, address);
+    return std::accumulate(
+        ledger.begin(), ledger.end(), 0.0,
+        [](auto accum, const auto& entry)
+        {
+            return accum + entry.amount;
+        });
+}
+
+std::tuple<TxResult, ash::Transaction> CreateTransaction(Blockchain& chain, std::string_view senderPK, std::string_view receiver, double amount)
 {
     // first get the address of the sender from the privateKey
     const auto senderAddress = ash::crypto::GetAddressFromPrivateKey(senderPK);
+
+    if (boost::iequals(receiver, senderAddress))
+    {
+        return { TxResult::NOOP_TRANSACTION, {} };
+    }
 
     // now get all of the unspent txouts of the sender
     auto senderUnspentList = ash::GetUnspentTxOuts(chain, senderAddress);
     if (senderUnspentList.size() == 0)
     {
-        return TxResult::TXOUTS_EMPTY;
+        return { TxResult::TXOUTS_EMPTY, {} };
     }
 
     double currentAmount = 0;
@@ -196,7 +230,7 @@ TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::st
 
     if (currentAmount < amount)
     {
-        return TxResult::INSUFFICIENT_FUNDS;
+        return { TxResult::INSUFFICIENT_FUNDS, {} };
     }
 
     ash::Transaction tx;
@@ -206,7 +240,7 @@ TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::st
     {
         // TODO: Signature!!!
         txins.emplace_back(uout.blockIndex,
-                           uout.txIndex, uout.txOutIndex, "signature");
+            uout.txIndex, uout.txOutIndex, "signature");
     }
 
     auto& outs = tx.txOuts();
@@ -216,9 +250,7 @@ TxResult CreateTransaction(Blockchain& chain, std::string_view senderPK, std::st
         outs.emplace_back(senderAddress, leftoverAmount);
     }
 
-    chain.queueTransaction(std::move(tx));
-
-    return TxResult::SUCCESS;
+    return { TxResult::SUCCESS, tx };
 }
 
 // TODO: The implementation of this should be improved to be faster
@@ -332,6 +364,11 @@ bool Blockchain::isValidChain() const
     return true;
 }
 
+std::uint64_t Blockchain::cumDifficulty() const
+{
+    return cumDifficulty(_blocks.size() - 1);
+}
+
 std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
 {
     std::uint64_t total = 0;
@@ -346,20 +383,6 @@ std::uint64_t Blockchain::cumDifficulty(std::size_t idx) const
     return total;
 }
 
-void Blockchain::getTransactionsToBeMined(Block& block)
-{
-    auto& txs = block.transactions();
-
-    // we assume someone else is making sure we're thread safe!
-    while (!_txQueue.empty())
-    {
-        auto& tx = _txQueue.front();
-        tx.calcuateId(block.index());
-        txs.push_back(std::move(tx));
-        _txQueue.pop();
-    }
-}
-
 std::size_t Blockchain::reQueueTransactions(Block& block)
 {
     std::size_t count = 0;
@@ -372,6 +395,62 @@ std::size_t Blockchain::reQueueTransactions(Block& block)
     }
 
     return count;
+}
+
+std::uint64_t Blockchain::getAdjustedDifficulty()
+{
+    const auto chainsize = size();
+    assert(chainsize > 0);
+
+    if (((back().index() + 1) % BLOCK_INTERVAL) != 0)
+    {
+        return back().difficulty();
+    }
+
+    const auto& firstBlock = at(size() - BLOCK_INTERVAL);
+    const auto& lastBlock = back();
+    const auto timespan =
+            std::chrono::duration_cast<std::chrono::seconds>
+                    (lastBlock.time() - firstBlock.time());
+
+    if (timespan.count() < (TARGET_TIMESPAN / 2))
+    {
+        return lastBlock.difficulty() + 1;
+    }
+    else if (timespan.count() > (TARGET_TIMESPAN * 2))
+    {
+        return lastBlock.difficulty() - 1;
+    }
+
+    return lastBlock.difficulty();
+}
+
+std::size_t Blockchain::transactionQueueSize() const noexcept
+{
+    return _txQueue.size();
+}
+
+void Blockchain::queueTransaction(Transaction&& tx)
+{
+    _txQueue.push(std::move(tx));
+}
+
+BlockUniquePtr Blockchain::createUnminedBlock(const std::string& coinbasewallet)
+{
+    const auto newblockidx = this->size();
+
+    ash::Transactions txs;
+    txs.push_back(ash::CreateCoinbaseTransaction(newblockidx, coinbasewallet));
+
+    while (!_txQueue.empty())
+    {
+        auto& tx = _txQueue.front();
+        tx.calcuateId(newblockidx);
+        txs.push_back(std::move(tx));
+        _txQueue.pop();
+    }
+
+    return std::make_unique<Block>(newblockidx, this->back().hash(), std::move(txs));
 }
 
 } // namespace
