@@ -1,6 +1,7 @@
 
 set(SOURCE_FILES
     AshLogger.cpp
+    AshUtils.cpp
     Block.cpp
     Blockchain.cpp
     ChainDatabase.cpp
@@ -10,11 +11,11 @@ set(SOURCE_FILES
     PeerManager.cpp
     Settings.cpp
     Transactions.cpp
-    utils.cpp
 )
 
 set(HEADER_FILES
     AshLogger.h
+    AshUtils.h
     Block.h
     Blockchain.h
     ChainDatabase.h
@@ -27,7 +28,6 @@ set(HEADER_FILES
     ProblemDetails.h
     Settings.h
     Transactions.h
-    utils.h
 )
 
 if(WIN32)

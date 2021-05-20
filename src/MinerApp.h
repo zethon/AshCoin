@@ -11,7 +11,7 @@
 #pragma warning(pop)
 #endif
 
-#include "utils.h"
+#include "AshUtils.h"
 #include "AshLogger.h"
 #include "Blockchain.h"
 #include "ChainDatabase.h"
@@ -92,9 +92,7 @@ private:
 
     ChainDatabasePtr        _database;
     
-    // MUST ALWAYS BE LOCKED IN THIS ORDER
     std::mutex              _chainMutex;    // chain mutex
-    std::mutex              _txMutex;       // transaction mutex
     
     BlockChainPtr           _blockchain;
     BlockChainPtr           _tempchain;
