@@ -17,7 +17,7 @@
 
 #include "AshLogger.h"
 #include "core.h"
-#include "utils.h"
+#include "AshUtils.h"
 #include "Blockchain.h"
 #include "Settings.h"
 #include "MinerApp.h"
@@ -124,6 +124,7 @@ void initializeLogs(ash::SettingsPtr settings)
 
     logger->info("log levels set to: {}", levelstr);
 }
+
 
 int main(int argc, char* argv[])
 {

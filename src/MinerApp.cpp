@@ -18,7 +18,7 @@
 #include "footer_html.h"
 
 #include "CryptoUtils.h"
-#include "utils.h"
+#include "AshUtils.h"
 #include "core.h"
 #include "ComputerID.h"
 #include "Transactions.h"
@@ -721,10 +721,11 @@ void MinerApp::runMineThread()
         if (auto result = _miner.mineBlock(*newblock, keepMiningCallback);
                 result != Miner::SUCCESS)
         {
-            std::lock_guard<std::mutex> lock{_chainMutex};
-
-            auto count = _blockchain->reQueueTransactions(*newblock);
-            _logger->debug("mining block #{} was aborted, requeueing {} transaction", newblock->index(), count);
+            {
+                std::lock_guard<std::mutex> lock{_chainMutex};
+                auto count = _blockchain->reQueueTransactions(*newblock);
+                _logger->debug("mining block #{} was aborted, requeueing {} transaction", newblock->index(), count);
+            }
 
             syncBlockchain();
             continue;
