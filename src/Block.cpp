@@ -20,6 +20,7 @@ void to_json(nl::json& j, const Block& b)
     j["miner"] = b.miner();
     j["data"] = b.data();
     j["transactions"] = b.transactions();
+    j["merkleroot"] = ash::to_hexstr(b.hash());
 
     j["time"] = 
         static_cast<std::uint64_t>(b.time().time_since_epoch().count());
@@ -31,10 +32,11 @@ void from_json(const nl::json& j, Block& b)
     j["nonce"].get_to(b._hashed._nonce);
     j["difficulty"].get_to(b._hashed._difficulty);
     j["data"].get_to(b._hashed._data);
-    j["prev"].get_to(b._hashed._prev);
-    j["hash"].get_to(b._hash);
     j["miner"].get_to(b._miner);
     j["transactions"].get_to(b._hashed._txs);
+
+    b._hash = ash::from_hexstr(j["hash"].get<std::string>());
+    b._hashed._prev = ash::from_hexstr(j["prev"].get<std::string>());
 
     b._hashed._time = 
         BlockTime{std::chrono::milliseconds{j["time"].get<std::uint64_t>()}};

@@ -14,6 +14,26 @@ namespace nl = nlohmann;
 namespace ash
 {
 
+inline std::string to_hexstr(const CryptoPP::Integer& value)
+{
+    std::stringstream ss;
+    ss << std::hex << value;
+    return ss.str();
+}
+
+inline CryptoPP::Integer from_hexstr(std::string_view data)
+{
+    if (data.at(data.size() - 1) != 'h'
+        || data.at(data.size() - 1) != 'H')
+    {
+        return CryptoPP::Integer{ data.data() };
+    }
+
+    std::string temp { data };
+    temp.append("h");
+    return CryptoPP::Integer{ temp.data() };
+}
+
 class Block;
 using BlockSharedPtr = std::shared_ptr<Block>;
 using BlockUniquePtr = std::unique_ptr<Block>;
@@ -68,15 +88,15 @@ public:
             (static_cast<const Block*>(this))->transactions());
     }
 
-    std::string hash() const { return _hash; }
+    CryptoPP::Integer hash() const { return _hash; }
 
     std::string miner() const { return _miner; }
     void setMiner(std::string_view val) { _miner = val; }
 
-    void setMinedData(std::uint64_t nonce, std::uint64_t diff, BlockTime time, std::string_view hash)
+    void setMinedData(std::uint64_t nonce, std::uint64_t difficulty, BlockTime time, const CryptoPP::Integer& hash)
     {
         _hashed._nonce = nonce;
-        _hashed._difficulty = diff;
+        _hashed._difficulty = difficulty;
         _hashed._time = time;
         _hash = hash;
     }
@@ -89,15 +109,15 @@ private:
         std::uint64_t       _difficulty;
         std::string         _data;
         BlockTime           _time;
-        std::string         _prev;
+        CryptoPP::Integer   _prev;
         Transactions        _txs;
     };
 
     HashedData      _hashed;
 
-    std::string     _hash;
-    std::string     _miner;
-    SpdLogPtr       _logger;
+    CryptoPP::Integer   _hash;
+    std::string         _miner;
+    SpdLogPtr           _logger;
 };
 
 } // namespace ash

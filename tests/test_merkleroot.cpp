@@ -15,6 +15,9 @@ BOOST_AUTO_TEST_SUITE(merkleroot)
 BOOST_AUTO_TEST_CASE(GetAddressLedgerTest)
 {
     auto retval = ash::crypto::SHA256Int("This is a test");
+    std::cout << "integer: " << retval << std::endl;
+    std::cout << "hexint : " << std::hex << retval << std::endl;
+    std::cout << "hexstr : " << ash::crypto::SHA256("This is a test") << std::endl;
     BOOST_TEST(retval == 0);
 }
 
