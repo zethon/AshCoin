@@ -20,6 +20,14 @@ A lot of this project is based on [this Javascript tutorial](https://lhartikk.gi
 
 **NOTE**: This is **a fun project**. I am writing this to learn about blockchains and crypto currency. **I am not an expert**. This is not intended to be a real crypto currency.
 
+## Todo
+
+These are the next priorities I am working on with some explanation of what I intend to do. Any help is more than welcome!
+
+* Get rid of the proprietary database - For some reason I decided to go with a proprietary database for storing the chain. This should be refactored to use something else like Google's LevelDB (which is what Bitcoin uses)
+* Get rid of the text hashes and ids - The hash values for blocks and ids for transactions use strings produced from SHA256 values. Instead we should be using `CryptoPP::Integer` and do the string conversation where and when neeed.
+* Refactor difficulty - Currently difficulty is based on the number of leading zeros in the string value of the hash of the block. This should use a method more widely used in crypto, such as finding a hash integer value that's less than a given value.
+
 ## Building
 
 The following tools are required on all platforms:
