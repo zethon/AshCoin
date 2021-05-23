@@ -43,6 +43,12 @@ class Block
 
 public:
     Block() = default;
+    Block(std::uint64_t index, std::string_view prevHash)
+        : Block(index, prevHash, {})
+    {
+        // nothing to do
+    }
+
     Block(std::uint64_t index, std::string_view prevHash, Transactions&& tx);
 
     bool operator==(const Block& other) const;
@@ -97,7 +103,6 @@ private:
 
     std::string     _hash;
     std::string     _miner;
-    SpdLogPtr       _logger;
 };
 
 } // namespace ash

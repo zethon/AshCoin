@@ -1,9 +1,125 @@
+#include <memory>
+
+#include <fmt/core.h>
+
+#include <leveldb/write_batch.h>
+
 #include "Transactions.h"
 #include "Blockchain.h"
 #include "ChainDatabase.h"
 
 namespace ash
 {
+
+ChainLevelDB::ChainLevelDB(const std::string& foldername)
+    : IChainDatabase(foldername),
+      _comparer{std::make_unique<ChainDBComparator>()}
+{
+    boost::filesystem::path dbfolder { this->datafolder() };
+    dbfolder /= "chaindb";
+
+    leveldb::Options options;
+    options.create_if_missing = true;
+    options.error_if_exists = false;
+    options.comparator = _comparer.get();
+
+    leveldb::DB* temp;
+    const auto status = leveldb::DB::Open(options, dbfolder.string(), &temp);
+    if (!status.ok())
+    {
+        if (auto statstr = status.ToString(); statstr.size() > 0)
+        {
+            auto msg = fmt::format("Chain database could not be opened because '{}'", statstr);
+            throw chaindb_error(msg);
+        }
+        
+        throw chaindb_error("Chain database could not be opened because of an unknown error");
+    }
+
+    _db.reset(temp);
+
+    // see if there's any data inside the db, and if so then manually count
+    // the elements to get `_size`
+    auto it = const_iteraor();
+    for (it->SeekToFirst(); it->Valid(); it->Next())
+    {
+        _size++;
+    }
+}
+
+void ChainLevelDB::initialize(Blockchain& chain, GenesisCallback gcb)
+{
+}
+
+void ChainLevelDB::write(const Block& block)
+{
+    std::uint64_t index = block.index();
+    const std::string value = nl::json{block}.dump();
+
+    const leveldb::Slice key{ reinterpret_cast<char*>(&index), sizeof(index) };
+    leveldb::Slice val{ value.data(), value.size() };
+
+    if (auto status = _db->Put(leveldb::WriteOptions(), key, val); status.ok())
+    {
+        _size++;
+    }
+}
+
+void ChainLevelDB::writeChain(const Blockchain &chain)
+{
+    std::size_t count = 0;
+    leveldb::WriteBatch batch;
+
+    for (const auto& block : chain)
+    {
+        std::uint64_t index = block.index();
+        const std::string valuestr = nl::json{block}.dump();
+
+        const leveldb::Slice key{ reinterpret_cast<char*>(&index), sizeof(index) };
+        leveldb::Slice value{ valuestr.data(), valuestr.size() };
+
+        batch.Put(key, value);
+        count++;
+    }
+
+    if (auto status = _db->Write(leveldb::WriteOptions(), &batch); status.ok())
+    {
+        _size += count;
+    }
+}
+
+std::optional<Block> ChainLevelDB::read(std::size_t index) const
+{
+    const leveldb::Slice key{ reinterpret_cast<char*>(&index), sizeof(index) };
+
+    std::string buffer;
+
+    if (const auto status = _db->Get(leveldb::ReadOptions(), key, &buffer);
+            status.ok())
+    {
+        nl::json json = nl::json::parse(buffer);
+        assert(json.is_array());
+        assert(json.size() == 1);
+        return json[0].get<ash::Block>();
+    }
+
+    return {};
+}
+
+size_t ChainLevelDB::size()
+{
+    return _size;
+}
+
+void ChainLevelDB::reset()
+{
+    _size = 0;
+}
+
+void ChainLevelDB::finalize(leveldb::WriteBatch &batch)
+{
+    _db->Write(leveldb::WriteOptions(), &batch);
+}
 
 void write_data(std::ostream& stream, const TxOutPoint& pt)
 {
@@ -153,8 +269,8 @@ void read_block(std::istream& stream, Block& block)
 constexpr std::string_view DatabaseFile = "chain.ashdb";
 
 ChainDatabase::ChainDatabase(std::string_view folder)
-    : _folder{ folder },
-      _path{ boost::filesystem::path { _folder.data()} },
+    : IChainDatabase(folder.data()),
+      _path{ boost::filesystem::path { folder.data()} },
       _dbfile { _path / DatabaseFile.data()},
       _logger(ash::initializeLogger("ChainDatabase"))
 {
@@ -234,6 +350,28 @@ void ChainDatabase::reset()
     {
         boost::filesystem::remove(_dbfile);
     }
+}
+
+int ChainDBComparator::Compare(const leveldb::Slice& a, const leveldb::Slice& b) const
+{
+    auto a1 = reinterpret_cast<const int*>(a.data());
+    auto b1 = reinterpret_cast<const int*>(b.data());
+    return *a1 - *b1;
+}
+
+const char *ChainDBComparator::Name() const
+{
+    return "ChainDBComparator1.0";
+}
+
+void ChainDBComparator::FindShortestSeparator(std::string *start, const leveldb::Slice &limit) const
+{
+
+}
+
+void ChainDBComparator::FindShortSuccessor(std::string *key) const
+{
+
 }
 
 } // namespace

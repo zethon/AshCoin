@@ -90,7 +90,7 @@ private:
     std::string             _uuid;
     std::string             _rewardAddress;
 
-    ChainDatabasePtr        _database;
+    IChainDatabasePtr        _database;
     
     std::mutex              _chainMutex;    // chain mutex
     
