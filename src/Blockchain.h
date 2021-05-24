@@ -147,12 +147,6 @@ public:
         return at(blockIndex).transactions().at(txIndex);
     }
 
-    auto& txAt(std::size_t blockIndex, std::size_t txIndex)
-    {
-        return const_cast<Transaction&>(
-                static_cast<const Blockchain&>(*this).txAt(blockIndex,txIndex));
-    }
-
     bool addNewBlock(const Block& block);
     bool addNewBlock(const Block& block, bool checkPreviousBlock);
     BlockUniquePtr createUnminedBlock(const std::string& coinbasewallet);
