@@ -260,10 +260,10 @@ void MinerApp::initRestService()
             response->write(json.dump());
         };
 
-    _httpServer.resource[R"x(^/rest/createAddress)x"]["GET"] =
+    _httpServer.resource[R"x(^/rest/createWallet)x"]["GET"] =
         [this](std::shared_ptr<HttpResponse> response, std::shared_ptr<HttpRequest> request)
         {
-            _logger->trace("/rest/createAddress request from {}", 
+            _logger->trace("/rest/createWallet request from {}",
                 request->remote_endpoint().address().to_string());
 
             const auto privateKey = ash::crypto::GeneratePrivateKey();

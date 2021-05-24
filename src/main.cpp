@@ -135,6 +135,7 @@ int main(int argc, char* argv[])
         ("help,?", "print help message")
         ("version,v", "print version string")
         ("config,c",po::value<std::string>(), "config file")
+        ("createwallet", "create a wallet")
         ;
 
     po::variables_map vm;
@@ -144,6 +145,19 @@ int main(int argc, char* argv[])
     if (vm.count("help") > 0)
     {
         std::cout << desc << '\n';
+        return 0;
+    }
+
+    if (vm.count("createwallet") > 0)
+    {
+        const auto privateKey = ash::crypto::GeneratePrivateKey();
+
+        nl::json json;
+        json["private-key"] = privateKey;
+        json["public-key"] = ash::crypto::GetPublicKey(privateKey);
+        json["address"] = ash::crypto::GetAddressFromPrivateKey(privateKey);
+
+        std::cout << json.dump(4) << std::endl;
         return 0;
     }
 
