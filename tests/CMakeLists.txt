@@ -41,6 +41,7 @@ set(ASH_FILES
     ../src/ChainDatabase.h
 )
 
+create_test("block" "${ASH_FILES}")
 create_test("blockchain" "${ASH_FILES}")
 create_test("crypto" "${ASH_FILES}")
 create_test("db" "${ASH_FILES}")

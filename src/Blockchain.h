@@ -23,6 +23,9 @@ constexpr auto BLOCK_INTERVAL   = 10u; // in blocks
 class Blockchain;
 using BlockChainPtr = std::unique_ptr<Blockchain>;
 
+class IChainDatabase;
+using IChainDatabasePtr = std::unique_ptr<IChainDatabase>;
+
 struct LedgerInfo;
 using AddressLedger = std::vector<LedgerInfo>;
 
@@ -74,9 +77,10 @@ struct LedgerInfo
 //  client handles synchronization
 class Blockchain final
 {
-    std::vector<Block>          _blocks;
+//    IChainDatabasePtr           _db;
+    std::vector<Block>          _blocks;    // TODO: refactor away
     UnspentTxOuts               _unspentTxOuts;
-    std::queue<Transaction>     _txQueue; // transactions waiting to be mined by this miner
+    std::queue<Transaction>     _txQueue;   // transactions waiting to be mined by this miner
     SpdLogPtr                   _logger;
 
     friend class ChainDatabase;
@@ -124,11 +128,6 @@ public:
     std::size_t size() const 
     { 
         return _blocks.size(); 
-    }
-
-    void clear()
-    {
-        _blocks.clear();
     }
 
     void resize(std::size_t size)

@@ -262,7 +262,7 @@ void read_block(std::istream& stream, Block& block)
     {
         Transaction tx;
         read_data(stream, tx);
-        txs.push_back(tx);
+        block.add_transaction(std::move(tx));
     }
 }
 

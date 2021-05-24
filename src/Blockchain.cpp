@@ -8,6 +8,7 @@
 
 #include "CryptoUtils.h"
 #include "Blockchain.h"
+#include "ChainDatabase.h"
 
 namespace nl = nlohmann;
 
@@ -24,8 +25,6 @@ void to_json(nl::json& j, const Blockchain& b)
 
 void from_json(const nl::json& j, Blockchain& b)
 {
-    b.clear();
-
     for (const auto& jblock : j.items())
     {
         b._blocks.push_back(jblock.value().get<Block>());
@@ -279,8 +278,11 @@ Block GetBlockDetails(const Blockchain& chain, std::size_t index)
 
     // loops through the transactions of the block we're
     // interested in
-    for (auto& tx : retblock.transactions())
+    for (auto transactions = retblock.transactions();
+            auto item : transactions | boost::adaptors::indexed())
     {
+        auto tx = item.value();
+
         // for each TxIn of the block we want to fill in
         // some missing information
         for (auto& txin : tx.txIns())
@@ -297,6 +299,8 @@ Block GetBlockDetails(const Blockchain& chain, std::size_t index)
             txin.txOutPt().address = txout.address();
             txin.txOutPt().amount = txout.amount();
         }
+
+        retblock.update_transaction(item.index(), tx);
     }
 
     return retblock;

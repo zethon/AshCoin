@@ -12,14 +12,14 @@
 
 #include <nlohmann/json.hpp>
 
-#include <test-config.h>
-
 #include "../src/Block.h"
 #include "../src/Blockchain.h"
 #include "../src/Miner.h"
 #include "../src/CryptoUtils.h"
 #include "../src/Transactions.h"
 #include "../src/Miner.h"
+
+#include "Test.h"
 
 namespace nl = nlohmann;
 namespace data = boost::unit_test::data;
@@ -80,23 +80,6 @@ std::ostream& operator<<(std::ostream& out, const ash::AddressLedger& ledger)
     return out;
 }
 
-}
-
-std::string LoadFile(std::string_view filename)
-{
-    std::ifstream t(filename.data());
-    std::string str((std::istreambuf_iterator<char>(t)),
-                    std::istreambuf_iterator<char>());
-    return str;
-}
-
-ash::Blockchain LoadBlockchain(std::string_view chainfile)
-{
-    const std::string filename = fmt::format("{}/tests/data/{}", ASH_SRC_DIRECTORY, chainfile);
-    const std::string rawjson = LoadFile(filename);
-    nl::json json = nl::json::parse(rawjson, nullptr, false);
-    BOOST_TEST(!json.is_discarded());
-    return json["blocks"].get<ash::Blockchain>();
 }
 
 BOOST_AUTO_TEST_SUITE(block)

@@ -68,10 +68,20 @@ public:
     std::string previousHash() const { return _hashed._prev; }
 
     const Transactions& transactions() const { return _hashed._txs; }
-    Transactions& transactions()
+    void add_transaction(Transaction&& tx)
     {
-        return const_cast<Transactions&>(
-            (static_cast<const Block*>(this))->transactions());
+        _hashed._txs.push_back(std::move(tx));
+    }
+
+    [[maybe_unused]] bool update_transaction(std::size_t index, const Transaction& tx)
+    {
+        if (index >= _hashed._txs.size())
+        {
+            return false;
+        }
+
+        _hashed._txs.at(index) = tx;
+        return true;
     }
 
     std::string hash() const { return _hash; }

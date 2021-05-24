@@ -131,6 +131,16 @@ BOOST_AUTO_TEST_CASE(test_write_read)
     }
 }
 
+BOOST_AUTO_TEST_CASE(test_update_block)
+{
+    auto db_name = CreateBlockDB("test_update_block");
+    ash::ChainLevelDB db{db_name};
+
+//    ash::Block& block1 { db.read(0) };
+//    block1.setData("updated1")
+
+}
+
 // write and entire blockchain to the database and make
 // sure we can read it how we expect
 BOOST_AUTO_TEST_CASE(test_write_read_blockchain)
@@ -143,6 +153,9 @@ BOOST_AUTO_TEST_CASE(test_size)
     auto db_name = CreateBlockDB("test_write_read");
     ash::ChainLevelDB db{ db_name };
     BOOST_TEST(db.size() == 3);
+
+    ash::Block newblock1 { db.size(), ""};
+
 
 }
 
