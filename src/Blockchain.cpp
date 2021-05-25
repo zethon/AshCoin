@@ -306,6 +306,29 @@ Block GetBlockDetails(const Blockchain& chain, std::size_t index)
     return retblock;
 }
 
+bool ValidBlockchain(const BlockList& blocklist)
+{
+    if (blocklist.size() == 0 || blocklist.size() == 1)
+    {
+        return true;
+    }
+
+    for (auto idx = 1u; idx < blocklist.size(); ++idx)
+    {
+        const auto& current = blocklist.at(idx);
+        const auto& prev = blocklist.at(idx - 1);
+
+        if ((current.index() != prev.index() + 1)
+           || (current.previousHash() != prev.hash())
+           || (CalculateBlockHash(current) != current.hash()))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 //*** Blockchain
 Blockchain::Blockchain()
     : _logger(ash::initializeLogger("Blockchain"))

@@ -54,6 +54,8 @@ std::optional<TxPoint> FindTransaction(const Blockchain& chain, std::string_view
 // fills in the TxIn TxPoint info for all the Transactions in the Block
 Block GetBlockDetails(const Blockchain& chain, std::size_t index);
 
+bool ValidBlockchain(const BlockList& blocklist);
+
 struct LedgerInfo
 {
     std::uint64_t   blockIdx;

@@ -22,6 +22,9 @@ using BlockList = std::vector<Block>;
 void to_json(nl::json& j, const Block& b);
 void from_json(const nl::json& j, Block& b);
 
+void to_json(nl::json& j, const BlockList& b);
+void from_json(const nl::json& j, BlockList& b);
+
 bool ValidHash(const Block& block);
 bool ValidNewBlock(const Block& block, const Block& prevblock);
 
