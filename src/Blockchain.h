@@ -78,7 +78,7 @@ struct LedgerInfo
 class Blockchain final
 {
 //    IChainDatabasePtr           _db;
-    std::vector<Block>          _blocks;    // TODO: refactor away
+    BlockList                   _blocks;    // TODO: refactor away
     UnspentTxOuts               _unspentTxOuts;
     std::queue<Transaction>     _txQueue;   // transactions waiting to be mined by this miner
     SpdLogPtr                   _logger;
@@ -92,8 +92,8 @@ public:
 
     Blockchain();
 
-    Blockchain(Blockchain&&) = default;
-    Blockchain& operator=(const Blockchain&) = default;
+    Blockchain(Blockchain&&) = delete;
+    Blockchain& operator=(const Blockchain&) = delete;
     
     auto begin() const -> decltype(_blocks.begin())
     {
@@ -132,7 +132,7 @@ public:
 
     void resize(std::size_t size)
     {
-        _blocks.resize(size);
+        throw std::runtime_error("Blockchain::resize() not implemented yet");
     }
 
     auto at(std::size_t index) const -> decltype(_blocks.at(index))
@@ -161,6 +161,8 @@ public:
     void queueTransaction(Transaction&& tx);
     std::size_t transactionQueueSize() const noexcept;
     std::size_t reQueueTransactions(Block& block);
+
+    void replace_blocks(const BlockList& block);
 };
 
 }

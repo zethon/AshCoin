@@ -17,6 +17,7 @@ namespace ash
 class Block;
 using BlockSharedPtr = std::shared_ptr<Block>;
 using BlockUniquePtr = std::unique_ptr<Block>;
+using BlockList = std::vector<Block>;
 
 void to_json(nl::json& j, const Block& b);
 void from_json(const nl::json& j, Block& b);

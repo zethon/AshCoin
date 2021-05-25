@@ -457,4 +457,9 @@ BlockUniquePtr Blockchain::createUnminedBlock(const std::string& coinbasewallet)
     return std::make_unique<Block>(newblockidx, this->back().hash(), std::move(txs));
 }
 
+void Blockchain::replace_blocks(const BlockList& block)
+{
+    throw std::runtime_error("replace_blocks not implemented");
+}
+
 } // namespace

@@ -79,7 +79,7 @@ private:
 
     void dispatchRequest(HcConnectionPtr, const nl::json& json);
     void handleResponse(HcConnectionPtr, const nl::json& json);
-    void handleChainResponse(HcConnectionPtr, const Blockchain&);
+    void handleChainResponse(HcConnectionPtr, BlockList&);
     void handleError(HcConnectionPtr, const nl::json&);
 
     void servePage(HttpResponsePtr response, 
@@ -95,7 +95,7 @@ private:
     std::mutex              _chainMutex;    // chain mutex
     
     BlockChainPtr           _blockchain;
-    BlockChainPtr           _tempchain;
+    BlockList               _tempchain;
 
     SettingsPtr             _settings;
     PeerManager             _peers;
