@@ -67,6 +67,13 @@ void from_json(const nlohmann::json& j, AddressLedger& ledger)
     }
 }
 
+void to_json(nl::json& j, const ChainSummary& summary)
+{
+    j["first"] = summary.first;
+    j["last"] = summary.last;
+    j["cummdiff"] = summary.cumdiff;
+}
+
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address)
 {
     auto cmp = 
@@ -330,8 +337,9 @@ bool ValidBlockchain(const BlockList& blocklist)
 }
 
 //*** Blockchain
-Blockchain::Blockchain()
-    : _logger(ash::initializeLogger("Blockchain"))
+Blockchain::Blockchain(IChainDatabasePtr ptr)
+    : _db(std::move(ptr)),
+      _logger(ash::initializeLogger("Blockchain"))
 {
     // nothing to do
 }
@@ -354,6 +362,7 @@ bool Blockchain::addNewBlock(const Block& block, bool checkPreviousBlock)
     }
 
     _blocks.push_back(block);
+    _db->write(block);
 
     return true;
 }
@@ -478,6 +487,11 @@ BlockUniquePtr Blockchain::createUnminedBlock(const std::string& coinbasewallet)
     }
 
     return std::make_unique<Block>(newblockidx, this->back().hash(), std::move(txs));
+}
+
+std::size_t Blockchain::size() const
+{
+    return _db->size();
 }
 
 void Blockchain::replace_blocks(const BlockList& block)

@@ -164,7 +164,7 @@ class ChainDatabase final : public IChainDatabase
 
 public:
     ChainDatabase(std::string_view folder);
-    ~ChainDatabase();
+    ~ChainDatabase() override = default;
 
     void write(const Block& block) override;
     void writeChain(const Blockchain& chain) override;
@@ -183,11 +183,11 @@ public:
     }
 
 private:
+    std::uint64_t _size = 0;
+
+    // TODO: fair game to be refactored
     boost::filesystem::path     _path;
     boost::filesystem::path     _dbfile;
-    // ash::db::LevelDBPtr         _txInIndex;
-    leveldb::DB*                _txIndex = nullptr;
-    
     SpdLogPtr                   _logger;
 };
 

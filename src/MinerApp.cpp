@@ -49,8 +49,7 @@ MinerApp::MinerApp(SettingsPtr settings)
     _logger->debug("target block generation interval is {} seconds", TARGET_TIMESPAN);
     _logger->debug("difficulty adjustment interval is every {} blocks", BLOCK_INTERVAL);
 
-    _blockchain = std::make_unique<Blockchain>();
-    _database = std::make_unique<ChainDatabase>(dbfolder);
+    _blockchain = std::make_unique<Blockchain>(std::make_unique<ChainDatabase>(dbfolder));
 }
 
 MinerApp::~MinerApp()
@@ -631,31 +630,24 @@ void MinerApp::run()
         return;
     }
 
+    if (_blockchain->size() == 0)
+    {
+        ash::Transactions txs;
+        txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
+        Block gen{ 0, "", std::move(txs) };
+        gen.setMiner(this->_uuid);
+
+        std::time_t t = std::time(nullptr);
+        const auto gendata =
+            fmt::format("Gensis Block created {:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&t));
+
+        gen.setData(gendata);
+        _logger->info("created gensis block with data '{}'", gendata);
+    }
+
     initHttp();
     initWebSocket();
     initPeers();
-
-    auto genesisBlockCallback = 
-        [this]() -> Block
-        {
-            Transactions txs;
-            txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
-            Block gen{ 0, "", std::move(txs) };
-            gen.setMiner(this->_uuid);
-
-            std::time_t t = std::time(nullptr);
-            const auto gendata = 
-                fmt::format("Gensis Block created {:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&t));
-
-            gen.setData(gendata);
-            _logger->debug("creating gensis block with data '{}'", gendata);
-
-            return gen;
-        };
-
-    // maybe it's ok if the blockchain has some concept of
-    // a persistence object?
-    _database->initialize(*_blockchain, genesisBlockCallback);
 
     _httpThread = std::thread(
         [this]()
@@ -734,15 +726,13 @@ void MinerApp::runMineThread()
         //       point on
 
         // append the block to the chain
-        if (!_blockchain->addNewBlock(*newblock))
+        if (std::lock_guard<std::mutex> lock{_chainMutex};
+            !_blockchain->addNewBlock(*newblock))
         {
             _logger->error("could not add new block #{} to blockchain, stopping mining", newblock->index());
             _miningDone = true;
             break;
         }
-
-        // write the block to the database
-        _database->write(*newblock);
 
         // see if there's an update waiting for the local
         // copy of the chain
@@ -780,39 +770,41 @@ bool MinerApp::syncBlockchain()
         {
             // we're replacing the full chain
             _blockchain->replace_blocks(_tempblocklist);
-            _database->reset();
-            _database->writeChain(*_blockchain);
+//            _database->reset();
+//            _database->writeChain(*_blockchain);
             retval = true;
         }
         else if (_tempblocklist.front().index() <= _blockchain->back().index())
         {
+            _blockchain->replace_blocks(_tempblocklist);
             // TODO: this can probably be refactored into `Blockchain::replace_blocks()`
-            auto startIdx = _tempblocklist.front().index();
-            _blockchain->resize(startIdx);
-            for (const auto& block : _tempblocklist)
-            {
-                // add up until a point of failure (if there
-                // is one)
-                if (!_blockchain->addNewBlock(block))
-                {
-                    _logger->warn("failed to add block while updating chain at index");
-                }
-            }
-
-            _database->reset();
-            _database->writeChain(*_blockchain);
+//            auto startIdx = _tempblocklist.front().index();
+//            _blockchain->resize(startIdx);
+//            for (const auto& block : _tempblocklist)
+//            {
+//                // add up until a point of failure (if there
+//                // is one)
+//                if (!_blockchain->addNewBlock(block))
+//                {
+//                    _logger->warn("failed to add block while updating chain at index");
+//                }
+//            }
+//
+//            _database->reset();
+//            _database->writeChain(*_blockchain);
             retval = true;
         }
         else if (_tempblocklist.front().index() == _blockchain->back().index() + 1)
         {
             // TODO: this can probably be refactored into `Blockchain::replace_blocks()`
-            for (const auto& block : _tempblocklist)
-            {
-                if (_blockchain->addNewBlock(block))
-                {
-                    _database->write(block);
-                }
-            }
+            _blockchain->replace_blocks(_tempblocklist);
+//            for (const auto& block : _tempblocklist)
+//            {
+//                if (_blockchain->addNewBlock(block))
+//                {
+//                    _database->write(block);
+//                }
+//            }
             retval = true;
         }
         else

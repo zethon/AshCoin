@@ -11,6 +11,28 @@
 namespace ash
 {
 
+int ChainDBComparator::Compare(const leveldb::Slice& a, const leveldb::Slice& b) const
+{
+    auto a1 = reinterpret_cast<const int*>(a.data());
+    auto b1 = reinterpret_cast<const int*>(b.data());
+    return *a1 - *b1;
+}
+
+const char *ChainDBComparator::Name() const
+{
+    return "ChainDBComparator1.0";
+}
+
+void ChainDBComparator::FindShortestSeparator(std::string *start, const leveldb::Slice &limit) const
+{
+
+}
+
+void ChainDBComparator::FindShortSuccessor(std::string *key) const
+{
+
+}
+
 ChainLevelDB::ChainLevelDB(const std::string& foldername)
     : IChainDatabase(foldername),
       _comparer{std::make_unique<ChainDBComparator>()}
@@ -276,14 +298,6 @@ ChainDatabase::ChainDatabase(std::string_view folder)
 {
 }
 
-ChainDatabase::~ChainDatabase()
-{
-    if (_txIndex)
-    {
-        delete _txIndex;
-    }
-}
-
 void ChainDatabase::initialize(Blockchain& blockchain, GenesisCallback gcb)
 {
     if (!boost::filesystem::exists(_path))
@@ -314,15 +328,6 @@ void ChainDatabase::initialize(Blockchain& blockchain, GenesisCallback gcb)
         throw std::logic_error("invalid chain");
     }
 
-    boost::filesystem::path txidx { _path / "txinindx" };
-    leveldb::Options options;
-    options.create_if_missing = true;
-    leveldb::Status status = leveldb::DB::Open(options, txidx.string(), &_txIndex);
-    if (!status.ok())
-    {
-        throw std::logic_error(fmt::format("could not open txin index: {}", status.ToString()));
-    }
-
     _logger->info("loaded {} blocks from saved chain", blockchain.size());
 }
 
@@ -330,16 +335,22 @@ void ChainDatabase::write(const Block& block)
 {
     std::ofstream ofs(_dbfile.c_str(), std::ios::app | std::ios::out | std::ios::binary);
     write_block(ofs, block);
+    _size++;
 }
 
 void ChainDatabase::writeChain(const Blockchain& chain)
 {
-    _logger->debug("writing {} blocks to file {}", chain.size(), _dbfile.string());
-    std::ofstream ofs(_dbfile.c_str(), std::ios::app | std::ios::out | std::ios::binary);
-    for (const auto& block : chain)
-    {
-        write_block(ofs, block);
-    }
+//    _logger->debug("writing {} blocks to file {}", chain.size(), _dbfile.string());
+//    std::ofstream ofs(_dbfile.c_str(), std::ios::app | std::ios::out | std::ios::binary);
+//    for (const auto& block : chain)
+//    {
+//        write_block(ofs, block);
+//    }
+}
+
+std::optional<Block> read(std::size_t index) const override
+{
+    return {};
 }
 
 void ChainDatabase::reset()
@@ -350,28 +361,8 @@ void ChainDatabase::reset()
     {
         boost::filesystem::remove(_dbfile);
     }
-}
 
-int ChainDBComparator::Compare(const leveldb::Slice& a, const leveldb::Slice& b) const
-{
-    auto a1 = reinterpret_cast<const int*>(a.data());
-    auto b1 = reinterpret_cast<const int*>(b.data());
-    return *a1 - *b1;
-}
-
-const char *ChainDBComparator::Name() const
-{
-    return "ChainDBComparator1.0";
-}
-
-void ChainDBComparator::FindShortestSeparator(std::string *start, const leveldb::Slice &limit) const
-{
-
-}
-
-void ChainDBComparator::FindShortSuccessor(std::string *key) const
-{
-
+    _size = 0;
 }
 
 } // namespace

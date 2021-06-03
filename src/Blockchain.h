@@ -8,6 +8,7 @@
 #include "Settings.h"
 #include "Block.h"
 #include "AshLogger.h"
+//#include "ChainDatabase.h"
 
 namespace ash
 {
@@ -75,11 +76,18 @@ struct LedgerInfo
     }
 };
 
-//! This class is not thread safe and assumes that the
-//  client handles synchronization
+struct ChainSummary
+{
+    std::uint64_t first = 0;
+    std::uint64_t last = 0;
+    std::uint64_t cumdiff = 0;
+};
+
+//! This class is not thread safe and assumes that the client
+//! handles synchronization
 class Blockchain final
 {
-//    IChainDatabasePtr           _db;
+    IChainDatabasePtr           _db;
     BlockList                   _blocks;    // TODO: refactor away
     UnspentTxOuts               _unspentTxOuts;
     std::queue<Transaction>     _txQueue;   // transactions waiting to be mined by this miner
@@ -90,13 +98,17 @@ class Blockchain final
     friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
-    using iterator = std::vector<Block>::iterator;
+//    using iterator = std::vector<Block>::iterator;
 
-    Blockchain();
+    Blockchain(IChainDatabasePtr ptr);
 
     Blockchain(Blockchain&&) = delete;
     Blockchain& operator=(const Blockchain&) = delete;
-    
+
+//    std::optional<Block> read_block(std::size_t index);
+
+
+    // TODO: everything below this is fair game to be refactored out!
     auto begin() const -> decltype(_blocks.begin())
     {
         return _blocks.begin();
@@ -127,10 +139,7 @@ public:
         return _blocks.back();
     }
 
-    std::size_t size() const 
-    { 
-        return _blocks.size(); 
-    }
+    std::size_t size() const;
 
     void resize(std::size_t size)
     {

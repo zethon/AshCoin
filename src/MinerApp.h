@@ -84,9 +84,7 @@ private:
     std::string             _uuid;
     std::string             _rewardAddress;
 
-    IChainDatabasePtr        _database;
-    
-    std::mutex              _chainMutex;    // chain mutex
+    std::mutex              _chainMutex;
     
     BlockChainPtr           _blockchain;
     BlockList               _tempblocklist;
