@@ -6,7 +6,7 @@
 #pragma warning(push)
 #pragma warning(disable:4267)
 #endif
-#include <simple-websocket-server/server_ws.hpp>
+#include <Simple-WebSocket-Server/server_ws.hpp>
 #if _WINDOWS
 #pragma warning(pop)
 #endif

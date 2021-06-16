@@ -10,8 +10,8 @@
 #pragma warning(push)
 #pragma warning(disable:4267)
 #endif
-#include <simple-websocket-server/server_ws.hpp>
-#include <simple-websocket-server/client_ws.hpp>
+#include <Simple-WebSocket-Server/server_ws.hpp>
+#include <Simple-WebSocket-Server/client_ws.hpp>
 #if _WINDOWS
 #pragma warning(pop)
 #endif
@@ -51,8 +51,7 @@ using PeerMap = std::map<std::string, PeerData>;
 
 class ReconnectWorker
 {
-
-    boost::asio::io_service         _statIoService;
+    boost::asio::io_context         _statIoService;
     boost::asio::deadline_timer     _statTimer { _statIoService };
     std::atomic_bool                _shutdown = false;
     
@@ -73,8 +72,6 @@ public:
 
     void run()
     {
-        _statIoService.reset();
-
         _statTimer.expires_from_now(
             boost::posix_time::milliseconds(_timeout.count()));
 
@@ -132,7 +129,7 @@ public:
         {
         }
 
-        void send(std::string_view message, std::function<void(const asio::error_code&)> callback = nullptr, unsigned char fin_rsv_opcode = 129)
+        void send(std::string_view message, std::function<void(const boost::system::error_code&)> callback = nullptr, unsigned char fin_rsv_opcode = 129)
         {
             if (_server)
             {
@@ -147,7 +144,7 @@ public:
         void sendMessage(std::string_view msg, 
             std::string_view msgtype, 
             std::string_view payload, 
-            std::function<void(const asio::error_code&)> callback = nullptr, 
+            std::function<void(const boost::system::error_code&)> callback = nullptr, 
             unsigned char fin_rsv_opcode = 129)
         {
             nl::json json;
@@ -163,7 +160,7 @@ public:
         }
 
         void sendRequest(std::string_view msg, 
-            std::function<void(const asio::error_code&)> callback = nullptr, 
+            std::function<void(const boost::system::error_code&)> callback = nullptr, 
             unsigned char fin_rsv_opcode = 129)
         {
             sendMessage(msg, "request", {}, callback, fin_rsv_opcode);
@@ -181,7 +178,7 @@ public:
         }
 
         void sendResponse(std::string_view msg, 
-            std::function<void(const asio::error_code&)> callback = nullptr, 
+            std::function<void(const boost::system::error_code&)> callback = nullptr, 
             unsigned char fin_rsv_opcode = 129)
         {
             sendMessage(msg, "response", {}, callback, fin_rsv_opcode);
@@ -189,7 +186,7 @@ public:
 
         void sendResponse(std::string_view msg, 
             std::string_view data,
-            std::function<void(const asio::error_code&)> callback = nullptr, 
+            std::function<void(const boost::system::error_code&)> callback = nullptr, 
             unsigned char fin_rsv_opcode = 129)
         {
             sendMessage(msg, "response", data, callback, fin_rsv_opcode);
@@ -202,7 +199,7 @@ public:
         }
 
         void sendError(std::string_view msg, 
-            std::function<void(const asio::error_code&)> callback = nullptr, 
+            std::function<void(const boost::system::error_code&)> callback = nullptr, 
             unsigned char fin_rsv_opcode = 129)
         {
             sendMessage(msg, "error", {}, callback, fin_rsv_opcode);

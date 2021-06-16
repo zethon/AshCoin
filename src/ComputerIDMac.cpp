@@ -119,7 +119,7 @@ ComputerID::ComputerID() = default;
 std::string ComputerID::getUUID()
 {
     namespace ip = boost::asio::ip;
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
 
     std::stringstream ss;
     ss << ip::host_name()
