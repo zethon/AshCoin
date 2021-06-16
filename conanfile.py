@@ -4,12 +4,10 @@ class AshConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
 
     requires = (
-        "boost/1.73.0",
-        "spdlog/1.8.1",
-        "simple-websocket-server/2.0.2",
-        "asio/1.18.0",
-        "nlohmann_json/3.7.0",
-        "cryptopp/8.2.0",
+        "boost/1.76.0",
+        "spdlog/1.8.5",
+        "nlohmann_json/3.9.1",
+        "cryptopp/8.5.0",
         "range-v3/0.10.0",
         "leveldb/1.22"
     )

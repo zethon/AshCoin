@@ -23,6 +23,9 @@ string(APPEND CMAKE_CXX_FLAGS_MINSIZEREL " -D_RELEASE")
 string(APPEND CMAKE_CXX_FLAGS_DEBUG " -D_DEBUG")
 string(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO " -D_DEBUG")
 
+# global definitions
+add_definitions(-DBOOST_ALLOW_DEPRECATED_HEADERS)
+
 if (MSVC)
     add_definitions(
         -DWIN32

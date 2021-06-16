@@ -27,6 +27,9 @@ jobs:
       BUILD_TYPE: ${{ matrix.build_type }}
 
     steps:
+    - name: Install OpenSSL
+      run: Choco-Install -PackageName openssl
+      
     - name: Checkout repository
       uses: actions/checkout@v2
       
