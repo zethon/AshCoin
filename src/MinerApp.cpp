@@ -49,7 +49,8 @@ MinerApp::MinerApp(SettingsPtr settings)
     _logger->debug("target block generation interval is {} seconds", TARGET_TIMESPAN);
     _logger->debug("difficulty adjustment interval is every {} blocks", BLOCK_INTERVAL);
 
-    _blockchain = std::make_unique<Blockchain>(std::make_unique<ChainDatabase>(dbfolder));
+    auto db = std::make_unique<ChainDatabase>(dbfolder);
+    _blockchain = std::make_unique<Blockchain>(std::move(db));
 }
 
 MinerApp::~MinerApp()

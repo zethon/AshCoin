@@ -40,8 +40,7 @@ std::string CalculateBlockHash(
 
 class Block 
 {
-    friend void read_block(std::istream& stream, Block& block);
-    friend void write_block(std::ostream& stream, const Block& block);
+    friend void ashdb_read(std::istream& stream, Block& block);
     friend void from_json(const nl::json& j, Block& b);
     friend class Miner;
 

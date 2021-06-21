@@ -341,7 +341,7 @@ Blockchain::Blockchain(IChainDatabasePtr ptr)
     : _db(std::move(ptr)),
       _logger(ash::initializeLogger("Blockchain"))
 {
-    // nothing to do
+    _db->initialize(*this);
 }
 
 bool Blockchain::addNewBlock(const Block& block)
