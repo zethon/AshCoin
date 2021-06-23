@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
 //    if (vm.count("summary"))
 //    {
 //        const std::string dbfolder = settings.value("database.folder", "");
-//        auto chaindb = std::make_unique<ash::ChainDatabase>(dbfolder);
+//        auto chaindb = std::make_unique<ash::AshChainDatabase>(dbfolder);
 //        auto chain = std::make_unique<ash::Blockchain>(std::move(chaindb));
 //
 //    }
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
         const auto index = vm["printblock"].as<std::uint64_t>();
 
         const std::string dbfolder = settings->value("database.folder", "");
-        auto chaindb = std::make_unique<ash::ChainDatabase>(dbfolder);
+        auto chaindb = std::make_unique<ash::AshChainDatabase>(dbfolder);
         ash::Blockchain chain{std::move(chaindb)};
 
         if (index > chain.size() - 1)

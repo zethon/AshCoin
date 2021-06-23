@@ -8,7 +8,7 @@
 #include "Settings.h"
 #include "Block.h"
 #include "AshLogger.h"
-//#include "ChainDatabase.h"
+//#include "AshChainDatabase.h"
 
 namespace ash
 {
@@ -93,11 +93,12 @@ class Blockchain final
     std::queue<Transaction>     _txQueue;   // transactions waiting to be mined by this miner
     SpdLogPtr                   _logger;
 
-    friend class ChainDatabase;
+    friend class AshChainDatabase;
     friend void to_json(nl::json& j, const Blockchain& b);
     friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
+    using GenesisCallback = std::function<Block()>;
 //    using iterator = std::vector<Block>::iterator;
 
     Blockchain(IChainDatabasePtr ptr);
@@ -105,19 +106,20 @@ public:
     Blockchain(Blockchain&&) = delete;
     Blockchain& operator=(const Blockchain&) = delete;
 
-//    std::optional<Block> read_block(std::size_t index);
-
+    void initialize(GenesisCallback gcb);
 
     // TODO: everything below this is fair game to be refactored out!
-    auto begin() const -> decltype(_blocks.begin())
-    {
-        return _blocks.begin();
-    }
+//    auto begin() const
+//    {
+//        return _db->read(0);
+//    }
 
-    auto end() const -> decltype(_blocks.end())
-    {
-        return _blocks.end();
-    }
+//    auto begin() const -> decltype(_blocks.begin())
+//    {
+//        return _blocks.begin();
+//    }
+    auto begin() const;
+    auto end() const;
 
     auto rbegin() const -> decltype(_blocks.rbegin())
     {

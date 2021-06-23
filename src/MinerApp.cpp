@@ -49,7 +49,7 @@ MinerApp::MinerApp(SettingsPtr settings)
     _logger->debug("target block generation interval is {} seconds", TARGET_TIMESPAN);
     _logger->debug("difficulty adjustment interval is every {} blocks", BLOCK_INTERVAL);
 
-    auto db = std::make_unique<ChainDatabase>(dbfolder);
+    auto db = std::make_unique<AshChainDatabase>(dbfolder);
     _blockchain = std::make_unique<Blockchain>(std::move(db));
 }
 
@@ -631,20 +631,23 @@ void MinerApp::run()
         return;
     }
 
-    if (_blockchain->size() == 0)
-    {
-        ash::Transactions txs;
-        txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
-        Block gen{ 0, "", std::move(txs) };
-        gen.setMiner(this->_uuid);
+    auto genesisBlockCallback =
+        [this]() -> Block
+        {
+            ash::Transactions txs;
+            txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
+            Block gen{ 0, "", std::move(txs) };
+            gen.setMiner(this->_uuid);
 
-        std::time_t t = std::time(nullptr);
-        const auto gendata =
-            fmt::format("Gensis Block created {:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&t));
+            std::time_t t = std::time(nullptr);
+            const auto gendata =
+                fmt::format("Genesis Block created {:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&t));
 
-        gen.setData(gendata);
-        _logger->info("created gensis block with data '{}'", gendata);
-    }
+            gen.setData(gendata);
+            return gen;
+        };
+
+    _blockchain->initialize(genesisBlockCallback);
 
     initHttp();
     initWebSocket();

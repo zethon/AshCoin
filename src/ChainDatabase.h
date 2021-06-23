@@ -164,36 +164,24 @@ inline void ashdb_read(std::istream& stream, Block& block)
     }
 }
 
-class ChainDatabase;
-using ChainDatabasePtr = std::unique_ptr<ChainDatabase>;
-
 class IChainDatabase;
 using IChainDatabasePtr = std::unique_ptr<IChainDatabase>;
 
-class chaindb_error : public std::runtime_error
-{
-public:
-    using std::runtime_error::runtime_error;
-};
+class AshChainDatabase;
+using ChainDatabasePtr = std::unique_ptr<AshChainDatabase>;
 
 class IChainDatabase
 {
-    std::string _datafolder;
 
 public:
-    IChainDatabase(const std::string& datafolder)
-        : _datafolder(datafolder)
-    {
-        // nothing to do
-    }
-
+    IChainDatabase() = default;
     virtual  ~IChainDatabase() = default;
-
-    std::string datafolder() const { return _datafolder; }
 
     // TODO: this should not be in the base class
     using GenesisCallback = std::function<Block(void)>;
     virtual void initialize(Blockchain& chain) = 0;
+
+    virtual bool opened() const = 0;
 
     virtual std::optional<Block> read(std::size_t index) const = 0;
     virtual std::size_t size() = 0;
@@ -202,14 +190,14 @@ public:
     virtual void writeChain(const Blockchain& chain) = 0;
 };
 
-class ChainDatabase final : public IChainDatabase
+class AshChainDatabase final : public IChainDatabase
 {
 
 public:
     using DBType = ashdb::AshDB<Block>;
 
-    ChainDatabase(std::string_view folder);
-    ~ChainDatabase() override = default;
+    AshChainDatabase(std::string_view folder);
+    ~AshChainDatabase() override = default;
 
     void write(const Block& block) override;
     void writeChain(const Blockchain& chain) override;
@@ -221,6 +209,11 @@ public:
     std::size_t size() override
     {
         return static_cast<std::size_t>(_db->size());
+    }
+
+    bool opened() const override
+    {
+        return _db->opened();
     }
 
 private:

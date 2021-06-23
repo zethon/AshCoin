@@ -12,14 +12,13 @@
 namespace ash
 {
 
-ChainDatabase::ChainDatabase(std::string_view folder)
-    : IChainDatabase(folder.data()),
-      _path{ boost::filesystem::path { folder.data()} },
-      _logger(ash::initializeLogger("ChainDatabase"))
+AshChainDatabase::AshChainDatabase(std::string_view folder)
+    : _path{ boost::filesystem::path { folder.data()} },
+      _logger(ash::initializeLogger("AshChainDatabase"))
 {
 }
 
-void ChainDatabase::initialize(Blockchain& blockchain)
+void AshChainDatabase::initialize(Blockchain& blockchain)
 {
     if (!boost::filesystem::exists(_path))
     {
@@ -50,12 +49,12 @@ void ChainDatabase::initialize(Blockchain& blockchain)
     _logger->info("loaded {} blocks from saved chain", blockchain.size());
 }
 
-void ChainDatabase::write(const Block& block)
+void AshChainDatabase::write(const Block& block)
 {
     _db->write(block);
 }
 
-void ChainDatabase::writeChain(const Blockchain& chain)
+void AshChainDatabase::writeChain(const Blockchain& chain)
 {
 //    _logger->debug("writing {} blocks to file {}", chain.size(), _dbfile.string());
 //    std::ofstream ofs(_dbfile.c_str(), std::ios::app | std::ios::out | std::ios::binary);
@@ -65,7 +64,7 @@ void ChainDatabase::writeChain(const Blockchain& chain)
 //    }
 }
 
-std::optional<Block> ChainDatabase::read(std::size_t index) const
+std::optional<Block> AshChainDatabase::read(std::size_t index) const
 {
     return _db->read(index);
 }

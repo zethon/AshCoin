@@ -344,6 +344,11 @@ Blockchain::Blockchain(IChainDatabasePtr ptr)
     _db->initialize(*this);
 }
 
+auto Blockchain::begin() const
+{
+    return _db->read(0);
+}
+
 bool Blockchain::addNewBlock(const Block& block)
 {
     return addNewBlock(block, true);
@@ -497,6 +502,17 @@ std::size_t Blockchain::size() const
 void Blockchain::replace_blocks(const BlockList& block)
 {
     throw std::runtime_error("replace_blocks not implemented");
+}
+
+void Blockchain::initialize(Blockchain::GenesisCallback gcb)
+{
+    assert(_db->opened());
+    if (_db->size()==0)
+    {
+        Block block{ gcb() };
+        _db->write(block);
+        _logger->info("created gensis block with data '{}'", block.data());
+    }
 }
 
 } // namespace
