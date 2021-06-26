@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string_view>
+#include <compare>
 
 #ifndef _WINDOWS
 #include <signal.h>
@@ -125,9 +126,18 @@ void initializeLogs(ash::SettingsPtr settings)
     logger->info("log levels set to: {}", levelstr);
 }
 
-
 int main(int argc, char* argv[])
 {
+    {
+        double foo = -0.0;
+        double bar = 0.0;
+        auto res = foo<=>bar;
+        if (res < 0)
+        {
+            std::cout << "1";
+        }
+    }
+
     setlocale(LC_ALL, "");
 
     po::options_description desc("Allowed options");
