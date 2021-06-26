@@ -128,16 +128,6 @@ void initializeLogs(ash::SettingsPtr settings)
 
 int main(int argc, char* argv[])
 {
-    {
-        double foo = -0.0;
-        double bar = 0.0;
-        auto res = foo<=>bar;
-        if (res < 0)
-        {
-            std::cout << "1";
-        }
-    }
-
     setlocale(LC_ALL, "");
 
     po::options_description desc("Allowed options");
