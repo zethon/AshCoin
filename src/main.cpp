@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string_view>
-#include <compare>
 
 #ifndef _WINDOWS
 #include <signal.h>
