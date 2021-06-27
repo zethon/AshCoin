@@ -125,7 +125,6 @@ void initializeLogs(ash::SettingsPtr settings)
     logger->info("log levels set to: {}", levelstr);
 }
 
-
 int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "");
