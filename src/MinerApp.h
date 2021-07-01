@@ -35,12 +35,6 @@ using HttpResponsePtr = std::shared_ptr<HttpResponse>;
 
 using WsServer = SimpleWeb::SocketServer<SimpleWeb::WS>;
 
-struct UpdatePackage
-{
-    BlockChainPtr   tempchain;
-    std::uint64_t   tempcumdiff;
-};
-
 class MinerApp
 {
 
@@ -79,7 +73,7 @@ private:
 
     void dispatchRequest(HcConnectionPtr, const nl::json& json);
     void handleResponse(HcConnectionPtr, const nl::json& json);
-    void handleChainResponse(HcConnectionPtr, const Blockchain&);
+    void handleChainResponse(HcConnectionPtr, BlockList);
     void handleError(HcConnectionPtr, const nl::json&);
 
     void servePage(HttpResponsePtr response, 
@@ -90,12 +84,10 @@ private:
     std::string             _uuid;
     std::string             _rewardAddress;
 
-    ChainDatabasePtr        _database;
-    
-    std::mutex              _chainMutex;    // chain mutex
+    std::mutex              _chainMutex;
     
     BlockChainPtr           _blockchain;
-    BlockChainPtr           _tempchain;
+    BlockList               _tempblocklist;
 
     SettingsPtr             _settings;
     PeerManager             _peers;

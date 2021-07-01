@@ -67,6 +67,12 @@ endif()
 add_subdirectory(Simple-Web-Server)
 include_directories(Simple-Web-Server)
 
+add_subdirectory(Simple-WebSocket-Server)
+include_directories(Simple-WebSocket-Server)
+
+add_subdirectory(AshDB)
+include_directories(AshDB/include)
+
 add_subdirectory(src)
 
 if (BUILD_ASH_TESTS)

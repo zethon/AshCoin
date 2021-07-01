@@ -17,9 +17,13 @@ namespace ash
 class Block;
 using BlockSharedPtr = std::shared_ptr<Block>;
 using BlockUniquePtr = std::unique_ptr<Block>;
+using BlockList = std::vector<Block>;
 
 void to_json(nl::json& j, const Block& b);
 void from_json(const nl::json& j, Block& b);
+
+void to_json(nl::json& j, const BlockList& b);
+void from_json(const nl::json& j, BlockList& b);
 
 bool ValidHash(const Block& block);
 bool ValidNewBlock(const Block& block, const Block& prevblock);
@@ -36,13 +40,18 @@ std::string CalculateBlockHash(
 
 class Block 
 {
-    friend void read_block(std::istream& stream, Block& block);
-    friend void write_block(std::ostream& stream, const Block& block);
+    friend void ashdb_read(std::istream& stream, Block& block);
     friend void from_json(const nl::json& j, Block& b);
     friend class Miner;
 
 public:
     Block() = default;
+    Block(std::uint64_t index, std::string_view prevHash)
+        : Block(index, prevHash, {})
+    {
+        // nothing to do
+    }
+
     Block(std::uint64_t index, std::string_view prevHash, Transactions&& tx);
 
     bool operator==(const Block& other) const;
@@ -62,10 +71,20 @@ public:
     std::string previousHash() const { return _hashed._prev; }
 
     const Transactions& transactions() const { return _hashed._txs; }
-    Transactions& transactions()
+    void add_transaction(Transaction&& tx)
     {
-        return const_cast<Transactions&>(
-            (static_cast<const Block*>(this))->transactions());
+        _hashed._txs.push_back(std::move(tx));
+    }
+
+    [[maybe_unused]] bool update_transaction(std::size_t index, const Transaction& tx)
+    {
+        if (index >= _hashed._txs.size())
+        {
+            return false;
+        }
+
+        _hashed._txs.at(index) = tx;
+        return true;
     }
 
     std::string hash() const { return _hash; }
@@ -97,7 +116,6 @@ private:
 
     std::string     _hash;
     std::string     _miner;
-    SpdLogPtr       _logger;
 };
 
 } // namespace ash

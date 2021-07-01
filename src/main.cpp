@@ -135,6 +135,8 @@ int main(int argc, char* argv[])
         ("version,v", "print version string")
         ("config,c",po::value<std::string>(), "config file")
         ("createwallet", "create a wallet")
+        ("summary", "get summary of current blockchain")
+        ("printblock",po::value<std::uint64_t>(), "print block id")
         ;
 
     po::variables_map vm;
@@ -167,6 +169,34 @@ int main(int argc, char* argv[])
     }
 
     auto settings = initSettings(configFile);
+
+//    if (vm.count("summary"))
+//    {
+//        const std::string dbfolder = settings.value("database.folder", "");
+//        auto chaindb = std::make_unique<ash::AshChainDatabase>(dbfolder);
+//        auto chain = std::make_unique<ash::Blockchain>(std::move(chaindb));
+//
+//    }
+
+    if (vm.count("printblock") > 0)
+    {
+        const auto index = vm["printblock"].as<std::uint64_t>();
+
+        const std::string dbfolder = settings->value("database.folder", "");
+        auto chaindb = std::make_unique<ash::AshChainDatabase>(dbfolder);
+        ash::Blockchain chain{std::move(chaindb)};
+
+        if (index > chain.size() - 1)
+        {
+            std::cerr << "invalid block number " << index << '\n';
+            return 1;
+        }
+
+        nl::json json { chain.at(index) };
+        std::cout << json.dump(4) << '\n';
+        return 0;
+    }
+
     initializeLogs(settings);
     ash::rootLogger()->info("using setting file {}", configFile);
 

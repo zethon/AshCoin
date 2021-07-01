@@ -8,6 +8,7 @@
 #include "Settings.h"
 #include "Block.h"
 #include "AshLogger.h"
+//#include "AshChainDatabase.h"
 
 namespace ash
 {
@@ -22,6 +23,9 @@ constexpr auto BLOCK_INTERVAL   = 10u; // in blocks
 
 class Blockchain;
 using BlockChainPtr = std::unique_ptr<Blockchain>;
+
+class IChainDatabase;
+using IChainDatabasePtr = std::unique_ptr<IChainDatabase>;
 
 struct LedgerInfo;
 using AddressLedger = std::vector<LedgerInfo>;
@@ -51,6 +55,8 @@ std::optional<TxPoint> FindTransaction(const Blockchain& chain, std::string_view
 // fills in the TxIn TxPoint info for all the Transactions in the Block
 Block GetBlockDetails(const Blockchain& chain, std::size_t index);
 
+bool ValidBlockchain(const BlockList& blocklist);
+
 struct LedgerInfo
 {
     std::uint64_t   blockIdx;
@@ -70,36 +76,50 @@ struct LedgerInfo
     }
 };
 
-//! This class is not thread safe and assumes that the
-//  client handles synchronization
+struct ChainSummary
+{
+    std::uint64_t first = 0;
+    std::uint64_t last = 0;
+    std::uint64_t cumdiff = 0;
+};
+
+//! This class is not thread safe and assumes that the client
+//! handles synchronization
 class Blockchain final
 {
-    std::vector<Block>          _blocks;
+    IChainDatabasePtr           _db;
+    BlockList                   _blocks;    // TODO: refactor away
     UnspentTxOuts               _unspentTxOuts;
-    std::queue<Transaction>     _txQueue; // transactions waiting to be mined by this miner
+    std::queue<Transaction>     _txQueue;   // transactions waiting to be mined by this miner
     SpdLogPtr                   _logger;
 
-    friend class ChainDatabase;
+    friend class AshChainDatabase;
     friend void to_json(nl::json& j, const Blockchain& b);
     friend void from_json(const nl::json& j, Blockchain& b);
 
 public:
-    using iterator = std::vector<Block>::iterator;
+    using GenesisCallback = std::function<Block()>;
+//    using iterator = std::vector<Block>::iterator;
 
-    Blockchain();
+    Blockchain(IChainDatabasePtr ptr);
 
-    Blockchain(Blockchain&&) = default;
-    Blockchain& operator=(const Blockchain&) = default;
-    
-    auto begin() const -> decltype(_blocks.begin())
-    {
-        return _blocks.begin();
-    }
+    Blockchain(Blockchain&&) = delete;
+    Blockchain& operator=(const Blockchain&) = delete;
 
-    auto end() const -> decltype(_blocks.end())
-    {
-        return _blocks.end();
-    }
+    void initialize(GenesisCallback gcb);
+
+    // TODO: everything below this is fair game to be refactored out!
+//    auto begin() const
+//    {
+//        return _db->read(0);
+//    }
+
+//    auto begin() const -> decltype(_blocks.begin())
+//    {
+//        return _blocks.begin();
+//    }
+    auto begin() const;
+    auto end() const;
 
     auto rbegin() const -> decltype(_blocks.rbegin())
     {
@@ -121,19 +141,11 @@ public:
         return _blocks.back();
     }
 
-    std::size_t size() const 
-    { 
-        return _blocks.size(); 
-    }
-
-    void clear()
-    {
-        _blocks.clear();
-    }
+    std::size_t size() const;
 
     void resize(std::size_t size)
     {
-        _blocks.resize(size);
+        throw std::runtime_error("Blockchain::resize() not implemented yet");
     }
 
     auto at(std::size_t index) const -> decltype(_blocks.at(index))
@@ -146,12 +158,6 @@ public:
         assert(blockIndex < size());
         assert(txIndex < at(blockIndex).transactions().size());
         return at(blockIndex).transactions().at(txIndex);
-    }
-
-    auto& txAt(std::size_t blockIndex, std::size_t txIndex)
-    {
-        return const_cast<Transaction&>(
-                static_cast<const Blockchain&>(*this).txAt(blockIndex,txIndex));
     }
 
     bool addNewBlock(const Block& block);
@@ -168,6 +174,8 @@ public:
     void queueTransaction(Transaction&& tx);
     std::size_t transactionQueueSize() const noexcept;
     std::size_t reQueueTransactions(Block& block);
+
+    void replace_blocks(const BlockList& block);
 };
 
 }

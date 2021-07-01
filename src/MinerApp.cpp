@@ -49,8 +49,8 @@ MinerApp::MinerApp(SettingsPtr settings)
     _logger->debug("target block generation interval is {} seconds", TARGET_TIMESPAN);
     _logger->debug("difficulty adjustment interval is every {} blocks", BLOCK_INTERVAL);
 
-    _blockchain = std::make_unique<Blockchain>();
-    _database = std::make_unique<ChainDatabase>(dbfolder);
+    auto db = std::make_unique<AshChainDatabase>(dbfolder);
+    _blockchain = std::make_unique<Blockchain>(std::move(db));
 }
 
 MinerApp::~MinerApp()
@@ -631,31 +631,27 @@ void MinerApp::run()
         return;
     }
 
-    initHttp();
-    initWebSocket();
-    initPeers();
-
-    auto genesisBlockCallback = 
+    auto genesisBlockCallback =
         [this]() -> Block
         {
-            Transactions txs;
+            ash::Transactions txs;
             txs.push_back(ash::CreateCoinbaseTransaction(0, _rewardAddress));
             Block gen{ 0, "", std::move(txs) };
             gen.setMiner(this->_uuid);
 
             std::time_t t = std::time(nullptr);
-            const auto gendata = 
-                fmt::format("Gensis Block created {:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&t));
+            const auto gendata =
+                fmt::format("Genesis Block created {:%Y-%m-%d %H:%M:%S %Z}", *std::localtime(&t));
 
             gen.setData(gendata);
-            _logger->debug("creating gensis block with data '{}'", gendata);
-
             return gen;
         };
 
-    // maybe it's ok if the blockchain has some concept of
-    // a persistence object?
-    _database->initialize(*_blockchain, genesisBlockCallback);
+    _blockchain->initialize(genesisBlockCallback);
+
+    initHttp();
+    initWebSocket();
+    initPeers();
 
     _httpThread = std::thread(
         [this]()
@@ -694,9 +690,8 @@ void MinerApp::runMineThread()
         [this](std::uint64_t index) -> bool
         {
             std::lock_guard<std::mutex> lock{_chainMutex};
-            return !_tempchain
-                || _tempchain->size() == 0
-                || _tempchain->back().index() < index;
+            return _tempblocklist.size() == 0
+                   || _tempblocklist.back().index() < index;
         };
 
     while (!_miningDone && !_done)
@@ -735,15 +730,13 @@ void MinerApp::runMineThread()
         //       point on
 
         // append the block to the chain
-        if (!_blockchain->addNewBlock(*newblock))
+        if (std::lock_guard<std::mutex> lock{_chainMutex};
+            !_blockchain->addNewBlock(*newblock))
         {
             _logger->error("could not add new block #{} to blockchain, stopping mining", newblock->index());
             _miningDone = true;
             break;
         }
-
-        // write the block to the database
-        _database->write(*newblock);
 
         // see if there's an update waiting for the local
         // copy of the chain
@@ -775,53 +768,57 @@ bool MinerApp::syncBlockchain()
 {
     bool retval = false;
     if (std::lock_guard<std::mutex> lock{_chainMutex}; 
-        _tempchain)
+        _tempblocklist.size() > 0)
     {
-        if (_tempchain->front().index() == 0)
+        if (_tempblocklist.front().index() == 0)
         {
             // we're replacing the full chain
-            _blockchain.swap(_tempchain);
-            _database->reset();
-            _database->writeChain(*_blockchain);
+            _blockchain->replace_blocks(_tempblocklist);
+//            _database->reset();
+//            _database->writeChain(*_blockchain);
             retval = true;
         }
-        else if (_tempchain->front().index() <= _blockchain->back().index())
+        else if (_tempblocklist.front().index() <= _blockchain->back().index())
         {
-            auto startIdx = _tempchain->front().index();
-            _blockchain->resize(startIdx);
-            for (const auto& block : *_tempchain)
-            {
-                // add up until a point of failure (if there
-                // is one)
-                if (!_blockchain->addNewBlock(block))
-                {
-                    _logger->warn("failed to add block while updating chain at index");
-                }
-            }
-
-            _database->reset();
-            _database->writeChain(*_blockchain);
+            _blockchain->replace_blocks(_tempblocklist);
+            // TODO: this can probably be refactored into `Blockchain::replace_blocks()`
+//            auto startIdx = _tempblocklist.front().index();
+//            _blockchain->resize(startIdx);
+//            for (const auto& block : _tempblocklist)
+//            {
+//                // add up until a point of failure (if there
+//                // is one)
+//                if (!_blockchain->addNewBlock(block))
+//                {
+//                    _logger->warn("failed to add block while updating chain at index");
+//                }
+//            }
+//
+//            _database->reset();
+//            _database->writeChain(*_blockchain);
             retval = true;
         }
-        else if (_tempchain->front().index() == _blockchain->back().index() + 1)
+        else if (_tempblocklist.front().index() == _blockchain->back().index() + 1)
         {
-            for (const auto& block : *_tempchain)
-            {
-                if (_blockchain->addNewBlock(block))
-                {
-                    _database->write(block);
-                }
-            }
+            // TODO: this can probably be refactored into `Blockchain::replace_blocks()`
+            _blockchain->replace_blocks(_tempblocklist);
+//            for (const auto& block : _tempblocklist)
+//            {
+//                if (_blockchain->addNewBlock(block))
+//                {
+//                    _database->write(block);
+//                }
+//            }
             retval = true;
         }
         else
         {
             _logger->warn("temp chain is too far ahead with blocks {}-{} and local chain {}-{}",
-                _tempchain->front().index(), _tempchain->back().index(),
-                _blockchain->front().index(), _blockchain->back().index());
+                          _tempblocklist.front().index(), _tempblocklist.back().index(),
+                          _blockchain->front().index(), _blockchain->back().index());
         }
 
-        _tempchain.reset();
+        _tempblocklist.clear();
     }
     
     return retval;
@@ -954,8 +951,8 @@ void MinerApp::handleResponse(HcConnectionPtr connection, const nl::json& json)
         // if we need to replace/update the chain, but we only
         // do those checks in 'summary'. We should do the thing
         // in the 'chain' command.
-        const auto& genesis = _tempchain ? _tempchain->front() : _blockchain->front();
-        const auto& lastblock = _tempchain ? _tempchain->back() : _blockchain->back();
+        const auto& genesis = _tempblocklist.size() > 0 ? _tempblocklist.front() : _blockchain->front();
+        const auto& lastblock = _tempblocklist.size() > 0 ? _tempblocklist.back() : _blockchain->back();
 
         if (genesis != remote_gen)
         {
@@ -986,19 +983,25 @@ void MinerApp::handleResponse(HcConnectionPtr connection, const nl::json& json)
     }
     else if (message == "chain")
     {
-        if (const auto tempchain = json["blocks"].get<ash::Blockchain>();
-                tempchain.size() <= 0 || !tempchain.isValidChain())
+        const auto blocklist = json["blocks"].get<BlockList>();
+        if (blocklist.size() <= 0)
         {
-            _logger->info("received invalid chain from connection {}", 
+            _logger->info("received empty chain from connection {}",
                 static_cast<void*>(connection.get()));
 
             return;
         }
-        else
+
+        if (!ash::ValidBlockchain(blocklist))
         {
-            std::lock_guard<std::mutex> lock(_chainMutex);
-            handleChainResponse(connection, tempchain);
-        }        
+            _logger->info("received invalid chain from connection {}",
+              static_cast<void*>(connection.get()));
+
+            return;
+        }
+
+        std::lock_guard<std::mutex> lock(_chainMutex);
+        handleChainResponse(connection, std::move(blocklist));
     }
 
     if (this->_miningDone)
@@ -1007,15 +1010,15 @@ void MinerApp::handleResponse(HcConnectionPtr connection, const nl::json& json)
     }
 }
 
-void MinerApp::handleChainResponse(HcConnectionPtr connection, const Blockchain& tempchain)
+void MinerApp::handleChainResponse(HcConnectionPtr connection, BlockList tempchain)
 {
     if (tempchain.front().index() == 0)
     {
         _logger->info("queuing replacement for local chain with with blocks {}-{}",
             tempchain.front().index(), tempchain.back().index());
 
-        _tempchain = std::make_unique<ash::Blockchain>();
-        *_tempchain = std::move(tempchain);
+        _tempblocklist = std::move(tempchain);
+
     }
     else if (tempchain.front().index() > _blockchain->back().index() + 1)
     {
@@ -1041,8 +1044,7 @@ void MinerApp::handleChainResponse(HcConnectionPtr connection, const Blockchain&
             _logger->info("caching update for local chain with remote blocks {}-{}",
                 tempchain.front().index(), tempchain.back().index());
 
-            _tempchain = std::make_unique<ash::Blockchain>();
-            *_tempchain = tempchain;
+            _tempblocklist = std::move(tempchain);
         }
         else
         {

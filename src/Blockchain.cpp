@@ -8,6 +8,7 @@
 
 #include "CryptoUtils.h"
 #include "Blockchain.h"
+#include "ChainDatabase.h"
 
 namespace nl = nlohmann;
 
@@ -24,8 +25,6 @@ void to_json(nl::json& j, const Blockchain& b)
 
 void from_json(const nl::json& j, Blockchain& b)
 {
-    b.clear();
-
     for (const auto& jblock : j.items())
     {
         b._blocks.push_back(jblock.value().get<Block>());
@@ -66,6 +65,13 @@ void from_json(const nlohmann::json& j, AddressLedger& ledger)
     {
         ledger.push_back(j.value().get<ash::LedgerInfo>());
     }
+}
+
+void to_json(nl::json& j, const ChainSummary& summary)
+{
+    j["first"] = summary.first;
+    j["last"] = summary.last;
+    j["cummdiff"] = summary.cumdiff;
 }
 
 UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& address)
@@ -279,8 +285,11 @@ Block GetBlockDetails(const Blockchain& chain, std::size_t index)
 
     // loops through the transactions of the block we're
     // interested in
-    for (auto& tx : retblock.transactions())
+    for (auto transactions = retblock.transactions();
+            auto item : transactions | boost::adaptors::indexed())
     {
+        auto tx = item.value();
+
         // for each TxIn of the block we want to fill in
         // some missing information
         for (auto& txin : tx.txIns())
@@ -297,16 +306,47 @@ Block GetBlockDetails(const Blockchain& chain, std::size_t index)
             txin.txOutPt().address = txout.address();
             txin.txOutPt().amount = txout.amount();
         }
+
+        retblock.update_transaction(item.index(), tx);
     }
 
     return retblock;
 }
 
-//*** Blockchain
-Blockchain::Blockchain()
-    : _logger(ash::initializeLogger("Blockchain"))
+bool ValidBlockchain(const BlockList& blocklist)
 {
-    // nothing to do
+    if (blocklist.size() == 0 || blocklist.size() == 1)
+    {
+        return true;
+    }
+
+    for (auto idx = 1u; idx < blocklist.size(); ++idx)
+    {
+        const auto& current = blocklist.at(idx);
+        const auto& prev = blocklist.at(idx - 1);
+
+        if ((current.index() != prev.index() + 1)
+           || (current.previousHash() != prev.hash())
+           || (CalculateBlockHash(current) != current.hash()))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+//*** Blockchain
+Blockchain::Blockchain(IChainDatabasePtr ptr)
+    : _db(std::move(ptr)),
+      _logger(ash::initializeLogger("Blockchain"))
+{
+    _db->initialize(*this);
+}
+
+auto Blockchain::begin() const
+{
+    return _db->read(0);
 }
 
 bool Blockchain::addNewBlock(const Block& block)
@@ -327,6 +367,7 @@ bool Blockchain::addNewBlock(const Block& block, bool checkPreviousBlock)
     }
 
     _blocks.push_back(block);
+    _db->write(block);
 
     return true;
 }
@@ -451,6 +492,27 @@ BlockUniquePtr Blockchain::createUnminedBlock(const std::string& coinbasewallet)
     }
 
     return std::make_unique<Block>(newblockidx, this->back().hash(), std::move(txs));
+}
+
+std::size_t Blockchain::size() const
+{
+    return _db->size();
+}
+
+void Blockchain::replace_blocks(const BlockList& block)
+{
+    throw std::runtime_error("replace_blocks not implemented");
+}
+
+void Blockchain::initialize(Blockchain::GenesisCallback gcb)
+{
+    assert(_db->opened());
+    if (_db->size()==0)
+    {
+        Block block{ gcb() };
+        _db->write(block);
+        _logger->info("created gensis block with data '{}'", block.data());
+    }
 }
 
 } // namespace

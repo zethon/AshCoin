@@ -40,6 +40,22 @@ void from_json(const nl::json& j, Block& b)
         BlockTime{std::chrono::milliseconds{j["time"].get<std::uint64_t>()}};
 }
 
+void to_json(nl::json& j, const BlockList& b)
+{
+    for (const auto& block : b)
+    {
+        j.push_back(block);
+    }
+}
+
+void from_json(const nl::json& j, BlockList& b)
+{
+    for (const auto& jblock : j.items())
+    {
+        b.push_back(jblock.value().get<Block>());
+    }
+}
+
 bool ValidHash(const Block& block)
 {
     const auto computedHash = CalculateBlockHash(block);
@@ -106,7 +122,6 @@ std::string CalculateBlockHash(const Block& block)
 }
 
 Block::Block(std::uint64_t index, std::string_view prevHash, Transactions&& txs)
-    : _logger(ash::initializeLogger("Block"))
 {
     _hashed._index = index;
     _hashed._nonce = 0;

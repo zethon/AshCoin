@@ -132,8 +132,8 @@ class TxIn final
     TxOutPoint      _txOutPt;    
     std::string     _signature;
 
-    friend void read_data(std::istream& stream, TxIn& txin);
     friend void from_json(const nl::json& j, TxIn& txin);
+    friend void read_txin(std::istream& stream, TxIn& txin);
 
 public:
     TxIn() = default;
@@ -204,8 +204,9 @@ public:
     double amount() const noexcept { return _amount; }
 
 private:
-    friend void read_data(std::istream& stream, TxOut& txout);
+
     friend void from_json(const nl::json& j, TxOut& txout);
+    friend void read_txout(std::istream& stream, TxOut& txout);
 
     std::string _address;   // public-key/address of receiver
     double      _amount;
@@ -240,6 +241,8 @@ class Transaction final
     friend Transaction CreateCoinbaseTransaction(std::uint64_t blockIdx, std::string_view address);
     friend void from_json(const nl::json& j, Transaction& tx);
     friend void read_data(std::istream& stream, Transaction& tx);
+    friend void read_tx(std::istream& stream, Transaction& tx);
+
 
 public:
 
