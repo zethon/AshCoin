@@ -17,10 +17,14 @@ namespace ash
 
 void to_json(nl::json& j, const Blockchain& b)
 {
-    for (const auto& block : b._blocks)
-    {
-        j.push_back(block);
-    }
+    // for (const auto& block : b._blocks)
+    // {
+    //     j.push_back(block);
+    // }
+    // for (const auto& block : this->_db)
+    // {
+
+    // }
 }
 
 void from_json(const nl::json& j, Blockchain& b)
@@ -84,55 +88,55 @@ UnspentTxOuts GetUnspentTxOuts(const Blockchain& chain, const std::string& addre
 
     std::set<UnspentTxOut, decltype(cmp)> outs(cmp);
 
-    for (const auto& block : chain)
-    {
-        for (const auto& txitem : block.transactions() | boost::adaptors::indexed())
-        {
-            const auto& tx = txitem.value();
+    // for (const auto& block : chain)
+    // {
+    //     for (const auto& txitem : block.transactions() | boost::adaptors::indexed())
+    //     {
+    //         const auto& tx = txitem.value();
 
-            assert(tx.txIns().size() > 0);
-            assert(tx.txOuts().size() > 0);
+    //         assert(tx.txIns().size() > 0);
+    //         assert(tx.txOuts().size() > 0);
 
-            for (const auto& txoutitem : tx.txOuts() | boost::adaptors::indexed())
-            {
-                const auto& txout = txoutitem.value();
-                if (address.size() > 0 && txout.address() != address)
-                {
-                    continue;
-                }
+    //         for (const auto& txoutitem : tx.txOuts() | boost::adaptors::indexed())
+    //         {
+    //             const auto& txout = txoutitem.value();
+    //             if (address.size() > 0 && txout.address() != address)
+    //             {
+    //                 continue;
+    //             }
 
-                outs.insert({
-                    block.index(),
-                    static_cast<std::uint64_t>(txitem.index()),
-                    static_cast<std::uint64_t>(txoutitem.index()),
-                    txout.address(), 
-                    txout.amount()});
-            }
+    //             outs.insert({
+    //                 block.index(),
+    //                 static_cast<std::uint64_t>(txitem.index()),
+    //                 static_cast<std::uint64_t>(txoutitem.index()),
+    //                 txout.address(), 
+    //                 txout.amount()});
+    //         }
 
-            // if this is a coinbase transaction then we do not need
-            // to process the TxIns
-            if (tx.isCoinbase())
-            {
-                continue;
-            }
+    //         // if this is a coinbase transaction then we do not need
+    //         // to process the TxIns
+    //         if (tx.isCoinbase())
+    //         {
+    //             continue;
+    //         }
 
-            for (const auto& txin : tx.txIns())
-            {
-                auto it = std::find_if(outs.begin(), outs.end(),
-                   [txin = txin](const UnspentTxOut& utxout)
-                   {
-                        return (txin.txOutPt().blockIndex == utxout.blockIndex)
-                            && (txin.txOutPt().txIndex == utxout.txIndex)
-                            && (txin.txOutPt().txOutIndex == utxout.txOutIndex);
-                   });
+    //         for (const auto& txin : tx.txIns())
+    //         {
+    //             auto it = std::find_if(outs.begin(), outs.end(),
+    //                [txin = txin](const UnspentTxOut& utxout)
+    //                {
+    //                     return (txin.txOutPt().blockIndex == utxout.blockIndex)
+    //                         && (txin.txOutPt().txIndex == utxout.txIndex)
+    //                         && (txin.txOutPt().txOutIndex == utxout.txOutIndex);
+    //                });
 
-                if (it != outs.end())
-                {
-                    outs.erase(it);
-                }
-            }
-        }
-    }
+    //             if (it != outs.end())
+    //             {
+    //                 outs.erase(it);
+    //             }
+    //         }
+    //     }
+    // }
 
     UnspentTxOuts retval;
     std::move(outs.begin(), outs.end(), std::back_inserter(retval));
@@ -144,47 +148,47 @@ AddressLedger GetAddressLedger(const Blockchain& chain, const std::string& addre
 {
     ash::AddressLedger ledger;
 
-    for (const auto& block : chain)
-    {
-        const auto fullblock = ash::GetBlockDetails(chain, block.index());
-        for (const auto& tx : fullblock.transactions())
-        {
-            bool debit = false;
-            assert(tx.txOuts().size() > 0);
+    // for (const auto& block : chain)
+    // {
+    //     const auto fullblock = ash::GetBlockDetails(chain, block.index());
+    //     for (const auto& tx : fullblock.transactions())
+    //     {
+    //         bool debit = false;
+    //         assert(tx.txOuts().size() > 0);
             
-            for (const auto& txout : tx.txOuts())
-            {
-                if (txout.address() == address)
-                {
-                    ledger.push_back(
-                        LedgerInfo{ block.index(), tx.id(), block.time(), txout.amount() });
+    //         for (const auto& txout : tx.txOuts())
+    //         {
+    //             if (txout.address() == address)
+    //             {
+    //                 ledger.push_back(
+    //                     LedgerInfo{ block.index(), tx.id(), block.time(), txout.amount() });
 
-                    break;
-                }
-            }
+    //                 break;
+    //             }
+    //         }
 
-            // this is a debit for the address so pop the last ledger entry, accumulate
-            // the total of all the TxIns and put it back to the ledger
-            assert(tx.txIns().size() > 0);
-            assert(tx.txIns().at(0).txOutPt().address.has_value());
+    //         // this is a debit for the address so pop the last ledger entry, accumulate
+    //         // the total of all the TxIns and put it back to the ledger
+    //         assert(tx.txIns().size() > 0);
+    //         assert(tx.txIns().at(0).txOutPt().address.has_value());
 
-            if (!tx.isCoinbase()
-                && *(tx.txIns().at(0).txOutPt().address) == address)
-            {
-                double txInTotal = std::accumulate(
-                    tx.txIns().begin(), tx.txIns().end(), 0.0,
-                    [](auto accum, const ash::TxIn& txin)
-                    {
-                        return accum + *(txin.txOutPt().amount);
-                    });
+    //         if (!tx.isCoinbase()
+    //             && *(tx.txIns().at(0).txOutPt().address) == address)
+    //         {
+    //             double txInTotal = std::accumulate(
+    //                 tx.txIns().begin(), tx.txIns().end(), 0.0,
+    //                 [](auto accum, const ash::TxIn& txin)
+    //                 {
+    //                     return accum + *(txin.txOutPt().amount);
+    //                 });
 
-                auto amount = txInTotal - ledger.back().amount;
-                ledger.pop_back();
-                ledger.push_back(
-                    LedgerInfo{ block.index(), tx.id(), block.time(), amount * -1.0 });
-            }
-        }
-    }
+    //             auto amount = txInTotal - ledger.back().amount;
+    //             ledger.pop_back();
+    //             ledger.push_back(
+    //                 LedgerInfo{ block.index(), tx.id(), block.time(), amount * -1.0 });
+    //         }
+    //     }
+    // }
 
     return ledger;
 }
@@ -263,17 +267,17 @@ std::tuple<TxResult, ash::Transaction> CreateTransaction(Blockchain& chain, std:
 // perhaps with a persisted index or something
 std::optional<TxPoint> FindTransaction(const Blockchain& chain, std::string_view txid)
 {
-    for (const auto& block: chain)
-    {
-        for (const auto& txitem : block.transactions() | boost::adaptors::indexed())
-        {
-            const auto& tx = txitem.value();
-            if (tx.id() == txid)
-            {
-                return TxPoint{ block.index(), txitem.index() };
-            }
-        }
-    }
+    // for (const auto& block: chain)
+    // {
+    //     for (const auto& txitem : block.transactions() | boost::adaptors::indexed())
+    //     {
+    //         const auto& tx = txitem.value();
+    //         if (tx.id() == txid)
+    //         {
+    //             return TxPoint{ block.index(), txitem.index() };
+    //         }
+    //     }
+    // }
 
     return {};
 }
@@ -346,7 +350,8 @@ Blockchain::Blockchain(IChainDatabasePtr ptr)
 
 auto Blockchain::begin() const
 {
-    return _db->read(0);
+    return BlockList::const_iterator{};
+    // return _db->read(0);
 }
 
 bool Blockchain::addNewBlock(const Block& block)

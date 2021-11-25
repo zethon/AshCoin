@@ -47,7 +47,7 @@ To create a `.sln` file, run the following commands from the root source directo
 mkdir build
 cd build
 conan install .. -s build_type=Debug --build missing
-cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_ASH_TESTS=On
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_ASH_TESTS=On -DASHDB_BUILD_CONAN=Off
 ```
 
 ### macos
@@ -58,7 +58,7 @@ This project has been compiled on macos 10.15 using Apple clang 11.0. I have bee
 mkdir build
 cd build
 conan install .. -s build_type=Debug --build missing
-cmake .. "-GNinja" -DCMAKE_BUILD_TYPE=Debug -DBUILD_ASH_TESTS=On
+cmake .. "-GNinja" -DCMAKE_BUILD_TYPE=Debug -DBUILD_ASH_TESTS=On -DASHDB_BUILD_CONAN=Off
 ```
 
 If there are no errors then the executable can be built with:
