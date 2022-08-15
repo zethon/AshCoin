@@ -99,9 +99,10 @@ if (UNIX)
     endif(CMAKE_COMPILER_IS_GNUCC)
 endif()
 
-find_package(spdlog)
-find_package(CryptoPP)
-find_package(Boost COMPONENTS)
+find_package(fmt REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(CryptoPP REQUIRED)
+find_package(Boost REQUIRED COMPONENTS)
 
 add_subdirectory(Simple-Web-Server)
 include_directories(Simple-Web-Server)
