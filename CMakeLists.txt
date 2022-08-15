@@ -10,7 +10,7 @@ conan_cmake_run(REQUIRES
     boost/1.77.0
     nlohmann_json/3.10.5
     spdlog/1.8.5
-    cryptopp/8.6.0
+    cryptopp/8.5.0
     range-v3/0.12.0
     leveldb/1.23
     BASIC_SETUP CMAKE_TARGETS
