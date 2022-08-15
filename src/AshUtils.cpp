@@ -11,6 +11,11 @@
 #include <random>
 #include <cctype>
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 5103)
+#endif
+
 #ifdef _WINDOWS
 #   include <windows.h>
 #   include <shellapi.h>
@@ -231,5 +236,8 @@ std::string getDefaultPeersFile()
         utils::getDefaultDatabaseFolder(), PATH_SEPERATOR, "peers.txt");
 }
 
-
 } // namespace
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
