@@ -53,7 +53,8 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake .. -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DBUILD_ASH_TESTS=ON
+      # this why the -DCMAKE_SYSTEM_VERSION is here... https://stackoverflow.com/questions/65402366/c5105-and-other-compiler-warnings-when-building-with-github-actions-winsdk-10
+      run: cmake .. -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DBUILD_ASH_TESTS=ON
 
     - name: Build
       shell: bash
