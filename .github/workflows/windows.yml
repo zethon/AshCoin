@@ -1,6 +1,8 @@
 name: Windows
 
 on:
+  schedule:
+    - cron: "0 0 * * 2"
   push:
     branches:
       - master
