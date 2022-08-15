@@ -76,6 +76,7 @@ target_link_libraries(ash
         simple-web-server
         CONAN_PKG::spdlog
         CONAN_PKG::fmt
+        CONAN_PKG::cryptopp
         ${CONAN_LIBS}
         ${COREFOUNDATION_LIBRARY}
         ${CARBON_LIBRARY}

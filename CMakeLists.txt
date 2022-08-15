@@ -101,7 +101,6 @@ endif()
 
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(CryptoPP REQUIRED)
 find_package(Boost REQUIRED COMPONENTS)
 
 add_subdirectory(Simple-Web-Server)
