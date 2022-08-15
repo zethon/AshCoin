@@ -49,7 +49,6 @@ string(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO " -D_DEBUG")
 # global definitions
 add_compile_definitions(
     BOOST_ALLOW_DEPRECATED_HEADERS
-    FMT_HEADER_ONLY
 )
 
 if (MSVC)
