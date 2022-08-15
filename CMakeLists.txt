@@ -94,6 +94,8 @@ if (UNIX)
     if (CMAKE_COMPILER_IS_GNUCC)
         # https://stackoverflow.com/questions/55406770/gcc-undefined-references-with-abicxx11
         add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+
+        add_compile_options(-Wno-deprecated-enum-enum-conversion)
     endif(CMAKE_COMPILER_IS_GNUCC)
 endif()
 

@@ -53,7 +53,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake .. -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_ASH_TESTS=ON
+      run: cmake .. -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DBUILD_ASH_TESTS=ON
 
     - name: Build
       shell: bash
