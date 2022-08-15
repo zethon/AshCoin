@@ -63,5 +63,5 @@ jobs:
 
     - name: Test
       shell: bash
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/build/bin
       run: ctest -VV -C $BUILD_TYPE
