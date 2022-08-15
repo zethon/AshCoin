@@ -1,6 +1,8 @@
 name: Ubuntu
 
 on:
+  schedule:
+    - cron: "0 0 * * 2"
   push:
     branches:
       - master
@@ -22,6 +24,7 @@ on:
 
 jobs:
   build-ubuntu:
+    if: ${{ false }}  # disable for now
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -56,13 +59,6 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: git submodule update --init --recursive
 
-    - name: Configure Conan
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run:  |
-        conan --version
-        conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE -s compiler=gcc -s compiler.version=11 --build missing
-
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
@@ -77,6 +73,6 @@ jobs:
       run: cmake --build . --config $BUILD_TYPE
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/build/bin
       shell: bash
       run: ctest -VV -C $BUILD_TYPE

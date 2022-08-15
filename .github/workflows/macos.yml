@@ -1,6 +1,8 @@
 name: macos
 
 on:
+  schedule:
+    - cron: "0 0 * * 2"
   push:
     branches:
       - master
@@ -46,11 +48,6 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: git submodule update --init --recursive
 
-    - name: Configure Conan
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE --build missing
-
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
@@ -62,6 +59,6 @@ jobs:
       run: cmake --build . --config $BUILD_TYPE
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: ${{github.workspace}}/build/bin
       shell: bash
       run: ctest -VV -C $BUILD_TYPE

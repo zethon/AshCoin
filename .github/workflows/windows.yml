@@ -1,6 +1,8 @@
 name: Windows
 
 on:
+  schedule:
+    - cron: "0 0 * * 2"
   push:
     branches:
       - master
@@ -22,7 +24,7 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       fail-fast: false
       matrix:
@@ -50,19 +52,18 @@ jobs:
       working-directory: ${{github.workspace}}
       run: cmake -E make_directory ${{github.workspace}}/build
 
-    - name: Configure Conan
+    - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build
-      run: conan install $GITHUB_WORKSPACE -s build_type=$BUILD_TYPE --build missing
-
-    - name: Configure CMake
-      working-directory: ${{github.workspace}}/build
-      run: cmake ${{github.workspace}} -G "Visual Studio 16 2019" -A x64 -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_ASH_TESTS=ON
+      # this why the -DCMAKE_SYSTEM_VERSION is here... https://stackoverflow.com/questions/65402366/c5105-and-other-compiler-warnings-when-building-with-github-actions-winsdk-10
+      run: cmake .. -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_SYSTEM_VERSION="10.0.18362.0" -DBUILD_ASH_TESTS=ON
 
     - name: Build
+      shell: bash
       working-directory: ${{github.workspace}}/build
-      run: cmake --build . --config $env:BUILD_TYPE
+      run: cmake --build . --config $BUILD_TYPE
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -VV -C $env:BUILD_TYPE
+      shell: bash
+      working-directory: ${{github.workspace}}/build/bin
+      run: ctest -VV -C $BUILD_TYPE

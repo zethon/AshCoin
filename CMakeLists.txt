@@ -1,8 +1,31 @@
+cmake_minimum_required(VERSION 3.0)
 project(Ash)
-cmake_minimum_required(VERSION 3.1)
+
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_MACOSX_RPATH 1)
 
 # initialize conan libs
+include(CMake/conan.cmake)
+conan_cmake_run(REQUIRES
+    boost/1.77.0
+    nlohmann_json/3.10.5
+    spdlog/1.8.5
+    cryptopp/8.5.0
+    range-v3/0.12.0
+    leveldb/1.23
+    BASIC_SETUP CMAKE_TARGETS
+    GENERATORS cmake_find_package cmake_paths
+    BUILD missing
+    OPTIONS 
+        boost:shared=False 
+        boost:without_test=False 
+        boost:without_program_options=False 
+        boost:without_filesystem=False 
+        boost:without_system=False 
+        boost:without_exception=False
+        boost:without_contract=False
+)
+include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(NO_OUTPUT_DIRS KEEP_RPATHS)
 
@@ -24,7 +47,9 @@ string(APPEND CMAKE_CXX_FLAGS_DEBUG " -D_DEBUG")
 string(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO " -D_DEBUG")
 
 # global definitions
-add_definitions(-DBOOST_ALLOW_DEPRECATED_HEADERS)
+add_compile_definitions(
+    BOOST_ALLOW_DEPRECATED_HEADERS
+)
 
 if (MSVC)
     add_definitions(
@@ -61,8 +86,14 @@ if (UNIX)
     if (CMAKE_COMPILER_IS_GNUCC)
         # https://stackoverflow.com/questions/55406770/gcc-undefined-references-with-abicxx11
         add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+
+        add_compile_options(-Wno-deprecated-enum-enum-conversion)
     endif(CMAKE_COMPILER_IS_GNUCC)
 endif()
+
+find_package(fmt REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(Boost REQUIRED COMPONENTS)
 
 add_subdirectory(Simple-Web-Server)
 include_directories(Simple-Web-Server)
