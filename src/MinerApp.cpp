@@ -628,6 +628,7 @@ void MinerApp::run()
     if (_rewardAddress.empty() || _rewardAddress == "<CHANGE ME>")
     {
         _logger->critical("the setting 'mining.miner.address' in the config file must be updated");
+        _logger->critical("use 'ash --createwallet' to create a new address");
         return;
     }
 

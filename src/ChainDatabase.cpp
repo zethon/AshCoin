@@ -207,7 +207,7 @@ void ChainDatabase::initialize(Blockchain& blockchain, GenesisCallback gcb)
         throw std::logic_error(fmt::format("could not open txin index: {}", status.ToString()));
     }
 
-    _logger->info("loaded {} blocks from saved chain", blockchain.size());
+    _logger->debug("loaded {} blocks from saved chain", blockchain.size());
 }
 
 void ChainDatabase::write(const Block& block)
