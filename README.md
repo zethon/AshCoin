@@ -5,9 +5,11 @@
 ![Ubuntu Workflow](https://github.com/zethon/AshCoin/actions/workflows/ubuntu.yml/badge.svg)
 
 
-Ash is a crypto-currency built from scratch.
+Ash is a crypto-currency built from scratch. 
 
-The goals with this project are:
+This is **a fun project**. I am writing this to learn about blockchains and crypto currency. **I am not an expert**. This is not intended to be a real crypto currency. 
+
+### **The goals with this project are**
 
 * **Mining**: A single chain is synced across a peer-to-peer network based on cumulative difficulty
 * **Networking**: Miners can join/leave the mining network without any configuration on a central node.
@@ -16,7 +18,9 @@ The goals with this project are:
 
 A lot of this project is based on [this Javascript tutorial](https://lhartikk.github.io/jekyll/update/2017/07/15/chapter0.html). However this project uses C++ (as of this writing I am using C++17, but hope to switch to C++20 soon). 
 
-**NOTE**: This is **a fun project**. I am writing this to learn about blockchains and crypto currency. **I am not an expert**. This is not intended to be a real crypto currency.
+Many people new to crypto-currency have questions about how they can send money from one person to another, or how they can receive payment from another person. These questions usually have somewhat complicated answers that involve third-party software and somewhat technical details. The goal with this project is to provide a simple interface to send and receive tokens. Of course, with this comes added risk, but we believe people are smart enough to know when they shouldn't take those risks!
+
+
 
 ![](docs/images/screenshot.png)
 
