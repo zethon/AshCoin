@@ -174,7 +174,7 @@ public:
         template<typename... Args>
         void sendRequestFmt(std::string_view msg, std::string_view formatstr, Args&&... args)
         {
-            sendMessage(msg, "request", fmt::format(formatstr, args...));
+            sendMessage(msg, "request", fmt::format(fmt::runtime(formatstr), args...));
         }
 
         void sendResponse(std::string_view msg, 
@@ -208,7 +208,7 @@ public:
         template<typename... Args>
         void sendErrorFmt(std::string_view formatstr, Args&&... args)
         {
-            sendMessage(fmt::format(formatstr, args...), "error", {});
+            sendMessage(fmt::format(fmt::runtime(formatstr), args...), "error", {});
         }
 
         std::string address() const

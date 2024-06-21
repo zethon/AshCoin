@@ -98,7 +98,7 @@ public:
 
     std::string error(const std::string& value) const override
     {
-        return fmt::format("the value '{}' is not a numeric value");
+        return fmt::format("the value '{}' is not a numeric value", value);
     }
 };
 

@@ -7,10 +7,10 @@ set(CMAKE_MACOSX_RPATH 1)
 # initialize conan libs
 include(CMake/conan.cmake)
 conan_cmake_run(REQUIRES
-    boost/1.77.0
-    nlohmann_json/3.10.5
-    spdlog/1.8.5
-    cryptopp/8.5.0
+    boost/1.84.0
+    nlohmann_json/3.11.3
+    spdlog/1.14.1
+    cryptopp/8.9.0
     range-v3/0.12.0
     leveldb/1.23
     BASIC_SETUP CMAKE_TARGETS
@@ -47,9 +47,11 @@ string(APPEND CMAKE_CXX_FLAGS_DEBUG " -D_DEBUG")
 string(APPEND CMAKE_CXX_FLAGS_RELWITHDEBINFO " -D_DEBUG")
 
 # global definitions
-add_compile_definitions(
-    BOOST_ALLOW_DEPRECATED_HEADERS
+add_definitions(
+    -DBOOST_ALLOW_DEPRECATED_HEADERS
+    -D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 )
+
 
 if (MSVC)
     add_definitions(

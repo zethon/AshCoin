@@ -1,3 +1,6 @@
+#include <fstream>
+#include <ostream>
+
 #include "Transactions.h"
 #include "Blockchain.h"
 #include "ChainDatabase.h"

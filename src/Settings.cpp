@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <iomanip>
+#include <fstream>
+#include <ostream>
 
 #include <boost/filesystem.hpp>
 
@@ -64,9 +66,9 @@ std::size_t Settings::load(std::string_view filename)
 
 void Settings::save(std::string_view filename)
 {
-    boost::filesystem::ofstream out;
+    std::ofstream out;
     out.open(filename.data(),
-        boost::filesystem::ofstream::out | boost::filesystem::ofstream::trunc);
+        std::ofstream::out | std::ofstream::trunc);
 
     out << std::setw(4) << _settings;
     out.close();
